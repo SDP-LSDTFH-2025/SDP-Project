@@ -1,0 +1,44 @@
+services:
+  - type: web
+    name: sdp-backend-api
+    env: node
+    plan: starter
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: ENABLE_DB_SYNC
+        value: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: 24h
+      - key: API_PREFIX
+        value: /api/v1
+      - key: RATE_LIMIT_WINDOW_MS
+        value: 900000
+      - key: RATE_LIMIT_MAX_REQUESTS
+        value: 100
+      - key: CORS_ORIGIN
+        value: https://your-frontend-domain.com
+      - key: ALLOWED_IPS
+        value: 127.0.0.1,::1
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: BCRYPT_ROUNDS
+        value: 12
+      - key: LOG_LEVEL
+        value: info
+    healthCheckPath: /health
+    autoDeploy: true
+    branch: main
+
+databases:
+  - name: sdp-postgres-db
+    databaseName: sdp_database
+    user: sdp_user
+    plan: starter
+     

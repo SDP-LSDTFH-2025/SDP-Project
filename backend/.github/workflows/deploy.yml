@@ -12,10 +12,11 @@ jobs:
     
     services:
       postgres:
-        image: postgres:13
+        image: postgres:17
         env:
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: test_db
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
+          POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
@@ -43,13 +44,13 @@ jobs:
       run: |
         cd backend
         cp env.example .env.test
-        echo "DB_HOST=localhost" >> .env.test
+        echo "DB_HOST=${{ secrets.POSTGRES_HOST }}" >> .env.test
         echo "DB_PORT=5432" >> .env.test
-        echo "DB_NAME=test_db" >> .env.test
-        echo "DB_USER=postgres" >> .env.test
-        echo "DB_PASSWORD=postgres" >> .env.test
+        echo "DB_NAME=${{ secrets.POSTGRES_DB }}" >> .env.test
+        echo "DB_USER=${{ secrets.POSTGRES_USER }}" >> .env.test
+        echo "DB_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}" >> .env.test
         echo "JWT_SECRET=test-secret-key" >> .env.test
-        echo "NODE_ENV=test" >> .env.test
+        echo "NODE_ENV=development" >> .env.test
         echo "ENABLE_DB_SYNC=false" >> .env.test
     
     - name: Run tests
@@ -58,22 +59,28 @@ jobs:
         npm test
       env:
         NODE_ENV: test
-        DB_HOST: localhost
+        DB_HOST: ${{ secrets.POSTGRES_HOST }}
         DB_PORT: 5432
-        DB_NAME: test_db
-        DB_USER: postgres
-        DB_PASSWORD: postgres
+        DB_NAME: ${{ secrets.POSTGRES_DB }}
+        DB_USER: neondb_owner
+        DB_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
         JWT_SECRET: test-secret-key
     
     - name: Run linting
       run: |
         cd backend
-        npm run lint || echo "Linting failed but continuing..."
+        npm run lint
     
     - name: Security audit
       run: |
         cd backend
-        npm audit --audit-level moderate || echo "Security audit found issues but continuing..."
+        npm audit --audit-level moderate
+    
+    - name: Check for vulnerabilities
+      run: |
+        cd backend
+        npm audit --audit-level high
+      continue-on-error: true
 
   build:
     needs: test
@@ -115,6 +122,7 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
+    environment: production
     
     steps:
     - name: Download artifact

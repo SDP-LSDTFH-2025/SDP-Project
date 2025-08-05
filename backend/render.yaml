@@ -1,10 +1,13 @@
 services:
   - type: web
-    name: sdp-backend-api
+    name: SDP-Project
     env: node
     plan: starter
     buildCommand: npm install
-    startCommand: npm start
+    startCommand: npm run dev
+    buildFilter:
+      paths:
+        - backend/**
     envVars:
       - key: NODE_ENV
         value: production
@@ -35,10 +38,12 @@ services:
     healthCheckPath: /health
     autoDeploy: true
     branch: main
+   
+
 
 databases:
-  - name: sdp-postgres-db
-    databaseName: sdp_database
-    user: sdp_user
+  - name: SDP-TLSDF
+    databaseName: neondb
+    user: neondb_owner
     plan: starter
      

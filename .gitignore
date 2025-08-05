@@ -1,11 +1,4 @@
 backend/node_modules
 backend/env.example
-backend/.env
-backend/.env.test
-backend/.env.production
-backend/.env.development
-backend/.env.staging
-backend/.env.test
-backend/.env.production
-backend/.env.development
-backend/.env.staging
+
+.env

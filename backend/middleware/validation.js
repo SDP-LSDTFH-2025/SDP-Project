@@ -25,82 +25,35 @@ const createRateLimiter = (windowMs, max, message) => {
   });
 };
 
-// Auth-specific rate limiting
-const authLimiter = createRateLimiter(
+// Google OAuth rate limiting
+const googleAuthLimiter = createRateLimiter(
   15 * 60 * 1000, // 15 minutes
-  5, // 5 attempts
-  'Too many authentication attempts, please try again later.'
+  10, // 10 attempts
+  'Too many Google authentication attempts, please try again later.'
 );
 
-const registerLimiter = createRateLimiter(
-  60 * 60 * 1000, // 1 hour
-  10, // 3 attempts
-  'Too many registration attempts, please try again later.'
-);
-
-// Validation rules
-const userValidation = {
-  register: [
+// Validation rules for Google OAuth
+const googleAuthValidation = {
+  mockLogin: [
     body('email')
       .isEmail()
       .normalizeEmail()
       .withMessage('Please provide a valid email address'),
-    body('username')
-      .isLength({ min: 3, max: 30 })
-      .matches(/^[a-zA-Z0-9_]+$/)
-      .withMessage('Username must be 3-30 characters, alphanumeric and underscores only'),
-    body('password')
-      .isLength({ min: 8 })
-      .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/)
-      .withMessage('Password must be at least 8 characters with uppercase, lowercase, number, and special character'),
-    body('first_name')
+    body('name')
+      .isLength({ min: 1, max: 100 })
+      .trim()
+      .escape()
+      .withMessage('Name is required'),
+    body('given_name')
       .optional()
       .isLength({ min: 1, max: 50 })
       .trim()
       .escape(),
-    body('last_name')
+    body('family_name')
       .optional()
       .isLength({ min: 1, max: 50 })
       .trim()
       .escape()
-  ],
-  
-  login: [
-    body('email')
-      .isEmail()
-      .normalizeEmail()
-      .withMessage('Please provide a valid email address'),
-    body('password')
-      .notEmpty()
-      .withMessage('Password is required')
-  ],
-  
-  updateProfile: [
-    body('first_name')
-      .optional()
-      .isLength({ min: 1, max: 50 })
-      .trim()
-      .escape(),
-    body('last_name')
-      .optional()
-      .isLength({ min: 1, max: 50 })
-      .trim()
-      .escape(),
-    body('username')
-      .optional()
-      .isLength({ min: 3, max: 30 })
-      .matches(/^[a-zA-Z0-9_]+$/)
-      .withMessage('Username must be 3-30 characters, alphanumeric and underscores only')
-  ],
-  
-  changePassword: [
-    body('current_password')
-      .notEmpty()
-      .withMessage('Current password is required'),
-    body('new_password')
-      .isLength({ min: 8 })
-      .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/)
-      .withMessage('New password must be at least 8 characters with uppercase, lowercase, number, and special character')
   ]
 };
 
@@ -123,8 +76,7 @@ const handleValidationErrors = (req, res, next) => {
 
 module.exports = {
   sanitizeInput,
-  authLimiter,
-  registerLimiter,
-  userValidation,
+  googleAuthLimiter,
+  googleAuthValidation,
   handleValidationErrors
 }; 

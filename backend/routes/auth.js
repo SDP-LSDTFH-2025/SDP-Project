@@ -19,7 +19,7 @@ const router = express.Router();
 passport.use(new GoogleStrategy({
   clientID: process.env.GOOGLE_CLIENT_ID,
   clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-  callbackURL: process.env.GOOGLE_CALLBACK_URL || 'http://localhost:3000/api/v1/auth/google/callback'
+  callbackURL: process.env.GOOGLE_CALLBACK_URL
 }, async (accessToken, refreshToken, profile, done) => {
   try {
     let user = await User.findOne({
@@ -75,7 +75,7 @@ passport.use(new GoogleStrategy({
 router.get('/google', (req, res) => {
   const googleAuthUrl = 'https://accounts.google.com/oauth/authorize?' +
     'client_id=' + process.env.GOOGLE_CLIENT_ID +
-    '&redirect_uri=' + encodeURIComponent(process.env.GOOGLE_CALLBACK_URL || 'http://localhost:3000/api/v1/auth/google/callback') +
+    '&redirect_uri=' + encodeURIComponent(process.env.GOOGLE_CALLBACK_URL) +
     '&response_type=code' +
     '&scope=email profile' +
     '&state=' + Math.random().toString(36).substring(7);

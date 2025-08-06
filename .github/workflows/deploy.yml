@@ -52,6 +52,7 @@ jobs:
         echo "JWT_SECRET=test-secret-key" >> .env.test
         echo "NODE_ENV=development" >> .env.test
         echo "ENABLE_DB_SYNC=false" >> .env.test
+  
     
     - name: Run linting
       run: |

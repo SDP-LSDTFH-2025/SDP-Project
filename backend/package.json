@@ -18,14 +18,14 @@
     "security:audit": "npm audit --audit-level moderate",
     "security:fix": "npm audit fix"
   },
-  
   "keywords": [
     "nodejs",
     "express",
     "sequelize",
     "postgresql",
     "jwt",
-    "api"
+    "api",
+    "google-oauth"
   ],
   "author": "SDP Team",
   "license": "MIT",
@@ -47,7 +47,10 @@
     "compression": "^1.7.4",
     "express-slow-down": "^2.0.1",
     "hpp": "^0.2.3",
-    "xss": "^1.0.14"
+    "xss": "^1.0.14",
+    "passport": "^0.7.0",
+    "passport-google-oauth20": "^2.0.0",
+    "google-auth-library": "^9.0.0"
   },
   "devDependencies": {
     "nodemon": "^3.0.2",

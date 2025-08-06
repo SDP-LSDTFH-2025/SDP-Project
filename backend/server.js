@@ -6,6 +6,7 @@ const compression = require('compression');
 const rateLimit = require('express-rate-limit');
 const swaggerJsdoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
+const passport = require('passport');
 require('dotenv').config();
 
 const { sequelize } = require('./config/database');
@@ -21,6 +22,9 @@ const {
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Initialize Passport
+app.use(passport.initialize());
+
 // Swagger configuration
 const swaggerOptions = {
   definition: {
@@ -28,7 +32,7 @@ const swaggerOptions = {
     info: {
       title: 'SDP Project API',
       version: '1.0.0',
-      description: 'Backend API for SDP Project',
+      description: 'Backend API for SDP Project - Google OAuth Only',
       contact: {
         name: 'API Support',
         email: 'support@example.com'
@@ -142,6 +146,7 @@ async function startServer() {
       console.log(`🚀 Server is running on port ${PORT}`);
       console.log(`📚 API Documentation available at: http://localhost:${PORT}/api-docs`);
       console.log(`🔗 Health check: http://localhost:${PORT}/health`);
+    
     });
   } catch (error) {
     console.error('❌ Unable to start server:', error);

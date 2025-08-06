@@ -11,7 +11,6 @@ const { sequelize } = require('../config/database');
  *       required:
  *         - email
  *         - username
- *         - password
  *       properties:
  *         id:
  *           type: integer
@@ -25,16 +24,27 @@ const { sequelize } = require('../config/database');
  *           description: User's username
  *         password:
  *           type: string
- *           description: User's password (hashed)
+ *           description: User's password (hashed, optional for Google users)
  *         first_name:
  *           type: string
  *           description: User's first name
  *         last_name:
  *           type: string
  *           description: User's last name
+ *         google_id:
+ *           type: string
+ *           description: Google OAuth ID
+ *         auth_provider:
+ *           type: string
+ *           enum: [google, email]
+ *           description: Authentication provider
  *         is_active:
  *           type: boolean
  *           description: Whether the user account is active
+ *         last_login:
+ *           type: string
+ *           format: date-time
+ *           description: Last login timestamp
  *         created_at:
  *           type: string
  *           format: date-time
@@ -67,7 +77,7 @@ const User = sequelize.define('User', {
   },
   password: {
     type: DataTypes.STRING,
-    allowNull: false,
+    allowNull: true, // Optional for Google users
     validate: {
       len: [6, 100]
     }
@@ -85,6 +95,15 @@ const User = sequelize.define('User', {
     validate: {
       len: [1, 50]
     }
+  },
+  google_id: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    unique: true
+  },
+  auth_provider: {
+    type: DataTypes.ENUM('google', 'email'),
+    defaultValue: 'google'
   },
   is_active: {
     type: DataTypes.BOOLEAN,
@@ -105,7 +124,7 @@ const User = sequelize.define('User', {
       }
     },
     beforeUpdate: async (user) => {
-      if (user.changed('password')) {
+      if (user.changed('password') && user.password) {
         user.password = await bcrypt.hash(user.password, 12);
       }
     }
@@ -114,6 +133,9 @@ const User = sequelize.define('User', {
 
 // Instance methods
 User.prototype.comparePassword = async function(candidatePassword) {
+  if (!this.password) {
+    return false; // Google users don't have passwords
+  }
   return await bcrypt.compare(candidatePassword, this.password);
 };
 

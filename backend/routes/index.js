@@ -3,6 +3,7 @@ const router = express.Router();
 
 const authRoutes = require('./auth');
 const userRoutes = require('./users');
+const uploadRoutes = require('./upload');
 
 // API Documentation
 /**
@@ -35,6 +36,7 @@ router.get('/', (req, res) => {
     endpoints: {
       auth: '/auth',
       users: '/users',
+      upload: '/upload',
       docs: '/api-docs'
     }
   });
@@ -43,5 +45,6 @@ router.get('/', (req, res) => {
 // Mount route modules
 router.use('/auth', authRoutes);
 router.use('/users', userRoutes);
+router.use('/upload', uploadRoutes);
 
 module.exports = router; 

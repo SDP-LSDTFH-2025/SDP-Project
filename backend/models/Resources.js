@@ -28,6 +28,10 @@ const Resources = sequelize.define('Resources', {
     type: DataTypes.STRING,
     allowNull: false
   },
+  public_id: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
   checksum: {
     type: DataTypes.STRING,
     allowNull: false

@@ -6,7 +6,6 @@ const compression = require('compression');
 const rateLimit = require('express-rate-limit');
 const swaggerJsdoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
-const passport = require('passport');
 require('dotenv').config();
 
 const { sequelize } = require('./config/database');
@@ -22,8 +21,6 @@ const {
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Initialize Passport
-app.use(passport.initialize());
 
 // Swagger configuration
 const swaggerOptions = {
@@ -103,15 +100,6 @@ app.use(limiter);
 // Swagger documentation
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
-// Health check endpoint
-app.get('/health', (req, res) => {
-  res.status(200).json({
-    status: 'OK',
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime()
-  });
-});
-
 // API routes
 app.use(process.env.API_PREFIX || '/api/v1', routes);
 
@@ -132,20 +120,10 @@ async function startServer() {
     // Test database connection
     await sequelize.authenticate();
     console.log('✅ Database connection established successfully.');
-    
-    // Sync database (only if explicitly enabled in development)
-    if (process.env.NODE_ENV !== 'production' && process.env.ENABLE_DB_SYNC === 'true') {
-      await sequelize.sync({ alter: true });
-      console.log('✅ Database synchronized.');
-    } else {
-      console.log('✅ Database sync skipped (production mode or ENABLE_DB_SYNC=false).');
-    }
-    
     // Start server
     app.listen(PORT, () => {
       console.log(`🚀 Server is running on port ${PORT}`);
       console.log(`📚 API Documentation available at: http://localhost:${PORT}/api-docs`);
-      console.log(`🔗 Health check: http://localhost:${PORT}/health`);
     
     });
   } catch (error) {
@@ -154,18 +132,6 @@ async function startServer() {
   }
 }
 
-// Graceful shutdown
-process.on('SIGTERM', async () => {
-  console.log('SIGTERM received, shutting down gracefully');
-  await sequelize.close();
-  process.exit(0);
-});
-
-process.on('SIGINT', async () => {
-  console.log('SIGINT received, shutting down gracefully');
-  await sequelize.close();
-  process.exit(0);
-});
 
 // Export app for testing
 module.exports = app;

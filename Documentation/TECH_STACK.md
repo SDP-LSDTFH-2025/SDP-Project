@@ -1,64 +1,95 @@
-# Backend Technology Stack
+Backend Technology Stack
+Core Technologies
+Node.js
+Why we chose it:
+Node.js is a fast, lightweight, and event-driven runtime built on Chrome’s V8 engine. Since it uses non-blocking I/O, it’s ideal for building high-performance web applications that need to handle many simultaneous connections.
 
- 
+What makes it a good choice:
 
-## Core Technologies
+Runs JavaScript on the backend, which means we can use one language across the entire stack no context switching for developers
 
-### Node.js
+Has a massive open-source ecosystem through npm, with libraries for almost anything we need
 
-**Choice**: Node.js runtime environment
+Performs well under load and scales easily, especially in microservices environments
 
-**Rationale**:
-- **Event-driven Architecture**: Non-blocking I/O operations provide excellent performance for web applications
-- **JavaScript Ecosystem**: Leverages the extensive npm package ecosystem with over 1.5 million packages
-- **Developer Productivity**: Single language (JavaScript) reduces context switching
-- **Community Support**: Large, active community with extensive documentation and resources
-- **Scalability**: Lightweight and suitable for microservices architecture
+Backed by a large and active community, making it easy to find help, tools, and best practices
 
-### Express.js
+Express.js
+Why we chose it:
+Express is a lightweight and flexible Node.js framework that doesn’t enforce a strict structure, which gives us more control over how we design our backend.
 
-**Choice**: Express.js web application framework
+What makes it a good choice:
 
-**Rationale**:
-- **Minimalist Design**: Unopinionated framework that provides flexibility in application structure
-- **Middleware Support**: Rich ecosystem of middleware for authentication, validation, and security
-- **Routing**: Simple and intuitive routing system for API endpoint management
-- **Performance**: Fast and lightweight, making it ideal for RESTful APIs
-- **Widely Adopted**: Industry standard with extensive documentation and community support
+Easy to set up and customize to suit our application’s needs
 
-### Sequelize
+Huge middleware ecosystem we can plug in authentication, error handling, logging, and more without reinventing the wheel
 
-**Choice**: Sequelize ORM for database management
+Clean and intuitive routing system, which makes managing API endpoints simple
 
-**Rationale**:
-- **Database Agnostic**: Supports multiple databases (PostgreSQL, MySQL, SQLite, etc.) with minimal code changes
-- **Migration System**: Built-in migration tools for version-controlled database schema changes
-- **Data Validation**: Comprehensive validation at the model level ensures data integrity
-- **Associations**: Intuitive relationship management between database models
-- **Query Interface**: Clean, chainable query interface that reduces SQL injection risks
+Widely adopted and well-documented, so onboarding new developers is easier
 
-### NeonDB
+Sequelize
+Why we chose it:
+Sequelize is a promise-based ORM for Node.js that simplifies database interaction while still allowing flexibility when needed.
 
-**Choice**: NeonDB as the PostgreSQL cloud provider
+What makes it a good choice:
 
-**Rationale**:
-- **Serverless PostgreSQL**: Automatic scaling without manual infrastructure management
-- **Branching Feature**: Database branching for development and testing environments
-- **Cost Efficiency**: Pay-per-use model reduces infrastructure costs during development
-- **Performance**: Optimized PostgreSQL with connection pooling and caching
-- **Developer Experience**: Simple setup and management through web interface
+Works with multiple databases (like PostgreSQL, MySQL, and SQLite) with minimal changes to our code
 
-### Swagger/OpenAPI
+Built-in migration system lets us version-control our database schema easily
 
-**Choice**: Swagger for API documentation and testing
+Provides strong model-level validation to protect data integrity
 
-**Rationale**:
-- **Interactive Documentation**: Self-documenting API with built-in testing capabilities
-- **Standards Compliance**: Follows OpenAPI 3.0 specification for industry compatibility
-- **Code Generation**: Can generate client SDKs in multiple programming languages
-- **Developer Experience**: Reduces onboarding time and improves API usability
-- **Testing Integration**: Built-in testing tools for API endpoint validation
+Makes managing relationships between models (like one-to-many or many-to-many) straightforward
 
-## Conclusion
+The query builder helps reduce the risk of SQL injection and improves readability
 
-This technology stack provides a robust foundation for building scalable web applications. Node.js and Express.js offer excellent performance and developer productivity, while Sequelize ensures reliable database operations. NeonDB provides cost-effective, scalable database hosting, and Swagger maintains clear API documentation for team collaboration and external integration. 
+NeonDB
+Why we chose it:
+NeonDB is a modern, serverless PostgreSQL platform designed for developers. It’s scalable, easy to use, and cost-effective — perfect for our use case.
+
+What makes it a good choice:
+
+Automatically handles scaling, so we don’t need to worry about infrastructure
+
+Lets us create “branches” of the database, which is great for testing new features or development without affecting production
+
+Pay-as-you-go pricing model keeps costs low during development and scales with our app
+
+Offers fast performance with built-in connection pooling and caching
+
+Web-based UI is intuitive and developer-friendly
+
+Swagger (OpenAPI)
+Why we chose it:
+Swagger helps us document our APIs in a way that’s both human- and machine-readable, making collaboration and testing much smoother.
+
+What makes it a good choice:
+
+Automatically generates interactive, live documentation so we can test endpoints directly from the browser
+
+Follows OpenAPI 3.0 standards, which means it’s compatible with a wide range of tools
+
+Enables auto-generation of client SDKs in different languages
+
+Great for internal team alignment and onboarding developers
+
+Speeds up testing and reduces miscommunication between frontend and backend
+
+Cloudinary
+Why we chose it:
+Managing images and videos manually can be a headache. Cloudinary simplifies everything from uploads and storage to transformations and delivery.
+
+What makes it a good choice:
+
+Handles image uploads, compression, resizing, and delivery through a single API
+
+Automatically optimizes media for web and mobile performance
+
+Provides secure and reliable cloud storage
+
+Makes it easy to transform and manipulate media with URL-based parameters (e.g., cropping, blurring, adding overlays)
+
+Reduces backend storage complexity and lets us focus on building features
+
+

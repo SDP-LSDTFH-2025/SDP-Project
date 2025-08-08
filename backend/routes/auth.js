@@ -1,11 +1,7 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
-const passport = require('passport');
-const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const { User } = require('../models');
-const { enhancedAuth, blacklistToken } = require('../middleware/security');
-
-
+const { enhancedAuth} = require('../middleware/security');
 const router = express.Router();
 
 /**
@@ -15,52 +11,25 @@ const router = express.Router();
  *   description: Google OAuth authentication endpoints
  */
 
-// Configure Google Strategy
-passport.use(new GoogleStrategy({
-  clientID: process.env.GOOGLE_CLIENT_ID,
-  clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-  callbackURL: process.env.GOOGLE_CALLBACK_URL
-}, async (accessToken, refreshToken, profile, done) => {
-  try {
-    let user = await User.findOne({
-      where: { google_id: profile.id }
-    });
-
-    if (!user) {
-      // Create new user from Google data
-      user = await User.create({
-        google_id: profile.id,
-        email: profile.emails[0].value,
-        username: profile.emails[0].value.split('@')[0] + '_' + Math.random().toString(36).substring(7),
-        first_name: profile.name.givenName,
-        last_name: profile.name.familyName,
-        auth_provider: 'google',
-        is_active: true
-      });
-    } else {
-      // Update existing user's info
-      await user.update({
-        first_name: profile.name.givenName,
-        last_name: profile.name.familyName,
-        last_login: new Date()
-      });
-    }
-
-    return done(null, user);
-  } catch (error) {
-    return done(error, null);
-  }
-}));
-
 /**
  * @swagger
- * /api/v1/auth/google:
- *   get:
- *     summary: Google OAuth login URL
+ * /api/v1/auth/google/verify:
+ *   post:
+ *     summary: Verify Google access token and create/update user
  *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               access_token:
+ *                 type: string
+ *                 description: Google access token
  *     responses:
  *       200:
- *         description: Google OAuth URL
+ *         description: User authenticated successfully
  *         content:
  *           application/json:
  *             schema:
@@ -68,92 +37,80 @@ passport.use(new GoogleStrategy({
  *               properties:
  *                 success:
  *                   type: boolean
- *                 auth_url:
- *                   type: string
- *                   description: Google OAuth authorization URL
- */
-router.get('/google', (req, res) => {
-  const googleAuthUrl = 'https://accounts.google.com/oauth/authorize?' +
-    'client_id=' + process.env.GOOGLE_CLIENT_ID +
-    '&redirect_uri=' + encodeURIComponent(process.env.GOOGLE_CALLBACK_URL) +
-    '&response_type=code' +
-    '&scope=email profile' +
-    '&state=' + Math.random().toString(36).substring(7);
-  
-  res.json({
-    success: true,
-    auth_url: googleAuthUrl
-  });
-});
-
-/**
- * @swagger
- * /api/v1/auth/google/callback:
- *   get:
- *     summary: Google OAuth callback
- *     tags: [Authentication]
- *     parameters:
- *       - in: query
- *         name: code
- *         schema:
- *           type: string
- *         description: Authorization code from Google
- *       - in: query
- *         name: state
- *         schema:
- *           type: string
- *         description: State parameter for security
- *     responses:
- *       200:
- *         description: Login successful
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                 message:
- *                   type: string
  *                 data:
  *                   $ref: '#/components/schemas/User'
  *                 token:
  *                   type: string
+ *                   description: JWT token
  *       400:
- *         description: Invalid authorization code
+ *         description: Invalid access token
  *       500:
  *         description: Internal server error
  */
-router.get('/google/callback', 
-  passport.authenticate('google', { session: false }),
-  async (req, res) => {
-    try {
-      const user = req.user;
-
-      // Generate JWT token
-      const token = jwt.sign(
-        { id: user.id, email: user.email },
-        process.env.JWT_SECRET,
-        { expiresIn: process.env.JWT_EXPIRES_IN || '24h' }
-      );
-
-      // For production, you might want to redirect to your frontend with the token
-      // or return it in a way that your frontend can handle
-      res.json({
-        success: true,
-        message: 'Google login successful',
-        data: user,
-        token
-      });
-    } catch (error) {
-      console.error('Google callback error:', error);
-      res.status(500).json({
+router.post('/google/verify', async (req, res) => {
+  try {
+    const { access_token } = req.body;
+    
+    if (!access_token) {
+      return res.status(400).json({
         success: false,
-        error: 'Internal server error'
+        error: 'Access token is required'
       });
     }
+
+    // Verify the token with Google
+    const googleResponse = await fetch(`https://www.googleapis.com/oauth2/v1/userinfo?access_token=${access_token}`);
+    
+    if (!googleResponse.ok) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid access token'
+      });
+    }
+
+    const googleUser = await googleResponse.json();
+    
+    // Find or create user in database
+    let user = await User.findOne({
+      where: { google_id: googleUser.id }
+    });
+
+    if (!user) {
+      // Create new user
+      user = await User.create({
+        google_id: googleUser.id,
+        username: googleUser.given_name + '_' + googleUser.family_name,
+        is_active: true
+      });
+    } else {
+      // Update existing user's last login
+      await user.update({
+        last_login: new Date()
+      });
+    }
+
+    // Generate JWT token
+    const token = jwt.sign(
+      { id: user.google_id, username: user.username },
+      process.env.JWT_SECRET,
+      { expiresIn: process.env.JWT_EXPIRES_IN || '24h' }
+    );
+
+    res.json({
+      success: true,
+      data: user,
+      token
+    });
+
+  } catch (error) {
+    console.error('Google verify error:', error);
+    console.log(error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error'
+    });
   }
-);
+});
 
 /**
  * @swagger
@@ -163,6 +120,16 @@ router.get('/google/callback',
  *     tags: [Authentication]
  *     security:
  *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               google_id:
+ *                 type: string
+ *                 description: Google OAuth ID
  *     responses:
  *       200:
  *         description: Current user profile
@@ -180,13 +147,23 @@ router.get('/google/callback',
  */
 router.get('/me', enhancedAuth, async (req, res) => {
   try {
-    res.json({
+    const { google_id } = req.body;
+    const user = await User.findOne({
+      where: { google_id: google_id }
+    });
+    if(!user){
+      return res.status(401).json({
+        success: false,
+        error: 'User not found'
+      });
+    }
+    return res.json({
       success: true,
-      data: req.user
+      data: user
     });
   } catch (error) {
     console.error('Get profile error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: 'Internal server error'
     });
@@ -205,14 +182,33 @@ router.get('/me', enhancedAuth, async (req, res) => {
  *       200:
  *         description: Logout successful
  */
-router.post('/logout', enhancedAuth, (req, res) => {
-  // Blacklist the current token
-  blacklistToken(req.token);
+router.post('/logout', async (req, res) => {
   
-  res.json({
-    success: true,
-    message: 'Logout successful'
-  });
+ 
+  try{
+    const { google_id } = req.body;
+    console.log(google_id);
+    await User.update({
+      last_login: new Date()
+    }, {
+      where: {
+        google_id: google_id  
+      }
+    });
+   
+    return res.json({
+      success: true,
+      message: 'Logout successful'
+    });
+     
+  } catch (error) {
+    console.error('Logout error:', error);
+    console.log(error);
+    return res.status(500).json({
+      success: false,
+      error: 'Internal server error'
+    });
+  }
 });
 
 module.exports = router; 

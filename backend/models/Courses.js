@@ -1,7 +1,5 @@
-const {DataTypes} = require('sequelize');
-const {sequelize} = require('../config/database');
-
-
+const { DataTypes } = require('sequelize');
+const { sequelize } = require('../config/database');
 
 const Courses = sequelize.define('Courses', {
   id: {
@@ -26,7 +24,7 @@ const Courses = sequelize.define('Courses', {
     allowNull: false,
     defaultValue: false
   },
-  created_by: {
+    created_by: {
     type: DataTypes.STRING,
     allowNull: false
   },
@@ -39,3 +37,5 @@ const Courses = sequelize.define('Courses', {
   tableName: 'courses',
   timestamps: false
 });
+
+module.exports = Courses;

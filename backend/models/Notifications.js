@@ -12,7 +12,11 @@ const Notifications = sequelize.define('Notifications', {
     allowNull: false
   },
   message: {
-    type: DataTypes.TEXT,
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  title: {
+    type: DataTypes.STRING,
     allowNull: false
   },
   read: {

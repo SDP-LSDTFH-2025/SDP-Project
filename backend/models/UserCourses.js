@@ -1,5 +1,5 @@
-const {DataTypes} = require('sequelize');
-const {sequelize} = require('../config/database');
+const { DataTypes } = require('sequelize');
+const { sequelize } = require('../config/database');
 
 const UserCourses = sequelize.define('UserCourses', {
   id: {
@@ -8,7 +8,7 @@ const UserCourses = sequelize.define('UserCourses', {
     autoIncrement: true
   },
   user_id: {
-    type: DataTypes.STRING,
+    type: DataTypes.STRING,    
     allowNull: false
   },
   course_id: {
@@ -17,7 +17,8 @@ const UserCourses = sequelize.define('UserCourses', {
   },
   role: {
     type: DataTypes.STRING,
-    allowNull: false
+    allowNull: false,
+    defaultValue: 'student'
   },
   joined_at: {
     type: DataTypes.DATE,

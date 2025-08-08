@@ -4,7 +4,9 @@ const router = express.Router();
 const authRoutes = require('./auth');
 const userRoutes = require('./users');
 const uploadRoutes = require('./upload');
-
+const notificationRoutes = require('./Notifications');
+const courseRoutes = require('./Courses');
+const userCourseRoutes = require('./UserCourses');
 // API Documentation
 /**
  * @swagger
@@ -37,6 +39,9 @@ router.get('/', (req, res) => {
       auth: '/auth',
       users: '/users',
       upload: '/upload',
+      notifications: '/notifications',
+      courses: '/courses',
+      userCourses: '/user-courses',
       docs: '/api-docs'
     }
   });
@@ -46,5 +51,7 @@ router.get('/', (req, res) => {
 router.use('/auth', authRoutes);
 router.use('/users', userRoutes);
 router.use('/upload', uploadRoutes);
-
+router.use('/notifications', notificationRoutes);
+router.use('/courses', courseRoutes);
+router.use('/user-courses', userCourseRoutes);
 module.exports = router; 

@@ -41,7 +41,7 @@ const router = express.Router();
  *       404:
  *         description: User not found
  */
-router.get('/:id', enhancedAuth ,async (req, res) => {
+router.get('/:id' ,async (req, res) => {
   try {
     const user = await User.findByPk(req.params.id);
 
@@ -58,6 +58,45 @@ router.get('/:id', enhancedAuth ,async (req, res) => {
     });
   } catch (error) {
     console.error('Get user error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error'
+    });
+  }
+});
+
+/**
+ * @swagger
+ * /api/v1/users:
+ *   get:
+ *     summary: Get all users
+ *     tags: [Users]
+ *     responses:
+ *       200:
+ *         description: List of users
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/User'
+ *       500:
+ *         description: Internal server error
+ */
+router.get('/', async (req, res) => {
+  try {
+    const users = await User.findAll();
+    res.json({
+      success: true,
+      data: users
+    });
+  } catch (error) {
+    console.error('Get users error:', error);
     res.status(500).json({
       success: false,
       error: 'Internal server error'

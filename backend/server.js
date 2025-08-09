@@ -29,7 +29,7 @@ const swaggerOptions = {
     info: {
       title: 'SDP Project API',
       version: '1.0.0',
-      description: 'Backend API for SDP Project - Google OAuth Only',
+      description: 'Backend API for SDP Project',
       contact: {
         name: 'API Support',
         email: 'support@example.com'
@@ -120,6 +120,8 @@ async function startServer() {
     // Test database connection
     await sequelize.authenticate();
     console.log('✅ Database connection established successfully.');
+    await sequelize.sync();
+    console.log('✅ Database synchronized successfully.');
     // Start server
     app.listen(PORT, () => {
       console.log(`🚀 Server is running on port ${PORT}`);

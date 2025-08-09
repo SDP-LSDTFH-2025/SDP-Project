@@ -29,7 +29,7 @@ const swaggerOptions = {
     info: {
       title: 'SDP Project API',
       version: '1.0.0',
-      description: 'Backend API for SDP Project - Google OAuth Only',
+      description: 'Backend API for SDP Project',
       contact: {
         name: 'API Support',
         email: 'support@example.com'

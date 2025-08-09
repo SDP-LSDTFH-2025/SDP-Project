@@ -101,7 +101,7 @@ app.use(limiter);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // API routes
-app.use(process.env.API_PREFIX || '/api/v1', routes);
+app.use(process.env.API_PREFIX, routes);
 
 // 404 handler
 app.use('*', (req, res) => {

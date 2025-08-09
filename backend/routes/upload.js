@@ -3,7 +3,6 @@ const router = express.Router();
 const CloudinaryService = require('../services/cloudinaryService');
 const { uploadSingle, uploadMultiple, handleUploadError } = require('../middleware/upload');
 const { enhancedAuth } = require('../middleware/security');
-
 /**
  * @swagger
  * /api/v1/upload/test:
@@ -378,7 +377,7 @@ router.get('/preset',
  *         description: Server error
  */
 router.get('/info/:publicId',
-  enhancedAuth,
+  
   async (req, res) => {
     try {
       const { publicId } = req.params;

@@ -1,35 +1,37 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+/** This will contain the routes for all screens and pages
+ * It will also contain a localStorage to allow us to see if the user is known
+ */
+import React, { useEffect } from 'react';
+import { BrowserRouter, Routes, Route, Navigate} from 'react-router-dom' ;
+import { useState } from 'react';
+import { Landing, Home, Login, Signup } from './screens';
+
+import { Registration } from "./components/landing" ;
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [user, setUser] = useState({});
+
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+
+    if (storedUser && !storedUser.includes("undefined")) {
+      setUser(JSON.parse(storedUser));
+    }
+  }, []);
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={user?.email ? <Navigate to="/home" /> : <Landing />} />
+        <Route path="/signup" element={user?.email && user.registrationComplete ? <Navigate to="/home" /> : <Signup setUser={setUser} />}>
+          <Route 
+            path="register" element={<Registration onComplete={() => window.location.replace("/home")} onBack={() => window.history.back()} />} />
+        </Route>
+        <Route path="/login" element={user?.email ? <Navigate to="/home" /> : <Login setUser={setUser} />} />
+        <Route path="/home" element={user?.email ? <Home user={user} /> : <Navigate to="/" />} />
+      </Routes>
+    </BrowserRouter>
+  );
 }
 
 export default App

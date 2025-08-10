@@ -12,3 +12,11 @@
 
 # DEVELOPMENT
     npm run dev
+
+# ROUTING
+    cd into the app(cd frontend)
+    npm install react-router-dom
+
+# GOOGLE AUTH
+    npm install @react-oauth/google
+    npm install jwt-decode

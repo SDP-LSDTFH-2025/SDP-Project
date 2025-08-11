@@ -33,6 +33,27 @@ const uploadSingle = upload.single('image');
 // Middleware for multiple files upload
 const uploadMultiple = upload.array('images', 10); // Max 10 images
 
+// PDF file filter function
+const pdfFileFilter = (req, file, cb) => {
+  const allowedTypes = /pdf/;
+  const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+  const mimetype = file.mimetype === 'application/pdf';
+
+  if (mimetype && extname) {
+    return cb(null, true);
+  } else {
+    cb(new Error('Only PDF files are allowed!'), false);
+  }
+};
+
+const uploadPDF = multer({
+  storage: storage,
+  limits: {
+    fileSize: 50 * 1024 * 1024, // 50MB limit for PDFs
+  },
+  fileFilter: pdfFileFilter
+}).single('pdf');
+
 // Error handling middleware for upload errors
 const handleUploadError = (error, req, res, next) => {
   if (error instanceof multer.MulterError) {
@@ -67,5 +88,6 @@ const handleUploadError = (error, req, res, next) => {
 module.exports = {
   uploadSingle,
   uploadMultiple,
-  handleUploadError
+  handleUploadError,
+  uploadPDF
 };

@@ -1,4 +1,5 @@
 const { sequelize } = require('../config/database');
+const { DataTypes } = require('sequelize');
 
 const PrivateChats = sequelize.define('PrivateChats', {
     id: {
@@ -33,4 +34,4 @@ const PrivateChats = sequelize.define('PrivateChats', {
     timestamps: false
 });
 
-module.exports = { PrivateChats };
+module.exports = PrivateChats ;

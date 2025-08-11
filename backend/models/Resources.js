@@ -5,7 +5,7 @@ const {DataTypes} = require('sequelize');
 
 const {sequelize} = require("../config/database");
 
-const Resources = sequalize.define('Resources',{
+const Resources = sequelize.define('Resources',{
  id:{
     type:DataTypes.INTEGER,
     primaryKey:true,
@@ -37,7 +37,7 @@ const Resources = sequalize.define('Resources',{
  },
  pictures_url: {
     type:DataTypes.STRING,
-    allowNull:false
+    allowNull:true
  },
  checksum: {
     type:DataTypes.STRING,
@@ -60,7 +60,9 @@ const Resources = sequalize.define('Resources',{
  }
 },{
     tableName: "resources",
-    tiemstamps:false
+    tiemstamps:true,
+    createdAt: 'created_at',
+    updatedAt: false
 });
 
 module.exports = Resources;

@@ -59,6 +59,55 @@ class CloudinaryService {
   }
 
   /**
+   * Upload a PDF to Cloudinary as raw resource
+   * @param {Buffer|string} file - File buffer or base64 string
+   * @param {Object} options - Upload options
+   * @returns {Promise<Object>} Upload result
+   */
+  static async uploadPDF(file, options = {}) {
+    try {
+      const uploadOptions = {
+        folder: options.folder || 'sdp-project/pdfs',
+        resource_type: 'raw',
+        allowed_formats: ['pdf'],
+        access_mode: 'public', // Ensure public access
+        ...options
+      };
+      let uploadResult;
+      if (Buffer.isBuffer(file)) {
+        uploadResult = await new Promise((resolve, reject) => {
+          const uploadStream = cloudinary.uploader.upload_stream(
+            uploadOptions,
+            (error, result) => {
+              if (error) reject(error);
+              else resolve(result);
+            }
+          );
+          uploadStream.end(file);
+        });
+      } else if (typeof file === 'string') {
+        uploadResult = await cloudinary.uploader.upload(file, uploadOptions);
+      } else {
+        throw new Error('Invalid file format. Expected Buffer or string.');
+      }
+      return {
+        success: true,
+        public_id: uploadResult.public_id,
+        secure_url: uploadResult.secure_url,
+        url: uploadResult.url,
+        format: uploadResult.format,
+        bytes: uploadResult.bytes
+      };
+    } catch (error) {
+      console.error('Cloudinary PDF upload error:', error);
+      return {
+        success: false,
+        error: error.message
+      };
+    }
+  }
+
+  /**
    * Delete an image from Cloudinary
    * @param {string} publicId - Public ID of the image
    * @returns {Promise<Object>} Delete result

@@ -34,6 +34,30 @@ const User = sequelize.define('User', {
     allowNull: false,
     defaultValue: 'student'
   },
+  institution: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  school: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  year_of_study: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  Course:{
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  Academic_interests:{
+    type: DataTypes.TEXT('long'),
+    allowNull: true
+  },
+  study_preferences:{
+    type: DataTypes.TEXT('long'),
+    allowNull: true
+  }
 }, {
   tableName: 'users',
   timestamps: false,

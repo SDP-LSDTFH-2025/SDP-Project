@@ -2,6 +2,9 @@ const express = require('express');
 const router = express.Router();
 const CloudinaryService = require('../services/cloudinaryService');
 const { uploadSingle, uploadMultiple, handleUploadError } = require('../middleware/upload');
+const { uploadPDF } = require('../middleware/upload');
+const Resources = require('../models/Resources');
+const User = require('../models/User');
 const { enhancedAuth } = require('../middleware/security');
 /**
  * @swagger
@@ -252,6 +255,79 @@ router.post('/multiple',
 
 /**
  * @swagger
+ * /api/v1/upload/pdf:
+ *   post:
+ *     summary: Upload a PDF to pdfHost and store URL in Resources
+ *     tags: [Upload]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               pdf:
+ *                 type: string
+ *                 format: binary
+ *                 description: PDF file to upload
+ *               user_id:
+ *                 type: string
+ *                 description: User ID
+ *               resource_id:
+ *                 type: integer
+ *                 description: Resource ID
+ *               course_id:
+ *                 type: string
+ *                 description: Course ID
+ *     responses:
+ *       200:
+ *         description: PDF uploaded and resource updated
+ *       400:
+ *         description: Upload failed
+ *       500:
+ *         description: Server error
+ */
+router.post('/pdf', uploadPDF, handleUploadError, async (req, res) => {
+  try {
+    const { user_id, course_id } = req.body;
+    if (!req.file) {
+      return res.status(400).json({ success: false, error: 'No PDF file provided' });
+    }
+    if (!user_id) {
+      return res.status(400).json({ success: false, error: 'user_id is required' });
+    }
+    // Check user exists
+    const user = await User.findByPk(user_id);
+    if (!user) {
+      return res.status(404).json({ success: false, error: 'User not found' });
+    }
+    // Upload to Cloudinary as PDF (raw)
+    const uploadResult = await CloudinaryService.uploadPDF(req.file.buffer, { filename: req.file.originalname });
+    if (!uploadResult.success) {
+      return res.status(500).json({ success: false, error: uploadResult.error });
+    }
+    // Create resource with file_url and user_id
+    const resource = await Resources.create({
+      file_url: uploadResult.secure_url,
+      public_id: uploadResult.public_id,
+      picture_url: "bdc ndvynudvybudy ",
+      course_id: course_id,
+      likes: 0,
+      checksum: 0,
+      upload_id: 0,
+      title: req.file.originalname,
+      description: "gbqregbqergb",
+      created_at: new Date()
+    });
+    res.json({ success: true, message: 'PDF uploaded and resource created', data: resource });
+  } catch (error) {
+    console.error('PDF upload error:', error);
+    res.status(500).json({ success: false, error: 'Failed to upload PDF' });
+  }
+});
+
+/**
+ * @swagger
  * /api/v1/upload/delete/{publicId}:
  *   delete:
  *     summary: Delete an image from Cloudinary
@@ -304,6 +380,7 @@ router.delete('/delete/:publicId',
   }
 );
 
+
 /**
  * @swagger
  * /api/v1/upload/preset:
@@ -312,6 +389,14 @@ router.delete('/delete/:publicId',
  *     tags: [Upload]
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: folder
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Folder to upload to
+ * 
  *     responses:
  *       200:
  *         description: Upload preset generated successfully
@@ -324,13 +409,14 @@ router.delete('/delete/:publicId',
  *                   type: boolean
  *                 data:
  *                   type: object
+ *               
  *       401:
  *         description: Unauthorized
  *       500:
  *         description: Server error
  */
 router.get('/preset',
-  enhancedAuth,
+  
   async (req, res) => {
     try {
       const preset = CloudinaryService.generateUploadPreset({

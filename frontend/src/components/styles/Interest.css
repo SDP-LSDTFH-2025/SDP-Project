@@ -1,0 +1,226 @@
+/* Interests Page Specific Styles */
+.interests-container {
+    min-height: 100vh;
+    min-width: 100vw;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    background-color: #ffffff;
+  }
+  
+  .interests-card {
+    width: 100%;
+    max-width: 64rem;
+    background-color: #ffffff;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 0.625rem;;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  }
+  
+  .interests-header {
+    text-align: center;
+    padding: 1.5rem 1.5rem 0;
+  }
+  
+  .interests-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: oklch(0.145 0 0);
+    margin-bottom: 0.5rem;
+  }
+  
+  .interests-description {
+    color: #717182;
+    font-size: 0.875rem;
+    line-height: 1.5;
+  }
+  
+  .interests-content {
+    padding: 1.5rem;
+  }
+  
+  .interests-form {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  }
+  
+  .interests-sections {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .interest-section {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .section-title {
+    font-size: 1.125rem;
+    font-weight: 500;
+    color: oklch(0.145 0 0);
+    margin-bottom: 0;
+  }
+  
+  .section-description {
+    font-size: 0.875rem;
+    color: #717182;
+    line-height: 1.4;
+    margin-bottom: 0;
+  }
+  
+  .badge-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  
+  .interest-badge {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    border-radius: 0.625rem;;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    background-color: transparent;
+    color: oklch(0.145 0 0);
+  }
+  
+  .interest-badge:hover {
+    background-color: linear-gradient(90deg, blue, pink); ;
+    color: #000;
+    opacity: 0.1;
+  }
+  
+  .interest-badge.selected {
+    background-color: oklch(0.145 0 0);
+    color: oklch(1 0 0);
+    border-color:#030213;
+  }
+  
+  .selections-summary {
+    padding: 1rem;
+    background-color: #ececf0;
+    opacity: 0.5;
+    border-radius: 0.625rem;;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  
+  .summary-title {
+    font-size: 1rem;
+    font-weight: 500;
+    color: oklch(0.145 0 0);
+  }
+  
+  .summary-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .summary-label {
+    font-size: 0.875rem;
+    color: #717182;
+    margin-bottom: 0;
+  }
+  
+  .summary-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+  }
+  
+  .summary-badge {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    background-color: oklch(0.95 0.0058 264.53);
+    color: #030213;
+    border-radius: 0.625rem;
+  }
+  
+  .interests-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding-top: 1rem;
+  }
+  
+  @media (min-width: 640px) {
+    .interests-actions {
+      flex-direction: row;
+    }
+  }
+  
+  .action-button {
+    flex: 1;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.75rem;;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+  }
+  
+  .action-button-primary {
+    background-color: #030213;
+    color: oklch(1 0 0);
+  }
+  
+  .action-button-primary:hover:not(:disabled) {
+    opacity: 0.9;
+  }
+  
+  .action-button-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  
+  .action-button-outline {
+    background-color: transparent;
+    color: oklch(0.145 0 0);
+    border-color: rgba(0, 0, 0, 0.1);
+  }
+  
+  .action-button-outline:hover {
+    background-color: #e9ebef;
+  }
+  
+  .action-button-ghost {
+    background-color: transparent;
+    color: #717182;
+  }
+  
+  .action-button-ghost:hover {
+    background-color: #e9ebef;
+    color: #030213;
+  }
+  
+  /* Responsive adjustments */
+  @media (max-width: 640px) {
+    .interests-container {
+      padding: 0.5rem;
+    }
+    
+    .interests-content {
+      padding: 1rem;
+    }
+    
+    .interests-header {
+      padding: 1rem 1rem 0;
+    }
+    
+    .badge-container {
+      gap: 0.375rem;
+    }
+    
+    .interest-badge {
+      padding: 0.375rem 0.625rem;
+      font-size: 0.8125rem;
+    }
+  }

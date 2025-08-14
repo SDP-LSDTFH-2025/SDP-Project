@@ -34,4 +34,4 @@ const PrivateChats = sequelize.define('PrivateChats', {
     timestamps: false
 });
 
-module.exports = { PrivateChats };
+module.exports = PrivateChats ;

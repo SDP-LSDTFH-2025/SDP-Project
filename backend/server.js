@@ -1,3 +1,5 @@
+
+
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -29,7 +31,7 @@ const swaggerOptions = {
     info: {
       title: 'SDP Project API',
       version: '1.0.0',
-      description: 'Backend API for SDP Project - Google OAuth Only',
+      description: 'Backend API for SDP Project',
       contact: {
         name: 'API Support',
         email: 'support@example.com'
@@ -120,17 +122,97 @@ async function startServer() {
     // Test database connection
     await sequelize.authenticate();
     console.log('✅ Database connection established successfully.');
+    await sequelize.sync();
+    console.log('✅ Database synchronized successfully.');
     // Start server
     app.listen(PORT, () => {
       console.log(`🚀 Server is running on port ${PORT}`);
       console.log(`📚 API Documentation available at: http://localhost:${PORT}/api-docs`);
     
     });
+
+    app.post('/signup', async (req, res) => {
+      try {
+        // console.log({ verified: verifyGoogleToken(req.body.credential) });
+        if (req.body.credential) {
+          const verificationResponse = await verifyGoogleToken(req.body.credential);
+
+          if (verificationResponse.error) {
+            return res.status(400).json({
+              message: verificationResponse.error,
+            });
+          }
+
+          const profile = verificationResponse?.payload;
+
+          DB.push(profile);
+
+          res.status(201).json({
+            message: 'Signup was successful',
+            user: {
+              firstName: profile?.given_name,
+              lastName: profile?.family_name,
+              picture: profile?.picture,
+              email: profile?.email,
+              token: jwt.sign({ email: profile?.email }, 'myScret', {
+                expiresIn: '1d',
+              }),
+            },
+          });
+        }
+      } catch (error) {
+        res.status(500).json({
+          message: 'An error occurred. Registration failed.',
+        });
+      }
+    });
+
+    app.post('/login', async (req, res) => {
+      try {
+        if (req.body.credential) {
+          const verificationResponse = await verifyGoogleToken(req.body.credential);
+          if (verificationResponse.error) {
+            return res.status(400).json({
+              message: verificationResponse.error,
+            });
+          }
+
+          const profile = verificationResponse?.payload;
+
+          const existsInDB = DB.find((person) => person?.email === profile?.email);
+
+          if (!existsInDB) {
+            return res.status(400).json({
+              message: 'You are not registered. Please sign up',
+            });
+          }
+
+          res.status(201).json({
+            message: 'Login was successful',
+            user: {
+              firstName: profile?.given_name,
+              lastName: profile?.family_name,
+              picture: profile?.picture,
+              email: profile?.email,
+              token: jwt.sign({ email: profile?.email }, process.env.JWT_SECRET, {
+                expiresIn: '1d',
+              }),
+            },
+          });
+        }
+      } catch (error) {
+        res.status(500).json({
+          message: error?.message || error,
+        });
+      }
+    });
+
   } catch (error) {
     console.error('❌ Unable to start server:', error);
     process.exit(1);
   }
 }
+
 
 
 // Export app for testing

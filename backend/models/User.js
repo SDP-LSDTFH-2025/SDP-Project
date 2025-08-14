@@ -10,18 +10,12 @@ const User = sequelize.define('User', {
     allowNull: false,
     unique: true,
   },
-
   username: {
     type: DataTypes.STRING,
     allowNull: false,
-    unique: false,
-
+    unique: true,
   },
-  role:{
-    type: DataTypes.STRING,
-    allowNull: false,
-    defaultValue: 'student'
-  },
+ 
   is_active: {
     type: DataTypes.BOOLEAN,
     defaultValue: true
@@ -34,11 +28,15 @@ const User = sequelize.define('User', {
     type: DataTypes.DATE,
     allowNull: false,
     defaultValue: DataTypes.NOW
-  }
+  },
+  role:{
+    type: DataTypes.STRING,
+    allowNull: false,
+    defaultValue: 'student'
+  },
 }, {
   tableName: 'users',
   timestamps: false,
-  underscored: true
 
 });
 

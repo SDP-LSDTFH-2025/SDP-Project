@@ -1,0 +1,54 @@
+import { Link } from "react-router-dom";
+import { GoogleLogin } from "@react-oauth/google";
+import { useNavigate } from 'react-router-dom';
+import { jwtDecode } from "jwt-decode"; //npm run jwt-decode
+
+function Login({ setUser }) {
+  const navigate = useNavigate();
+
+  return (
+    <main className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4">
+      <section className="bg-white p-8 rounded-xl shadow-2xl w-full max-w-sm sm:max-w-md transform transition-all duration-300 hover:scale-[1.02]">
+        <header className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-gray-800">Welcome Back</h1>
+          <p className="mt-2 text-gray-500 text-sm">Login to continue</p>
+        </header>
+        <section className="space-y-6">
+          <section className="flex justify-center">
+            <GoogleLogin
+              onSuccess={(credentialResponse) => {
+                let token = jwtDecode(credentialResponse.credential);
+                //console.log(jwtDecode(credentialResponse.credential));
+                const profile = {
+                  email: token.email,
+                  name: token.name,
+                  picture: token.picture
+                };
+                localStorage.setItem("user", JSON.stringify(profile));
+                setUser(profile);
+
+                navigate("/home");
+              }}
+              onError={() => console.log("Login failed")}
+              theme="filled_blue"
+              size="large"
+              text="continue_with"
+              width="300"
+            />
+          </section>
+          <p className="text-center text-sm text-gray-600">
+            Don't have an account?{' '}
+            <Link
+              to="/signup"
+              className="text-blue-600 font-medium hover:underline transition-colors duration-200"
+            >
+              Sign up
+            </Link>
+          </p>
+        </section>
+      </section>
+    </main>
+  );
+}
+
+export default Login;

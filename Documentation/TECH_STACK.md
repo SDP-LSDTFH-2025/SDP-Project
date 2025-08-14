@@ -82,7 +82,7 @@ Managing images and videos manually can be a headache. Cloudinary simplifies eve
 
 What makes it a good choice:
 
-Handles image uploads, compression, resizing, and delivery through a single API
+Handles image uploads,pdf uploads, compression, resizing, and delivery through a single API
 
 Automatically optimizes media for web and mobile performance
 

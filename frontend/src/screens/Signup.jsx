@@ -1,43 +1,33 @@
 import { Outlet, useNavigate } from "react-router-dom";
 import { GoogleLogin } from "@react-oauth/google";
-import { jwtDecode } from "jwt-decode";
-import { useState } from "react";
 
-function Signup({ setUser }) {
+function Signup() {
   const navigate = useNavigate();
-  const [profile, setProfile] = useState(null);
+
 
   function handleGoogleLogin(credentialResponse){
-    const token = jwtDecode(credentialResponse.credential);
-    console.log(jwtDecode(credentialResponse.credential));
-    const userProfile = {
-      email: token.email,
-      name : token.given_name,
-      surname : token.family_name,
-      fullName: token.name,
-      picture: token.picture,
-      registrationComplete: false
-    };
-
-    localStorage.setItem("user", JSON.stringify(userProfile));
-    setUser(userProfile);
-    setProfile(userProfile);
+    const token = credentialResponse.credential;
+    localStorage.setItem("Token", JSON.stringify(token));
 
     // Navigate to /signup/register
-    navigate("register");
+    navigate("registration");
   };
 
-  const isRegistering = location.pathname.endsWith("/register");
-
+  const isRegistering = location.pathname.endsWith("/registration");
+  const isInterests = location.pathname.endsWith("/interests");
+  const isSuccess = location.pathname.endsWith("/success");
   return (
     <main className="signup-container">
-      <h1>Sign Up</h1>
-
-      {!isRegistering && (
-        <GoogleLogin onSuccess={handleGoogleLogin} onError={() => alert("Login Failed")} />
+      {!isRegistering || !isSuccess || !isInterests && (
+        <>
+          <h1>Sign Up</h1>
+          <GoogleLogin onSuccess={handleGoogleLogin} onError={() => alert("Login Failed")} />
+        </>
       )}
+            <div className="w-full max-w-lg bg-white shadow-lg rounded-lg p-6">
 
-      <Outlet context={{ profile, onBack: () => navigate(-1) }} />
+        <Outlet />
+      </div>
     </main>
   );
 }

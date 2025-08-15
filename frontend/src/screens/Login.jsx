@@ -1,10 +1,37 @@
 import { Link } from "react-router-dom";
 import { GoogleLogin } from "@react-oauth/google";
-import { useNavigate } from 'react-router-dom';
-import { jwtDecode } from "jwt-decode"; //npm run jwt-decode
+import { useNavigate } from "react-router-dom";
 
-function Login({ setUser }) {
+function Login({ setUser, Token }) {
   const navigate = useNavigate();
+
+  const handleLogin = async (credentialResponse) => {
+    try {
+      const token = credentialResponse.credential;
+
+      // Send token to backend for verification
+      Token(false);
+      const res = await fetch(`http://localhost:3000/api/v1/auth/google/verify` /* this shall be changend to env*/, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        Token(true);
+        localStorage.setItem("user", JSON.stringify(data.user));
+        setUser(data.user);
+        navigate("/home");
+      } else {
+        alert(data.message || "Authentication failed");
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+      alert("Something went wrong. Please try again.");
+    }
+  };
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4">
@@ -16,19 +43,7 @@ function Login({ setUser }) {
         <section className="space-y-6">
           <section className="flex justify-center">
             <GoogleLogin
-              onSuccess={(credentialResponse) => {
-                let token = jwtDecode(credentialResponse.credential);
-                //console.log(jwtDecode(credentialResponse.credential));
-                const profile = {
-                  email: token.email,
-                  name: token.name,
-                  picture: token.picture
-                };
-                localStorage.setItem("user", JSON.stringify(profile));
-                setUser(profile);
-
-                navigate("/home");
-              }}
+              onSuccess={handleLogin}
               onError={() => console.log("Login failed")}
               theme="filled_blue"
               size="large"
@@ -37,7 +52,7 @@ function Login({ setUser }) {
             />
           </section>
           <p className="text-center text-sm text-gray-600">
-            Don't have an account?{' '}
+            Don't have an account?{" "}
             <Link
               to="/signup"
               className="text-blue-600 font-medium hover:underline transition-colors duration-200"

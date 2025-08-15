@@ -1,5 +1,6 @@
 import { useState } from "react";
 import "./styles/Registration.css";
+import { useNavigate } from "react-router-dom";
 import {
     Select,
     SelectContent,
@@ -7,7 +8,9 @@ import {
     SelectTrigger,
     SelectValue,
   } from "./ui/select";
-export function Registration({ onComplete, onBack }) {
+export function Registration() {
+  const navigate = useNavigate();
+
   const [formData, setFormData] = useState({
     university: "",
     faculty: "",
@@ -17,10 +20,15 @@ export function Registration({ onComplete, onBack }) {
     fullName: "",
   });
 
-  const handleSubmit = (e) => {
+  /*const handleSubmit = (e) => {
     e.preventDefault();
     console.log("Registration data:", formData);
     onComplete();
+  };*/
+  const handleNext = () => {
+    // Save step data to localStorage
+    localStorage.setItem("registrationData", JSON.stringify(formData));
+    navigate("../interests");
   };
 
   const handleInputChange = (field, value) => {
@@ -44,7 +52,7 @@ export function Registration({ onComplete, onBack }) {
         </header>
 
         <main className="registration-content">
-          <form onSubmit={handleSubmit} className="registration-form">
+          <form onSubmit={handleNext} className="registration-form">
             
 
             <div className="form-field">
@@ -143,7 +151,7 @@ export function Registration({ onComplete, onBack }) {
               <button
                 type="button"
                 className="form-button form-button-outline"
-                onClick={onBack}
+                onClick={() => navigate("..")}
               >
                 Back
               </button>
@@ -151,6 +159,7 @@ export function Registration({ onComplete, onBack }) {
                 type="submit"
                 className="form-button form-button-primary"
                 disabled={!isFormValid}
+                onClick = {handleNext}
               >
                 Complete Registration
               </button>

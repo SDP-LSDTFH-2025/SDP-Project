@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Button } from "./ui/button.jsx";
-import { Badge } from "./ui/badge.jsx";
+//import { Badge } from "./ui/badge.jsx";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card.jsx";
 import "./styles/Interest.css"
 const academicInterests = [
@@ -19,7 +20,9 @@ const studyPreferences = [
   "Problem Solving", "Creative Projects", "Field Work"
 ];
 
-export function Interests({ onComplete, onBack, onSkip }) {
+export function Interests() {
+ const navigate = useNavigate();
+
   const [selectedInterests, setSelectedInterests] = useState([]);
   const [selectedPreferences, setSelectedPreferences] = useState([]);
 
@@ -39,12 +42,22 @@ export function Interests({ onComplete, onBack, onSkip }) {
     );
   };
 
-  const handleSubmit = (e) => {
+  /**const handleSubmit = (e) => {
     e.preventDefault();
     console.log("Selected interests:", selectedInterests);
     console.log("Selected preferences:", selectedPreferences);
     onComplete();
-  };
+  };*/
+
+function handleInterests(){
+    localStorage.setItem("interestData", JSON.stringify(selectedInterests));
+    localStorage.setItem("preferenceData", JSON.stringify(selectedInterests));
+    navigate("../success");
+}
+
+function onSkip(){
+  navigate("../success");
+}
 
   const isFormValid = selectedInterests.length > 0 || selectedPreferences.length > 0;
 
@@ -57,7 +70,7 @@ export function Interests({ onComplete, onBack, onSkip }) {
       </CardHeader>
   
       <CardContent className="interests-content">
-        <form className="interests-form" onSubmit={handleSubmit}>
+        <form className="interests-form" onSubmit={handleInterests}>
           <div className="interests-sections">
             <section className="interest-section">
               <h3 className="section-title">Academic Interests</h3>
@@ -144,7 +157,7 @@ export function Interests({ onComplete, onBack, onSkip }) {
             <Button
               type="button"
               className="action-button action-button-outline"
-              onClick={onBack}
+              onClick={() => navigate("../registration")}
             >
               Back
             </Button>
@@ -159,6 +172,7 @@ export function Interests({ onComplete, onBack, onSkip }) {
               type="submit"
               className="action-button action-button-primary"
               disabled={!(selectedInterests.length > 0 || selectedPreferences.length > 0)}
+              onClick={handleInterests}
             >
               Continue
             </Button>

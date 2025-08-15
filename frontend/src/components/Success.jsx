@@ -1,14 +1,65 @@
 import { Button } from "./ui/button.jsx";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card.jsx";
 import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
+import { jwtDecode } from "jwt-decode";
 import "./styles/Success.css";
 
-export function Success({ onRestart }) {
+export function Success({ setUser }) {
 const navigate = useNavigate();
 
+    useEffect(() => {
+    async function submitRegistration() {
+      const token = JSON.parse(localStorage.getItem("Token") || '""');
+      const registrationData = JSON.parse(localStorage.getItem("registrationData") || "{}");
+      const interestData = JSON.parse(localStorage.getItem("interestData") || "[]");
+      const preferenceData = JSON.parse(localStorage.getItem("preferenceData") || "[]");
 
-  
+      if (!token) {
+        console.error("No token found in localStorage");
+        navigate("/login");
+        return;
+      }
 
+      const payload = {
+        google_id: token,
+        course: registrationData.course || "",
+        year_of_study: registrationData.year || "",
+        academic_interests: interestData.join(", "),
+        study_preferences: preferenceData.join(", "),
+        institution: registrationData.university || "",
+        school: registrationData.faculty || ""
+      };
+
+      try {
+        const res = await fetch("http://localhost:3000/api/v1/users/register", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
+          body: JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+          console.log("Registration success");
+          setUser(jwtDecode(token));
+          localStorage.removeItem("registrationData");
+          localStorage.removeItem("interestData");
+          localStorage.removeItem("preferenceData");
+
+          navigate("/home");
+        } else {
+          const err = await res.json();
+          console.error("Registration failed:", err);
+        }
+      } catch (error) {
+        console.error("Error submitting registration:", error);
+      }
+    }
+
+    submitRegistration();
+  }, [navigate]);
 
   return (
     <div className="success-container">
@@ -49,13 +100,6 @@ const navigate = useNavigate();
               onClick={() => navigate("/home")}
             >
               Go to Dashboard
-            </button>
-            <button
-              type="button"
-              className="success-button success-button-outline"
-              onClick={onRestart}
-            >
-              Start Over (Demo)
             </button>
           </div>
         </section>

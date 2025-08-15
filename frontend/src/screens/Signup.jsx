@@ -18,7 +18,7 @@ function Signup() {
   const isSuccess = location.pathname.endsWith("/success");
   return (
     <main className="signup-container">
-      {!isRegistering || !isSuccess || !isInterests && (
+      {!isRegistering && !isSuccess && !isInterests && (
         <>
           <h1>Sign Up</h1>
           <GoogleLogin onSuccess={handleGoogleLogin} onError={() => alert("Login Failed")} />

@@ -16,8 +16,6 @@ export function Registration() {
     faculty: "",
     course: "",
     year: "",
-    surname: "",
-    fullName: "",
   });
 
   /*const handleSubmit = (e) => {

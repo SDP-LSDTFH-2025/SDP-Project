@@ -31,7 +31,7 @@ export default function App() {
           element={
             user?.email && user.registrationComplete
               ? <Navigate to="/home" />
-              : <Signup/>
+              : <Signup />
           }
         >
           <Route path="registration" element={<Registration />} />
@@ -45,7 +45,7 @@ export default function App() {
           element={
             user?.email
               ? <Navigate to="/home" />
-              : <Login setUser={setUser} Token ={haveToken} />
+              : <Login setUser={setUser} />
           }
         />
 

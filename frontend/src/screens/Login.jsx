@@ -1,8 +1,9 @@
 import { Link } from "react-router-dom";
 import { GoogleLogin } from "@react-oauth/google";
 import { useNavigate } from "react-router-dom";
+import { jwtDecode } from "jwt-decode";
 
-function Login({ setUser, Token }) {
+function Login({ setUser }) {
   const navigate = useNavigate();
 
   const handleLogin = async (credentialResponse) => {
@@ -10,7 +11,6 @@ function Login({ setUser, Token }) {
       const token = credentialResponse.credential;
 
       // Send token to backend for verification
-      Token(false);
       const res = await fetch(`http://localhost:3000/api/v1/auth/google/verify` /* this shall be changend to env*/, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -20,9 +20,8 @@ function Login({ setUser, Token }) {
       const data = await res.json();
 
       if (res.ok) {
-        Token(true);
         localStorage.setItem("user", JSON.stringify(data.user));
-        setUser(data.user);
+        setUser(jwtDecode(token));
         navigate("/home");
       } else {
         alert(data.message || "Authentication failed");

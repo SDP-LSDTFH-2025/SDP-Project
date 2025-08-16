@@ -7,6 +7,12 @@ const PrivateChats = require('./PrivateChats');
 
 //resources table 
 const Resources = require('./Resources');
+const { default: Follows } = require('./Follows');
+const { default: Group_chats } = require('./Group_chats');
+const { default: Group_members } = require('./Group_members');
+import Progress from './Progress';
+import Study_groups from './study_groups';
+import Study_sessions from './Study_sessions';
 
 module.exports = {
   sequelize,
@@ -15,5 +21,11 @@ module.exports = {
   Courses,
   UserCourses,
   PrivateChats,
-  Resources
+  Resources,
+  Follows,
+  Group_chats,
+  Group_members,
+  Progress,
+  Study_groups,
+  Study_sessions
 }; 

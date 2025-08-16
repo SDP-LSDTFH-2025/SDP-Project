@@ -20,9 +20,9 @@ const navigate = useNavigate();
         navigate("/login");
         return;
       }
-
+      const { sub: google_id } = jwtDecode(token);
       const payload = {
-        google_id: token,
+        google_id,
         course: registrationData.course || "",
         year_of_study: registrationData.year || "",
         academic_interests: interestData.join(", "),
@@ -41,9 +41,11 @@ const navigate = useNavigate();
           body: JSON.stringify(payload)
         });
 
-        if (res.ok) {
+        const data = await res.json();
+        if (data.success) {
           console.log("Registration success");
           setUser(jwtDecode(token));
+          localStorage.setItem("user", JSON.stringify(jwtDecode(token)));
           localStorage.removeItem("registrationData");
           localStorage.removeItem("interestData");
           localStorage.removeItem("preferenceData");

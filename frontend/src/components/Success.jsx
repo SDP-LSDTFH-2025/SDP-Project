@@ -1,67 +1,25 @@
 import { Button } from "./ui/button.jsx";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card.jsx";
-import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
-import { jwtDecode } from "jwt-decode";
+import { useNavigate } from "react-router-dom";
 import "./styles/Success.css";
 
 export function Success({ setUser }) {
 const navigate = useNavigate();
 
-    useEffect(() => {
-    async function submitRegistration() {
-      const token = JSON.parse(localStorage.getItem("Token") || '""');
-      const registrationData = JSON.parse(localStorage.getItem("registrationData") || "{}");
-      const interestData = JSON.parse(localStorage.getItem("interestData") || "[]");
-      const preferenceData = JSON.parse(localStorage.getItem("preferenceData") || "[]");
-
-      if (!token) {
-        console.error("No token found in localStorage");
-        navigate("/login");
-        return;
-      }
-      const { sub: google_id } = jwtDecode(token);
-      const payload = {
-        google_id,
-        course: registrationData.course || "",
-        year_of_study: registrationData.year || "",
-        academic_interests: interestData.join(", "),
-        study_preferences: preferenceData.join(", "),
-        institution: registrationData.university || "",
-        school: registrationData.faculty || ""
-      };
-
-      try {
-        const res = await fetch("http://localhost:3000/api/v1/users/register", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`
-          },
-          body: JSON.stringify(payload)
-        });
-
-        const data = await res.json();
-        if (data.success) {
-          console.log("Registration success");
-          setUser(jwtDecode(token));
-          localStorage.setItem("user", JSON.stringify(jwtDecode(token)));
-          localStorage.removeItem("registrationData");
-          localStorage.removeItem("interestData");
-          localStorage.removeItem("preferenceData");
-
-          navigate("/home");
-        } else {
-          const err = await res.json();
-          console.error("Registration failed:", err);
-        }
-      } catch (error) {
-        console.error("Error submitting registration:", error);
-      }
-    }
-
-    submitRegistration();
-  }, [navigate]);
+useEffect(() => {
+  const storedUser = localStorage.getItem("user");
+  if (storedUser) {
+    const userData = JSON.parse(storedUser);
+    setUser(userData);
+    // Redirect automatically after 1.5 seconds
+    const timer = setTimeout(() => navigate("/home"), 1500);
+    return () => clearTimeout(timer);
+  } else {
+    console.error("No user data found in localStorage");
+    navigate("/signup"); // Redirect to signup if no user data
+  }
+}, [setUser, navigate]);
 
   return (
     <div className="success-container">
@@ -99,7 +57,7 @@ const navigate = useNavigate();
             <button
               type="button"
               className="success-button success-button-primary"
-              onClick={() => navigate("/home")}
+              onClick={() => navigate('/home')}
             >
               Go to Dashboard
             </button>

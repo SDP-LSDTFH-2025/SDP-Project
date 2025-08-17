@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "./ui/button.jsx";
 //import { Badge } from "./ui/badge.jsx";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card.jsx";
 import "./styles/Interest.css"
+
 const academicInterests = [
   "Mathematics", "Computer Science", "Physics", "Chemistry", "Biology",
   "Psychology", "Economics", "Business", "Engineering", "Medicine",
@@ -20,11 +21,24 @@ const studyPreferences = [
   "Problem Solving", "Creative Projects", "Field Work"
 ];
 
-export function Interests() {
+export function Interests({ user }) {
  const navigate = useNavigate();
-
   const [selectedInterests, setSelectedInterests] = useState([]);
   const [selectedPreferences, setSelectedPreferences] = useState([]);
+  const [currentUser, setCurrentUser] = useState(user);
+
+   useEffect(() => {
+    if (!currentUser) {
+      const storedUser = localStorage.getItem("user");
+      if (storedUser) {
+        setCurrentUser(JSON.parse(storedUser));
+      }
+    }
+  }, [currentUser]);
+
+  if (!currentUser) {
+    return <p>Loading user info...</p>; // prevent null errors
+  }
 
   const handleInterestToggle = (interest) => {
     setSelectedInterests(prev => 
@@ -42,24 +56,50 @@ export function Interests() {
     );
   };
 
-  /**const handleSubmit = (e) => {
-    e.preventDefault();
-    console.log("Selected interests:", selectedInterests);
-    console.log("Selected preferences:", selectedPreferences);
-    onComplete();
-  };*/
+  async function handleInterests(e) {
+    if (e) e.preventDefault(); // stop page reload
 
-function handleInterests(){
-    localStorage.setItem("interestData", JSON.stringify(selectedInterests));
-    localStorage.setItem("preferenceData", JSON.stringify(selectedInterests));
+    const registrationData = JSON.parse(localStorage.getItem("registrationData")) || {};
+    const userty = JSON.parse(localStorage.getItem("user"));
+
+    const payload = {
+      google_id: userty.google_id,
+      Course: registrationData.course || "",
+      year_of_study: registrationData.year || "",
+      Academic_interests: selectedInterests.join(", "),
+      study_preferences: selectedPreferences.join(", "),
+      institution: registrationData.university || "",
+      school: registrationData.faculty || ""
+    };
+
+    try {
+      const res = await fetch("http://localhost:3000/api/v1/users/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        console.error("Backend error:", data);
+        alert(data.error || "Something went wrong.");
+        return;
+      }
+
+      localStorage.setItem("payload", JSON.stringify(data));
+      localStorage.removeItem("registrationData");
+      navigate("../success");
+
+    } catch (error) {
+      console.error("Capturing interests error:", error);
+      alert("Something went wrong. Please try again.");
+    }
+  }
+
+  function onSkip(){
     navigate("../success");
-}
-
-function onSkip(){
-  navigate("../success");
-}
-
-  const isFormValid = selectedInterests.length > 0 || selectedPreferences.length > 0;
+  }
 
   return (
     <div className="interests-container">
@@ -172,7 +212,6 @@ function onSkip(){
               type="submit"
               className="action-button action-button-primary"
               disabled={!(selectedInterests.length > 0 || selectedPreferences.length > 0)}
-              onClick={handleInterests}
             >
               Continue
             </Button>

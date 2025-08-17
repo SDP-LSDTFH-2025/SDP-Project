@@ -17,13 +17,9 @@ export function Registration() {
     course: "",
     year: "",
   });
-
-  /*const handleSubmit = (e) => {
+  
+  const handleNext = (e) => {
     e.preventDefault();
-    console.log("Registration data:", formData);
-    onComplete();
-  };*/
-  const handleNext = () => {
     // Save step data to localStorage
     localStorage.setItem("registrationData", JSON.stringify(formData));
     navigate("../interests");
@@ -157,7 +153,6 @@ export function Registration() {
                 type="submit"
                 className="form-button form-button-primary"
                 disabled={!isFormValid}
-                onClick = {handleNext}
               >
                 Complete Registration
               </button>

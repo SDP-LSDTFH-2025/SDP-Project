@@ -151,6 +151,7 @@ router.get('/', async (req, res) => {
  */
 router.post('/register', async (req, res) => {
   try{
+  console.log("Payload received on backend:", req.body)
   const {google_id,course,year_of_study,academic_interests,study_preferences,institution,school} = req.body;
   const user = await User.findOne({where:{google_id}});
   if (!user) {
@@ -159,7 +160,13 @@ router.post('/register', async (req, res) => {
       error: 'User not found'
     });
   }
-  const updated_user = await User.update({course,year_of_study,academic_interests,study_preferences,institution,school},{where:{google_id}});
+
+  await User.update(
+  { course, year_of_study, academic_interests, study_preferences, institution, school },
+  { where: { google_id } }
+);
+
+const updated_user = await User.findOne({ where: { google_id } });
 
   res.json({
     success: true,

@@ -7,7 +7,7 @@ import { Interests } from "./components/Interests.jsx";
 import { Success } from "./components/Success.jsx";
 
 export default function App() {
-  const [user, setUser, haveToken] = useState(null);
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
@@ -19,43 +19,39 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Landing page: if logged in → go to home */}
+        /* Landing page: if logged in, go to home, else stay */
         <Route
           path="/"
-          element={user?.email ? <Navigate to="/home" /> : <Welcome />}
+          element={user?.google_id ? <Navigate to="/home" /> : <Welcome />}
         />
 
-        {/* Signup route */}
+        /* Signup route */
         <Route
           path="/signup"
-          element={
-            user?.email && user.registrationComplete
-              ? <Navigate to="/home" />
-              : <Signup />
-          }
+          element={<Signup setUser={setUser} />}
         >
           <Route path="registration" element={<Registration />} />
-          <Route path="interests" element={<Interests />} />
-          <Route path="success" element={<Success setUser={setUser}/>} />
+          <Route path="interests" element={<Interests user={user} />} />
+          <Route path="success" element={<Success setUser={setUser} />} />
         </Route>
 
-        {/* Login route with Google Auth verification */}
+        /* Login route with Google Auth verification */
         <Route
           path="/login"
           element={
-            user?.email
+            user?.google_id
               ? <Navigate to="/home" />
               : <Login setUser={setUser} />
           }
         />
 
-        {/* Home route - only for logged-in users */}
+        /* Home route - only for logged-in users */
         <Route
           path="/home"
-          element={user?.email ? <Home user={user} /> : <Navigate to="/" />}
+          element={user?.google_id ? <Home user={user} /> : <Navigate to="/login" />}
         />
 
-        {/* Registration steps */}
+        /* Registration steps */
         <Route
           path="/welcome"
           element={<Welcome onStartRegistration={() => {}} />}

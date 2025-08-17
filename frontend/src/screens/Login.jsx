@@ -1,30 +1,31 @@
 import { Link } from "react-router-dom";
 import { GoogleLogin } from "@react-oauth/google";
 import { useNavigate } from "react-router-dom";
-import { jwtDecode } from "jwt-decode";
 
 function Login({ setUser }) {
   const navigate = useNavigate();
 
-  const handleLogin = async (credentialResponse) => {
+   async function handleLogin(credentialResponse){
     try {
       const token = credentialResponse.credential;
 
-      // Send token to backend for verification
-      const res = await fetch(`http://localhost:3000/api/v1/auth/google/verify` /* this shall be changend to env*/, {
+      // Send token to backend for verification  /* this shall be changend to env*/
+      const res = await fetch("http://localhost:3000/api/v1/auth/google/verify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token }),
+        body: JSON.stringify({ access_token: token }),
       });
 
       const data = await res.json();
 
-      if (res.ok) {
-        localStorage.setItem("user", JSON.stringify(data.user));
-        setUser(jwtDecode(token));
+      if (data.success) {
+        console.log("logged in!");
+        localStorage.setItem("user", JSON.stringify(data.data));
+
+        setUser(data.data);
         navigate("/home");
       } else {
-        alert(data.message || "Authentication failed");
+        alert(data.success || "Authentication failed");
       }
     } catch (error) {
       console.error("Login error:", error);

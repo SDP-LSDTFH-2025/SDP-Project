@@ -3,6 +3,8 @@ const jwt = require('jsonwebtoken');
 const { User } = require('../models');
 const { enhancedAuth} = require('../middleware/security');
 const router = express.Router();
+const { OAuth2Client } = require('google-auth-library');
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 /**
  * @swagger
@@ -58,28 +60,37 @@ router.post('/google/verify', async (req, res) => {
       });
     }
 
-    // Verify the token with Google
-    const googleResponse = await fetch(`https://www.googleapis.com/oauth2/v1/userinfo?access_token=${access_token}`);
-    
-    if (!googleResponse.ok) {
+    const ticket = await client.verifyIdToken({
+      idToken: access_token,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+
+    const payload = ticket.getPayload();
+    if (!payload) {
       return res.status(400).json({
         success: false,
-        error: 'Invalid access token'
+        error: 'Invalid access token' 
       });
     }
 
-    const googleUser = await googleResponse.json();
+    const googleUser = payload;
+    console.log(googleUser);
     
     // Find or create user in database
     let user = await User.findOne({
-      where: { google_id: googleUser.id }
+      where: { google_id: googleUser.sub}
     });
-
-    if (!user) {
+    
+    let un_username = `${googleUser.given_name}_${googleUser.family_name}`;
+    let suffix = 1;
+    while (await User.findOne({ where: { username: un_username } })) {
+      un_username = `${googleUser.given_name}_${googleUser.family_name}_${suffix++}`;
+    }
+        if (!user) {
       // Create new user
       user = await User.create({
-        google_id: googleUser.id,
-        username: googleUser.given_name + '_' + googleUser.family_name,
+        google_id: googleUser.sub,
+        username: un_username,
         is_active: true
       });
     } else {
@@ -103,7 +114,7 @@ router.post('/google/verify', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Google verify error:', error);
+    console.error('Google verify error:', error.message);
     console.log(error);
     res.status(500).json({
       success: false,

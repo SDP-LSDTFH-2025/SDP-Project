@@ -64,13 +64,14 @@ export function Interests({ user }) {
 
     const payload = {
       google_id: userty.google_id,
-      Course: registrationData.course || "",
+      course: registrationData.course || "",
       year_of_study: registrationData.year || "",
-      Academic_interests: selectedInterests.join(", "),
+      academic_interests: selectedInterests.join(", "),
       study_preferences: selectedPreferences.join(", "),
       institution: registrationData.university || "",
       school: registrationData.faculty || ""
     };
+    console.log(payload);
 
     try {
       const res = await fetch("http://localhost:3000/api/v1/users/register", {
@@ -79,7 +80,9 @@ export function Interests({ user }) {
         body: JSON.stringify(payload)
       });
 
+
       const data = await res.json();
+      console.log(data);
 
       if (!res.ok) {
         console.error("Backend error:", data);

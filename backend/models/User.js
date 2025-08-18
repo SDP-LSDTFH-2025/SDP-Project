@@ -46,11 +46,11 @@ const User = sequelize.define('User', {
     type: DataTypes.STRING,
     allowNull: true
   },
-  Course:{
+  course:{
     type: DataTypes.STRING,
     allowNull: true
   },
-  Academic_interests:{
+  academic_interests:{
     type: DataTypes.TEXT('long'),
     allowNull: true
   },

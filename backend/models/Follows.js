@@ -1,5 +1,5 @@
-import { sequelize } from "../config/database";
-import { DataTypes } from "sequelize";
+const { sequelize } = require("../config/database");
+const { DataTypes } = require("sequelize");
 
 const Follows = sequelize.define('Follows', {
     id: {
@@ -25,4 +25,4 @@ const Follows = sequelize.define('Follows', {
     timestamps: false
 });
 
-export default Follows;
+module.exports = Follows;

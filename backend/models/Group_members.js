@@ -1,5 +1,5 @@
-import { sequelize } from "../config/database";
-import { DataTypes } from "sequelize";
+const { sequelize } = require("../config/database");
+const { DataTypes } = require("sequelize");
 
 const Group_members = sequelize.define('Group_members', {
     id: {
@@ -25,4 +25,4 @@ const Group_members = sequelize.define('Group_members', {
     timestamps: false
 });
 
-export default Group_members;
+module.exports = Group_members;

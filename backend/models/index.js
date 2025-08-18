@@ -7,12 +7,12 @@ const PrivateChats = require('./PrivateChats');
 
 //resources table 
 const Resources = require('./Resources');
-const { default: Follows } = require('./Follows');
-const { default: Group_chats } = require('./Group_chats');
-const { default: Group_members } = require('./Group_members');
-import Progress from './Progress';
-import Study_groups from './study_groups';
-import Study_sessions from './Study_sessions';
+const Follows = require('./Follows');
+const Group_chats = require('./Group_chats');
+const Group_members = require('./Group_members');
+const Progress = require('./Progress');
+const Study_groups = require('./study_groups');
+const Study_sessions = require('./Study_sessions');
 
 module.exports = {
   sequelize,

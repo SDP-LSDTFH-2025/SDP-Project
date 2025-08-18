@@ -1,5 +1,5 @@
-import { sequelize } from "../config/database";
-import { DataTypes } from "sequelize";
+const { sequelize } = require("../config/database");
+const { DataTypes } = require("sequelize");
 
 const Progress = sequelize.define('Progress', {
     id: {
@@ -33,4 +33,4 @@ const Progress = sequelize.define('Progress', {
     timestamps: false
 });
 
-export default Progress;
+module.exports = Progress;

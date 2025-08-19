@@ -8,9 +8,10 @@ function Login({ setUser }) {
    async function handleLogin(credentialResponse){
     try {
       const token = credentialResponse.credential;
+      const SERVER = import.meta.env.VITE_PROD_SERVER || import.meta.env.VITE_DEV_SERVER ;
 
       // Send token to backend for verification  /* this shall be changend to env*/
-      const res = await fetch("http://localhost:3000/api/v1/auth/google/verify", {
+      const res = await fetch(`${SERVER}/api/v1/auth/google/verify`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ access_token: token }),

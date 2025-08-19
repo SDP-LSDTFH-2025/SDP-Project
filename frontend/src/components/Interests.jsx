@@ -74,7 +74,8 @@ export function Interests({ user }) {
     console.log(payload);
 
     try {
-      const res = await fetch("http://localhost:3000/api/v1/users/register", {
+      const SERVER = import.meta.env.VITE_PROD_SERVER || import.meta.env.VITE_DEV_SERVER ;
+      const res = await fetch(`${SERVER}/api/v1/users/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)

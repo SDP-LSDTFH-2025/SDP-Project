@@ -41,4 +41,4 @@ const Study_groups = sequelize.define('Study_groups',{
     timestamps:false
 })
 
-module.exports = Study_groups
+module.exports = Study_groups;

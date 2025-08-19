@@ -87,7 +87,7 @@ app.use(speedLimiter);
 // Standard middleware
 app.use(compression());
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
+  origin: process.env.PROD_LIVE_HOST || process.env.PROD_PREVIEW_HOST || process.env.CORS_ORIGIN,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']

@@ -12,7 +12,7 @@ const Follows = sequelize.define('Follows', {
         type: DataTypes.INTEGER,
         allowNull: false,
     },
-    followee_id: {
+    followee_id: { 
         type: DataTypes.INTEGER,
         allowNull: false,
     },

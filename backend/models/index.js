@@ -11,7 +11,7 @@ const Follows = require('./Follows');
 const Group_chats = require('./Group_chats');
 const Group_members = require('./Group_members');
 const Progress = require('./Progress');
-const Study_groups = require('./study_groups');
+const Study_groups = require('./Study_groups');
 const Study_sessions = require('./Study_sessions');
 
 module.exports = {

@@ -1,43 +1,55 @@
 import { Outlet, useNavigate } from "react-router-dom";
 import { GoogleLogin } from "@react-oauth/google";
-import { jwtDecode } from "jwt-decode";
-import { useState } from "react";
 
 function Signup({ setUser }) {
   const navigate = useNavigate();
-  const [profile, setProfile] = useState(null);
 
-  function handleGoogleLogin(credentialResponse){
-    const token = jwtDecode(credentialResponse.credential);
-    console.log(jwtDecode(credentialResponse.credential));
-    const userProfile = {
-      email: token.email,
-      name : token.given_name,
-      surname : token.family_name,
-      fullName: token.name,
-      picture: token.picture,
-      registrationComplete: false
-    };
 
-    localStorage.setItem("user", JSON.stringify(userProfile));
-    setUser(userProfile);
-    setProfile(userProfile);
+   async function handleLogin(credentialResponse){
+    try {
+      const SERVER = import.meta.env.VITE_PROD_SERVER || import.meta.env.VITE_DEV_SERVER ;
+      const token = credentialResponse.credential;
 
-    // Navigate to /signup/register
-    navigate("register");
+      // Send token to backend for verification  /* this shall be changend to env*/
+      const res = await fetch(`${SERVER}/api/v1/auth/google/verify`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ access_token: token }),
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        console.log("Signed up!");
+        localStorage.setItem("user", JSON.stringify(data.data));
+
+        setUser(data.data);
+        navigate("registration");
+      } else {
+        alert(data.success || "Authentication failed");
+      }
+    } catch (error) {
+      console.error("Sign up error:", error);
+      alert("Something went wrong. Please try again.");
+    }
   };
 
-  const isRegistering = location.pathname.endsWith("/register");
-
+  const isRegistering = location.pathname.endsWith("/registration");
+  const isInterests = location.pathname.endsWith("/interests");
+  const isSuccess = location.pathname.endsWith("/success");
   return (
     <main className="signup-container">
-      <h1>Sign Up</h1>
-
-      {!isRegistering && (
-        <GoogleLogin onSuccess={handleGoogleLogin} onError={() => alert("Login Failed")} />
+      {!isRegistering && !isSuccess && !isInterests && (
+        <>
+          <h1>Sign Up</h1>
+          <GoogleLogin onSuccess={handleLogin} onError={() => alert("Signin Failed")} />
+        </>
       )}
 
-      <Outlet context={{ profile, onBack: () => navigate(-1) }} />
+      <div className="w-full max-w-lg bg-white shadow-lg rounded-lg p-6">
+
+        <Outlet context={{ setUser }}/>
+      </div>
     </main>
   );
 }

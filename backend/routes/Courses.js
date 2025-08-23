@@ -278,8 +278,7 @@ router.delete('/:id', async (req, res) => {
  *         in: query
  *         required: true
  *         description: Search term for course name or code
- *         schema:
- *           type: string
+ *         type: string
  *     responses:
  *       200:
  *         description: List of matching courses
@@ -340,8 +339,7 @@ router.get('/search', async (req, res) => {
  *         in: query
  *         required: true
  *         description: School name
- *         schema:
- *           type: string
+ *         type: string
  *     responses:
  *       200:
  *         description: List of courses from the specified school
@@ -393,8 +391,7 @@ router.get('/school', async (req, res) => {
  *         in: query
  *         required: true
  *         description: Course code
- *         schema:
- *           type: string
+ *         type: string
  *     responses:
  *       200:
  *         description: List of courses with the specified code
@@ -446,8 +443,7 @@ router.get('/code', async (req, res) => {
  *         in: query
  *         required: true
  *         description: Course name
- *         schema:
- *           type: string
+ *         type: string
  *     responses:
  *       200:
  *         description: List of courses with the specified name
@@ -499,9 +495,8 @@ router.get('/name', async (req, res) => {
  *         in: query
  *         required: false
  *         description: Approval status (true for approved, false for not approved)
- *         schema:
- *           type: boolean
- *           default: true
+ *         type: boolean
+ *         default: true
  *     responses:
  *       200:
  *         description: List of courses with the specified approval status
@@ -543,8 +538,7 @@ router.get('/approved', async (req, res) => {
  *         in: query
  *         required: true
  *         description: User ID of the course creator
- *         schema:
- *           type: string
+ *         type: string
  *     responses:
  *       200:
  *         description: List of courses created by the specified user

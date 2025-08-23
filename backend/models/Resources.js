@@ -60,7 +60,7 @@ const Resources = sequelize.define('Resources',{
  }
 },{
     tableName: "resources",
-    tiemstamps:true,
+    timestamps:true,
     createdAt: 'created_at',
     updatedAt: false
 });

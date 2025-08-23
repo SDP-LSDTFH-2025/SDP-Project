@@ -7,7 +7,7 @@ function Home({ user }){
   };
   return (
     <main style={{ textAlign: "center", margin: "3rem" }}>
-      <h1>Dear {user?.name}</h1>
+      <h1>Dear {user?.username}</h1>
 
       <p>
         You are viewing this page because you are logged in or you just signed

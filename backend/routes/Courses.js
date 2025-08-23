@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { Courses } = require('../models');
+const { Courses,UserCourses } = require('../models');
 const { Op } = require('sequelize');
 
 // Debug: Check if Courses model is properly loaded
@@ -77,7 +77,7 @@ router.get('/', async (req, res) => {
 });
 /**
  * @swagger
- * /api/v1/courses:
+ * /api/v1/courses/add:
  *   post:
  *     summary: Create a new course
  *     tags: [Courses]
@@ -121,7 +121,7 @@ router.get('/', async (req, res) => {
  *       500:
  *         description: Internal server error
  */
-router.post('/', async (req, res) => {
+router.post('/add', async (req, res) => {
   try {
     const { code, name, school, approved, created_by } = req.body;
     
@@ -130,6 +130,13 @@ router.post('/', async (req, res) => {
       return res.status(400).json({
         success: false,
         error: 'Missing required fields: code, name, school, created_by'
+      });
+    }
+    const existingCourse = await Courses.findOne({ where: { code } });
+    if (existingCourse) {
+      return res.status(400).json({
+        success: false,
+        error: 'Course with this code already exists'
       });
     }
     
@@ -145,7 +152,7 @@ router.post('/', async (req, res) => {
 });
 /**
  * @swagger
- * /api/v1/courses/{id}:
+ * /api/v1/courses/update/{id}:
  *   put:
  *     summary: Update a course
  *     tags: [Courses]
@@ -191,20 +198,27 @@ router.post('/', async (req, res) => {
  *       500:
  *         description: Internal server error
  */
-router.put('/:id', async (req, res) => {
+router.put('/update/:id', async (req, res) => {
   try {
     const { code, name, school, approved, created_by } = req.body;
+
+    const existingCourse = await Courses.findOne({ where: { code } });
+    if (!existingCourse) {
+      return res.status(400).json({
+        success: false,
+        error: 'This course does not exist'
+      });
+    }
+    if(existingCourse.created_by != created_by){
+      return res.status(400).json({
+        success: false,
+        error: 'You are not the owner of this course'
+      });
+    }
     const [affectedRows] = await Courses.update(
       { code, name, school, approved, created_by },
       { where: { id: req.params.id } }
     );
-    
-    if (affectedRows === 0) {
-      return res.status(404).json({
-        success: false,
-        error: 'Course not found'
-      });
-    }
     
     res.json({ success: true, data: affectedRows });
   } catch (error) {
@@ -228,6 +242,12 @@ router.put('/:id', async (req, res) => {
  *         description: Course ID
  *         schema:
  *           type: integer
+*    requestbody:
+*     - created_by: id
+*      required: true
+*      description: creator id
+*      schema:
+*      type: integer
  *     responses:
  *       200:
  *         description: Course deleted successfully
@@ -248,14 +268,23 @@ router.put('/:id', async (req, res) => {
  */
 router.delete('/:id', async (req, res) => {
   try {
-    const deletedRows = await Courses.destroy({ where: { id: req.params.id } });
-    
-    if (deletedRows === 0) {
+    const {created_by} = req.body;
+
+    const course = Courses.findByPk(req.params.id);
+    if(!course){
       return res.status(404).json({
         success: false,
         error: 'Course not found'
       });
     }
+    if(course.created_by != created_by){
+      return res.status(400).json({
+        success: false,
+        error: 'You are not the owner of this course'
+      });
+    }
+    const deletedRows = await Courses.destroy({ where: { id: req.params.id } });
+
     
     res.json({ success: true, data: deletedRows });
   } catch (error) {

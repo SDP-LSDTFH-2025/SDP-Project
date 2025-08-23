@@ -1,7 +1,7 @@
 const { sequelize } = require("../config/database");
 const { DataTypes } = require("sequelize");
 
-const Group_chats = sequelize.define('Group_chats', {
+const Group_chats = sequelize.define('group_chats', {
     id: {
         type: DataTypes.INTEGER,
         primaryKey: true,
@@ -29,7 +29,7 @@ const Group_chats = sequelize.define('Group_chats', {
         allowNull: false,
     }
 }, {
-    tableName: "Group_chats",
+    tableName: "group_chats",
     timestamps: false
 });
 

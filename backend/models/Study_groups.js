@@ -2,7 +2,7 @@ const { sequelize } = require("../config/database");
 const { DataTypes } = require("sequelize");
 
 
-const Study_groups = sequelize.define('Study_groups',{
+const Study_groups = sequelize.define('study_groups',{
     id:{
         type:DataTypes.INTEGER,
         primaryKey:true,
@@ -37,7 +37,7 @@ const Study_groups = sequelize.define('Study_groups',{
         type:DataTypes.TIME
     }
 },{
-    tableName: "Study_groups",
+    tableName: "study_groups",
     timestamps:false
 })
 

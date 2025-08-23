@@ -1,7 +1,7 @@
 const { sequelize } = require("../config/database");
 const { DataTypes } = require("sequelize");
 
-const Study_sessions = sequelize.define('Study_sessions', {
+const Study_sessions = sequelize.define('study_sessions', {
     id: {
         type: DataTypes.INTEGER,
         primaryKey: true,
@@ -37,7 +37,7 @@ const Study_sessions = sequelize.define('Study_sessions', {
         allowNull: false,
     }
 }, {
-    tableName: "Study_sessions",
+    tableName: "study_sessions",
     timestamps: false
 });
 

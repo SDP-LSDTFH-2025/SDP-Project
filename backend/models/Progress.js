@@ -1,7 +1,7 @@
 const { sequelize } = require("../config/database");
 const { DataTypes } = require("sequelize");
 
-const Progress = sequelize.define('Progress', {
+const Progress = sequelize.define('progress', {
     id: {
         type: DataTypes.INTEGER,
         primaryKey: true,
@@ -29,7 +29,7 @@ const Progress = sequelize.define('Progress', {
         allowNull: false,
     }
 }, {
-    tableName: "Progress",
+    tableName: "progress",
     timestamps: false
 });
 

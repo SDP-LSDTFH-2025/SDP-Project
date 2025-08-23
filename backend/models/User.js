@@ -15,6 +15,14 @@ const User = sequelize.define('User', {
     allowNull: false,
     unique: true,
   },
+  h_email:{
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  h_password:{
+    type: DataTypes.STRING,
+    allowNull: true
+  },
  
   is_active: {
     type: DataTypes.BOOLEAN,

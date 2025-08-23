@@ -5,6 +5,9 @@ const { enhancedAuth} = require('../middleware/security');
 const router = express.Router();
 const { OAuth2Client } = require('google-auth-library');
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+const {errorClass, isValidEmail, generateID} = require('../middleware/tools');
+const crypto = require('crypto');
+const bcript = require('bcrypt');
 
 /**
  * @swagger
@@ -221,5 +224,186 @@ router.post('/logout', async (req, res) => {
     });
   }
 });
+
+
+//Manual signing in routes:
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * @swagger
+ * /api/v1/auth/signIn:
+ *   post:
+ *     summary: generates user id to create new users, returns a message and a token
+ *     tags: [Manual Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *               - username
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 description: User's email address
+ *               password:
+ *                 type: string
+ *                 description: User's password
+ *               username:
+ *                 type: string
+ *                 description: User's username
+ *     responses:
+ *       200:
+ *         description: User created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 token:
+ *                   type: string
+ *                   description: JWT token
+ *                   example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+ *       400:
+ *         description: email/password/username not provided
+ *       500:
+ *         description: Internal server error
+ */
+
+router.post('/signIn',async (req,res)=>{
+    try{
+        //checking the availability of the request body
+        if (!req.body){
+            return errorClass.insufficientInfo(res);
+        }
+        const {email,password,username} = req.body;
+        if (!email || !password){
+            return errorClass.insufficientInfo(res);
+        }
+        if (!isValidEmail(email)){
+            return errorClass.errorRes('invalid email',res);
+        }
+        
+        //hashing valuable information
+        const H_email = await crypto.createHash('sha256').update(email).digest("hex"); //allows lookup in the db
+        const H_password = await bcript.hash(password,12); //untracable even from the rainbow table
+
+        //storing the user to db
+        let sub = generateID(13);
+        while (await User.findOne({where:{google_id:sub}})) {
+            sub = generateID();
+        }
+
+        await User.create({
+                google_id:sub,
+                username:username,
+                last_login: new Date(),
+                created_at: new Date(),
+                h_email:H_email,
+                h_password:H_password
+            });
+            
+        //generate token
+        const Token = jwt.sign(
+            { id: sub, username: username},
+            process.env.JWT_SECRET,
+            { expiresIn: '7d' }
+            );
+
+        res.status(200).json({message:'successful operation',token:Token});
+    }
+    catch(error){
+        errorClass.serverError(res);
+        console.log(error);
+    }
+});
+
+/**
+ * @swagger
+ * /api/v1/auth/logIn:
+ *   post:
+ *     summary: checks if user exists, if true then return a token
+ *     tags: [Manual Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - password
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 description: User's email address (provide either email or username)
+ *               username:
+ *                 type: string
+ *                 description: User's username (provide either email or username)
+ *               password:
+ *                 type: string
+ *                 description: User's password
+ *     responses:
+ *       200:
+ *         description: User exists, token returned
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 token:
+ *                   type: string
+ *                   description: JWT token
+ *                   example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+ *       400:
+ *         description: email/password/username not provided
+ *       500:
+ *         description: Internal server error
+ */
+
+router.post('/logIn',async (req,res)=>{
+    try{
+        //checking the availability of the request body
+        if (!req.body){
+            return errorClass.insufficientInfo(res);
+        }
+        const {email,password,username} = req.body;
+        if ((!email && !username) || !password){
+            return errorClass.insufficientInfo(res);
+        }
+        //"email":"gaming@gmail.com",
+
+        let user;
+        if (email){//email login
+            if (!isValidEmail(email)){
+                return errorClass.errorRes('invalid email snytax',res);
+            }
+            const H_email = await crypto.createHash('sha256').update(email).digest("hex"); //allows lookup in the db
+            user = await User.findOne({where:{h_email:H_email}});
+        }
+        else{//username login
+            user = await User.findOne({where:{username:username}});
+        }
+        if (!user){
+            return errorClass.userNotFound(res);
+        }
+            
+        //generate token
+        const Token = jwt.sign(
+            { id: user.google_id, username: username },
+            process.env.JWT_SECRET,
+            { expiresIn: '7d' }
+        );
+
+        res.status(200).json({message:'successful operation',token:Token});
+    }
+    catch(error){
+        errorClass.serverError(res);
+        console.log(error);
+    }
+});
+
 
 module.exports = router; 

@@ -1,52 +1,85 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { GoogleLogin } from "@react-oauth/google";
-import { useNavigate } from 'react-router-dom';
-import { jwtDecode } from "jwt-decode"; //npm run jwt-decode
+import "./Login.css";
+
 
 function Login({ setUser }) {
   const navigate = useNavigate();
 
-  return (
-    <main className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4">
-      <section className="bg-white p-8 rounded-xl shadow-2xl w-full max-w-sm sm:max-w-md transform transition-all duration-300 hover:scale-[1.02]">
-        <header className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-800">Welcome Back</h1>
-          <p className="mt-2 text-gray-500 text-sm">Login to continue</p>
-        </header>
-        <section className="space-y-6">
-          <section className="flex justify-center">
-            <GoogleLogin
-              onSuccess={(credentialResponse) => {
-                let token = jwtDecode(credentialResponse.credential);
-                //console.log(jwtDecode(credentialResponse.credential));
-                const profile = {
-                  email: token.email,
-                  name: token.name,
-                  picture: token.picture
-                };
-                localStorage.setItem("user", JSON.stringify(profile));
-                setUser(profile);
 
-                navigate("/home");
-              }}
-              onError={() => console.log("Login failed")}
-              theme="filled_blue"
-              size="large"
-              text="continue_with"
-              width="300"
-            />
-          </section>
-          <p className="text-center text-sm text-gray-600">
-            Don't have an account?{' '}
-            <Link
-              to="/signup"
-              className="text-blue-600 font-medium hover:underline transition-colors duration-200"
-            >
-              Sign up
-            </Link>
-          </p>
-        </section>
-      </section>
+  async function handleLogin(credentialResponse) {
+    try {
+      const SERVER = import.meta.env.VITE_PROD_SERVER || import.meta.env.VITE_DEV_SERVER ;
+      const token = credentialResponse.credential;
+
+
+      // Send token to backend for verification  /* this shall be changend to env*/
+      const res = await fetch(`${SERVER}/api/v1/auth/google/verify`, {
+
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ access_token: token }),
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        console.log("logged in!");
+        localStorage.setItem("user", JSON.stringify(data.data));
+        setUser(data.data);
+        navigate("/home");
+      } else {
+        alert(data.success || "Authentication failed");
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+      alert("Something went wrong. Please try again.");
+    }
+  }
+
+  return (
+    <main className="login-page">
+      <div className="login-card">
+        <h1 className="logo">StudyBuddy</h1>
+        <p className="subtitle">Welcome back! Sign in to your account</p>
+
+        <form className="login-form">
+          <label>Email</label>
+          <input type="email" placeholder="Enter your email" />
+
+          <label>Password</label>
+          <input type="password" placeholder="Enter your password" />
+
+          <div className="forgot">
+            <Link to="/forgot">Forgot password?</Link>
+          </div>
+
+          <button type="submit" className="login-btn">
+            Sign In
+          </button>
+        </form>
+
+        
+        <div className="divider">
+          <span>or</span>
+        </div>
+
+        
+        <div className="google-btn">
+          <GoogleLogin
+            onSuccess={handleLogin}
+            onError={() => console.log("Login failed")}
+          />
+        </div>
+
+        <p className="footer-text">
+          Don’t have an account?{" "}
+          <Link to="/signup" className="link">
+            Sign up
+          </Link>
+        </p>
+      </div>
+
     </main>
   );
 }

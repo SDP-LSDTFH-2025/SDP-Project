@@ -142,8 +142,10 @@ export function Registration({ onComplete, onBack }) {
             <div className="form-actions">
               <button
                 type="button"
-                className="form-button form-button-outline"
-                onClick={onBack}
+
+                className="back"
+                onClick={() => navigate("..")}
+
               >
                 Back
               </button>

@@ -233,7 +233,7 @@ router.post('/logout', async (req, res) => {
  * @swagger
  * /api/v1/auth/signIn:
  *   post:
- *     summary: generates user id to create new users, returns a message and a token
+ *     summary: creates the new users, returns a message and a token,(if their email doesnt exists in firebase)
  *     tags: [Manual Authentication]
  *     requestBody:
  *       required: true
@@ -244,7 +244,7 @@ router.post('/logout', async (req, res) => {
  *             required:
  *               - email
  *               - password
- *               - username
+ *               - username (optional)
  *             properties:
  *               email:
  *                 type: string
@@ -268,52 +268,69 @@ router.post('/logout', async (req, res) => {
  *                   description: JWT token
  *                   example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
  *       400:
- *         description: email/password/username not provided
+ *         description: email/password not provided
  *       500:
  *         description: Internal server error
  */
 
-router.post('/signIn',async (req,res)=>{
+
+const { getAuth, createUserWithEmailAndPassword,signInWithEmailAndPassword  } = require("firebase/auth");
+const {firebaseConfig,app} = require('../config/fireBase');//looks like it isnt being used, but it is not the case. so don't removed them
+
+
+
+router.post('/signIn', async (req, res) => {
     try{
         //checking the availability of the request body
         if (!req.body){
             return errorClass.insufficientInfo(res);
         }
-        const {email,password,username} = req.body;
+        let {email,password,username} = req.body;
+
+        //check for validty of user details
         if (!email || !password){
             return errorClass.insufficientInfo(res);
         }
         if (!isValidEmail(email)){
-            return errorClass.errorRes('invalid email',res);
+              return errorClass.errorRes('invalid email syntax',res);
+          }
+
+        //for null username
+        if (!username){
+          username='';
+          for (let i=0; i<email.length; i++){
+            if (email[i]=='@'){break}
+            username += email[i];
+          }
         }
+
+        //sign up the user
+        const auth = getAuth();
+        createUserWithEmailAndPassword(auth, email, password)
+          .then(async(userCredential) => {
+            const user = userCredential.user;
+
+          //save user info to database
+          await User.create({
+            google_id: user.uid,
+            username: username,
+            is_active: true,
+            last_login:new Date()
+          });
+          //generate token for more control
+          const Token = jwt.sign(
+              { id: user.uid},
+              process.env.JWT_SECRET,
+              { expiresIn: '7d' }
+          );
+          res.status(200).json({message:'successful operation',token:Token});
+          console.log('user created successfully');
+          })
+          .catch((error) => {
+            const errorMessage = error.message;
+            errorClass.errorRes(errorMessage,res);
+          }); 
         
-        //hashing valuable information
-        const H_email = await crypto.createHash('sha256').update(email).digest("hex"); //allows lookup in the db
-        const H_password = await bcript.hash(password,12); //untracable even from the rainbow table
-
-        //storing the user to db
-        let sub = generateID(13);
-        while (await User.findOne({where:{google_id:sub}})) {
-            sub = generateID();
-        }
-
-        await User.create({
-                google_id:sub,
-                username:username,
-                last_login: new Date(),
-                created_at: new Date(),
-                h_email:H_email,
-                h_password:H_password
-            });
-            
-        //generate token
-        const Token = jwt.sign(
-            { id: sub, username: username},
-            process.env.JWT_SECRET,
-            { expiresIn: '7d' }
-            );
-
-        res.status(200).json({message:'successful operation',token:Token});
     }
     catch(error){
         errorClass.serverError(res);
@@ -363,47 +380,62 @@ router.post('/signIn',async (req,res)=>{
  *         description: Internal server error
  */
 
-router.post('/logIn',async (req,res)=>{
+router.post('/logIn',async (req, res) => {
     try{
         //checking the availability of the request body
         if (!req.body){
             return errorClass.insufficientInfo(res);
         }
         const {email,password,username} = req.body;
-        if ((!email && !username) || !password){
+
+        //check for validty of user details
+        if (!email || !password){
             return errorClass.insufficientInfo(res);
         }
-        //"email":"gaming@gmail.com",
+        if (!isValidEmail(email)){
+              return errorClass.errorRes('invalid email syntax',res);
+          }
 
-        let user;
-        if (email){//email login
-            if (!isValidEmail(email)){
-                return errorClass.errorRes('invalid email snytax',res);
+        //sign up the user
+        const auth = getAuth();
+        signInWithEmailAndPassword(auth, email, password)
+          .then(async(userCredential) => {
+            const user = userCredential.user;
+
+            //check user existance;
+            const existance = await User.findOne({where:{google_id:user.uid}});
+            if (!existance){
+              return errorClass.errorRes('User does not exist',res);
             }
-            const H_email = await crypto.createHash('sha256').update(email).digest("hex"); //allows lookup in the db
-            user = await User.findOne({where:{h_email:H_email}});
-        }
-        else{//username login
-            user = await User.findOne({where:{username:username}});
-        }
-        if (!user){
-            return errorClass.userNotFound(res);
-        }
-            
-        //generate token
-        const Token = jwt.sign(
-            { id: user.google_id, username: username },
-            process.env.JWT_SECRET,
-            { expiresIn: '7d' }
-        );
+       
+            //generate token for more control
+            const Token = jwt.sign(
+                { id: user.uid},
+                process.env.JWT_SECRET,
+                { expiresIn: '7d' }
+            );
+            res.status(200).json({message:'successful operation',token:Token});
+            console.log('user logged in successfully');
+          })
+          .catch((error) => {
+            const errorCode = error.code;
+            const errorMessage = error.message;
 
-        res.status(200).json({message:'successful operation',token:Token});
+            console.log(errorCode,errorMessage);
+            errorClass.errorRes(errorMessage,res);
+          }); 
+        
     }
     catch(error){
+      console.log('server says:\n\n\n')
         errorClass.serverError(res);
-        console.log(error);
     }
 });
+
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 
 
 module.exports = router; 

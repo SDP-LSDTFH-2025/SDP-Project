@@ -1,7 +1,6 @@
 const {DataTypes} = require('sequelize');
 const {sequelize} = require("../config/database");
 
-
 const Resource_tags = sequelize.define('Resource_tags',{
     id:{
         type:DataTypes.INTEGER,

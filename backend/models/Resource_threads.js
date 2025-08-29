@@ -1,6 +1,6 @@
 const {DataTypes} = require('sequelize');
 const {sequelize} = require("../config/database");
-
+const { v4: uuidv4 } = require('uuid');
 
 const Resource_threads = sequelize.define('Resource_threads',{
     id:{
@@ -14,7 +14,7 @@ const Resource_threads = sequelize.define('Resource_threads',{
 
     },
     user_id:{
-        type:DataTypes.INTEGER,
+        type:DataTypes.UUID,
         allowNull:false
     },
     message:{
@@ -33,9 +33,7 @@ const Resource_threads = sequelize.define('Resource_threads',{
 
 },{
     tableName:"resource_threads",
-    timestamps:true,
-    createdAt:'created_at',
-    updatedAt:false
+    timestamps: false
 });
 
 module.exports = Resource_threads;

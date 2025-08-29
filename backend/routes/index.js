@@ -7,6 +7,7 @@ const uploadRoutes = require('./upload');
 const notificationRoutes = require('./Notifications');
 const courseRoutes = require('./Courses');
 const userCourseRoutes = require('./UserCourses');
+const Study_groupsRoutes = require('./Study_groups')
 // API Documentation
 /**
  * @swagger
@@ -54,4 +55,5 @@ router.use('/upload', uploadRoutes);
 router.use('/notifications', notificationRoutes);
 router.use('/courses', courseRoutes);
 router.use('/user-courses', userCourseRoutes);
+router.use('/Study_groups',Study_groupsRoutes);
 module.exports = router; 

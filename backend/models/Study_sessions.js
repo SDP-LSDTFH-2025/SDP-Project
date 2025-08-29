@@ -1,6 +1,6 @@
 const { sequelize } = require("../config/database");
 const { DataTypes } = require("sequelize");
-
+const { v4: uuidv4 } = require('uuid');
 const Study_sessions = sequelize.define('study_sessions', {
     id: {
         type: DataTypes.INTEGER,
@@ -9,7 +9,7 @@ const Study_sessions = sequelize.define('study_sessions', {
         unique: true,
     },
     user_id: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.UUID,
         allowNull: false,
     },
     title: {

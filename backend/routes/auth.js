@@ -233,8 +233,9 @@ router.post('/logout', async (req, res) => {
  * @swagger
  * /api/v1/auth/signIn:
  *   post:
- *     summary: creates the new users, returns a message and a token,(if their email doesnt exists in firebase)
- *     tags: [Manual Authentication]
+ *     summary: Creates a new user, returns a message and a token
+ *     tags:
+ *       - Manual Authentication
  *     requestBody:
  *       required: true
  *       content:
@@ -244,7 +245,6 @@ router.post('/logout', async (req, res) => {
  *             required:
  *               - email
  *               - password
- *               - username (optional)
  *             properties:
  *               email:
  *                 type: string
@@ -254,7 +254,7 @@ router.post('/logout', async (req, res) => {
  *                 description: User's password
  *               username:
  *                 type: string
- *                 description: User's username
+ *                 description: User's username (optional)
  *     responses:
  *       200:
  *         description: User created successfully
@@ -268,7 +268,7 @@ router.post('/logout', async (req, res) => {
  *                   description: JWT token
  *                   example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
  *       400:
- *         description: email/password not provided
+ *         description: Email or password not provided
  *       500:
  *         description: Internal server error
  */
@@ -375,7 +375,7 @@ router.post('/signIn', async (req, res) => {
  *                   description: JWT token
  *                   example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
  *       400:
- *         description: email/password/username not provided
+ *         description: email/password not provided or invalid email
  *       500:
  *         description: Internal server error
  */

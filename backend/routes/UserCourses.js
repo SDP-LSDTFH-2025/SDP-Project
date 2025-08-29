@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { UserCourses,Courses } = require('../models');
 const { Op } = require('sequelize');
-const { Courses } = require('../models');
+
 
 /**
  * @swagger

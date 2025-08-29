@@ -5,7 +5,7 @@ const { sequelize } = require('../config/database');
 const User = sequelize.define('User', {
 
   google_id: {
-    type: DataTypes.STRING,
+    type: DataTypes.INTEGER,
     primaryKey: true,
     allowNull: false,
     unique: true,

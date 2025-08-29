@@ -8,11 +8,11 @@ const PrivateChats = sequelize.define('PrivateChats', {
         autoIncrement: true
     },
     sender_id: {
-        type: DataTypes.STRING,
+        type: DataTypes.INTEGER,
         allowNull: false
     },
     receiver_id: {
-        type: DataTypes.STRING,
+        type: DataTypes.INTEGER,
         allowNull: false
     },
     message: {

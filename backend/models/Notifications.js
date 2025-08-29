@@ -8,7 +8,7 @@ const Notifications = sequelize.define('Notifications', {
     autoIncrement: true
   },
   user_id: {
-    type: DataTypes.STRING,
+    type: DataTypes.INTEGER,
     allowNull: false
   },
   message: {

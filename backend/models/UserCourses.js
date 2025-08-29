@@ -8,7 +8,7 @@ const UserCourses = sequelize.define('UserCourses', {
     autoIncrement: true
   },
   user_id: {
-    type: DataTypes.STRING,    
+    type: DataTypes.INTEGER,    
     allowNull: false
   },
   course_id: {

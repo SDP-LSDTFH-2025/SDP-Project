@@ -25,7 +25,7 @@ const Courses = sequelize.define('Courses', {
     defaultValue: false
   },
     created_by: {
-    type: DataTypes.STRING,
+    type: DataTypes.INTEGER,
     allowNull: false
   },
   created_at: {

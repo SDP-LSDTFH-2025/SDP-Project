@@ -1,3 +1,14 @@
+/**
+ * Fetches all users from the server.
+ * @async
+ * @function getAllUsers
+ * @returns {Promise<Object[]>} A promise that resolves to an array of user objects if the request is successful.
+ * @throws {Error} If the request fails or the server returns an error.
+ * @example
+ * getAllUsers()
+ *   .then(users => console.log("Users:", users))
+ *   .catch(error => console.error("Error:", error));
+ */
 export async function getAllUsers() {
   try {
     const SERVER = import.meta.env.VITE_PROD_SERVER || import.meta.env.VITE_DEV_SERVER;
@@ -21,6 +32,18 @@ export async function getAllUsers() {
   }
 }
 
+/**
+ * Fetches a single user by their ID from the server.
+ * @async
+ * @function getUser
+ * @param {string} userId - The ID of the user to fetch.
+ * @returns {Promise<Object>} A promise that resolves to the user object if the request is successful.
+ * @throws {Error} If the request fails, the userId is invalid, or the server returns an error.
+ * @example
+ * getUser("12345")
+ *   .then(user => console.log("User:", user))
+ *   .catch(error => console.error("Error:", error));
+ */
 export async function getUser(userId) {
   try {
     const SERVER = import.meta.env.VITE_PROD_SERVER || import.meta.env.VITE_DEV_SERVER;
@@ -44,6 +67,34 @@ export async function getUser(userId) {
   }
 }
 
+/**
+ * Registers a new user with the provided data.
+ * @async
+ * @function regUser
+ * @param {Object} userData - The user data to register.
+ * @param {string} userData.google_id - The user's Google ID.
+ * @param {string} userData.course - The user's course of study.
+ * @param {string} userData.year_of_study - The user's year of study.
+ * @param {string} userData.academic_interests - The user's academic interests.
+ * @param {string} userData.study_preferences - The user's study preferences.
+ * @param {string} userData.institution - The user's institution.
+ * @param {string} userData.school - The user's school.
+ * @returns {Promise<Object>} A promise that resolves to the registered user object if the request is successful.
+ * @throws {Error} If the request fails or the server returns an error.
+ * @example
+ * const userData = {
+ *   google_id: "12345",
+ *   course: "Computer Science",
+ *   year_of_study: "2nd",
+ *   academic_interests: "AI, Machine Learning",
+ *   study_preferences: "Group study",
+ *   institution: "Example University",
+ *   school: "Engineering"
+ * };
+ * regUser(userData)
+ *   .then(user => console.log("Registered user:", user))
+ *   .catch(error => console.error("Error:", error));
+ */
 export async function regUser(userData) {
   try {
     const SERVER = import.meta.env.VITE_PROD_SERVER || import.meta.env.VITE_DEV_SERVER;
@@ -57,7 +108,7 @@ export async function regUser(userData) {
 
     if (user.success) {
       console.log("API Response:", user);
-      return user.data; // Access 'data' property directly
+      return user.data;
     } else {
       console.error(`Failed to register user: ${user.message || "Unknown error"}`);
       throw new Error(user.message || "Failed to register user");

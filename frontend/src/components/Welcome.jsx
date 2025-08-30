@@ -20,7 +20,7 @@ import img12 from "../assets/cput.png";
 import img13 from "../assets/VUT.png";
 import img14 from "../assets/msa.png";
 import logo from "../assets/logo.svg";
-import { useNavigate } from "react-router-dom";
+
 gsap.registerPlugin(ScrollTrigger);
 const cardData = [
   {
@@ -37,7 +37,7 @@ const cardData = [
   }
 ];
 
-export function Welcome({ onStartRegistration }) {
+export function Welcome() {
   const navigate = useNavigate();
 
   const headingRef = useRef(null);
@@ -45,7 +45,7 @@ export function Welcome({ onStartRegistration }) {
   const fullText = "You're already juggling a lot.";
   const [displayedText, setDisplayedText] = useState("");
   const [hasTyped, setHasTyped] = useState(false);
-  const navigate= useNavigate();
+
 
   useEffect(() => {
     function onScroll() {

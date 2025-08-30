@@ -43,3 +43,27 @@ export async function getUser(userId) {
     throw error; 
   }
 }
+
+export async function regUser(userData) {
+  try {
+    const SERVER = import.meta.env.VITE_PROD_SERVER || import.meta.env.VITE_DEV_SERVER;
+    let res = await fetch(`${SERVER}/api/v1/users/register`, {
+      method: "POST",
+      body: JSON.stringify(userData),
+      headers: { "Content-Type": "application/json" },
+    });
+
+    let user = await res.json();
+
+    if (user.success) {
+      console.log("API Response:", user);
+      return user.data; // Access 'data' property directly
+    } else {
+      console.error(`Failed to register user: ${user.message || "Unknown error"}`);
+      throw new Error(user.message || "Failed to register user");
+    }
+  } catch (error) {
+    console.error("User registration error:", error);
+    throw error;
+  }
+}

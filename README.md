@@ -6,5 +6,7 @@ Campus Study Buddy Enhanced is a vibrant platform designed to elevate your unive
 
 ## 🔗 Links
 
-- **Notion Workspace**: Explore our project planning and documentation on Notion:  
+- **Workspace**: Explore our project planning and documentation:  
   [LSDFTH SDP Notion Page](https://www.notion.so/LSDFTH-SDP-246e71bbe6ed80d3b367dd94107325ba?source=copy_link)
+  [This Latex Documention](https://www.papeeria.com/join?token_id=bfa0c22d-04ac-429a-86b1-e39392cd3972&retry=3)
+

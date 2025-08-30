@@ -37,8 +37,8 @@ const cardData = [
 ];
 
 export function Welcome({ onStartRegistration }) {
-  const navigate = useNavigate();
-
+  const navigate= useNavigate();
+  
   const headingRef = useRef(null);
   const h3Ref = useRef(null);
   const fullText = "You're already juggling a lot.";

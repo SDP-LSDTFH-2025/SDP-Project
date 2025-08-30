@@ -1,7 +1,7 @@
 const { sequelize } = require("../config/database");
 const { DataTypes } = require("sequelize");
-
-const Group_chats = sequelize.define('Group_chats', {
+const { v4: uuidv4 } = require('uuid');
+const Group_chats = sequelize.define('group_chats', {
     id: {
         type: DataTypes.INTEGER,
         primaryKey: true,
@@ -13,7 +13,7 @@ const Group_chats = sequelize.define('Group_chats', {
         allowNull: false,
     },
     user_id: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.UUID,
         allowNull: false,
     },
     message: {
@@ -29,7 +29,7 @@ const Group_chats = sequelize.define('Group_chats', {
         allowNull: false,
     }
 }, {
-    tableName: "Group_chats",
+    tableName: "group_chats",
     timestamps: false
 });
 

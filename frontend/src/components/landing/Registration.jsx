@@ -175,7 +175,7 @@ export default function Registration({ onComplete, onBack }) {
               onClick={onBack}
               className="flex-1 border rounded-lg py-2 text-gray-700 hover:bg-gray-100"
             >
-              Back
+             
             </button>
             <button
               type="submit"

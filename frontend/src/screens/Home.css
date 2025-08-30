@@ -1,0 +1,150 @@
+/* ------- Design tokens ------- */
+:root{
+    --bg: #f9fafb;
+    --card: #ffffff;
+    --border: #e5e7eb;      /* light gray borders like the mock */
+    --text: #111827;
+    --muted: #6b7280;
+    --brand-500: #7c3aed;   /* violet */
+    --brand-600: #6d28d9;
+    --brand-700: #4c1d95;
+    --radius: 12px;
+    --shadow: 0 1px 2px rgba(16,24,40,0.06);
+  }
+  
+  /* ------- Layout ------- */
+  .dashboard{
+    display:grid;
+    grid-template-columns: 300px 1fr 320px; /* left | center | right like the screenshot */
+    gap:24px;
+    padding:24px;
+    max-width: 1280px;
+    margin: 0 auto;
+    min-height: 100vh;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,system-ui,sans-serif;
+  }
+  
+  /* Generic card look used everywhere in the mock */
+  .sidebar,
+  .resources,
+  .rightbar > div{
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+  }
+  
+  /* ------- Sidebar (Navigation card) ------- */
+  .sidebar{
+    padding: 16px;
+  }
+  .sidebar h2{
+    font-size: 1rem;
+    font-weight: 700;
+    margin: 4px 0 12px;
+  }
+  .sidebar ul{ margin:0; padding:0; list-style:none; }
+  .sidebar li{
+    display:flex; align-items:center;
+    gap:10px;
+    padding:10px 8px;
+    border-radius: 10px;
+    transition: background .2s ease;
+    color:#0f172a;
+  }
+  .sidebar li:hover{ background:#f3f4f6; }
+  .sidebar li .badge{
+    margin-left:auto;
+    font-size:12px;
+    padding:2px 8px;
+    border-radius:999px;
+    background:#f0e9ff;
+    color: var(--brand-600);
+    border:1px solid #e9ddff;
+  }
+  
+  /* ------- Center: Resource feed ------- */
+  .resources{
+    padding: 16px;
+  }
+  .resources h2{
+    font-size: 1.1rem;
+    font-weight: 800;
+    margin: 4px 0 12px;
+    display:flex; align-items:center; justify-content:space-between;
+  }
+  .resources .upload-btn{
+    border: none;
+    padding: 8px 14px;
+    border-radius: 999px;
+    font-weight: 700;
+    cursor: pointer;
+    background: linear-gradient(90deg, var(--brand-600), #3b82f6);
+    color: white;
+    box-shadow: 0 4px 10px rgba(109,40,217,.25);
+  }
+  
+  .resources .share-input{
+    width: 100%;
+    padding: 12px 14px;
+    border: 2px solid #6366f1;     /* blue-ish border like mock */
+    border-radius: 12px;
+    outline: none;
+    font-size: 0.95rem;
+    margin: 8px 0 20px;
+    background: #fff;
+  }
+  
+  /* resource post card */
+  .resource-card{
+    border: 1px solid var(--border);   /* light outline (not dark) like screenshot */
+    background: #fff;
+    border-radius: 14px;
+    padding: 14px;
+    margin-bottom: 14px;
+    box-shadow: var(--shadow);
+  }
+  .resource-card h3{
+    margin: 0 0 6px;
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: #0f172a;
+  }
+  .resource-card p{
+    margin:0;
+    color: var(--muted);
+    line-height: 1.45;
+    font-size: .95rem;
+  }
+  
+  /* ------- Right column ------- */
+  .rightbar{ display:flex; flex-direction:column; gap:24px; }
+  .rightbar > div{ padding: 16px; }
+  .rightbar h3{
+    margin:0 0 10px;
+    font-size: 1rem;
+    font-weight: 800;
+  }
+  
+  /* Empty states */
+  .empty-text{
+    color: var(--muted);
+    font-style: italic;
+    padding: 8px 0;
+  }
+  
+  /* ------- Responsive ------- */
+  @media (max-width: 1200px){
+    .dashboard{ grid-template-columns: 260px 1fr 300px; }
+  }
+  @media (max-width: 1024px){
+    .dashboard{ grid-template-columns: 240px 1fr; }
+    .rightbar{ display:none; } /* hide right column on tablets like many dashboards */
+  }
+  @media (max-width: 768px){
+    .dashboard{ grid-template-columns: 1fr; }
+    .sidebar{ display:none; }  /* keep content focused on mobile */
+  }
+  

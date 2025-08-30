@@ -74,7 +74,7 @@ router.post('/google/verify', async (req, res) => {
     }
 
     const googleUser = payload;
-    console.log(googleUser);
+   // console.log(googleUser);
     
     // Find or create user in database
     let user = await User.findOne({

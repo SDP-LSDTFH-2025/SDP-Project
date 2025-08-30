@@ -13,7 +13,6 @@ const User = sequelize.define('User', {
 
   google_id: {
     type: DataTypes.STRING,
-    primaryKey: true,
     allowNull: false,
     unique: true,
   },

@@ -1,7 +1,7 @@
 const { sequelize } = require("../config/database");
 const { DataTypes } = require("sequelize");
-
-const Study_sessions = sequelize.define('Study_sessions', {
+const { v4: uuidv4 } = require('uuid');
+const Study_sessions = sequelize.define('study_sessions', {
     id: {
         type: DataTypes.INTEGER,
         primaryKey: true,
@@ -9,7 +9,7 @@ const Study_sessions = sequelize.define('Study_sessions', {
         unique: true,
     },
     user_id: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.UUID,
         allowNull: false,
     },
     title: {
@@ -37,7 +37,7 @@ const Study_sessions = sequelize.define('Study_sessions', {
         allowNull: false,
     }
 }, {
-    tableName: "Study_sessions",
+    tableName: "study_sessions",
     timestamps: false
 });
 

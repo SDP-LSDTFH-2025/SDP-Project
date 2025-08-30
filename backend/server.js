@@ -87,7 +87,26 @@ app.use(speedLimiter);
 // Standard middleware
 app.use(compression());
 app.use(cors({
-  origin: process.env.PROD_LIVE_HOST || process.env.PROD_PREVIEW_HOST || process.env.CORS_ORIGIN,
+  origin: function(origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    const allowedOrigins = [
+      process.env.PROD_LIVE_HOST,
+      process.env.PROD_PREVIEW_HOST,
+      process.env.CORS_ORIGIN,
+      'http://localhost:5173',
+      'http://localhost:5174',
+      'http://localhost:3000'
+    ].filter(Boolean); // Remove undefined values
+    
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      console.log('CORS blocked origin:', origin);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
@@ -122,10 +141,11 @@ async function startServer() {
     // Test database connection
     await sequelize.authenticate();
     console.log('✅ Database connection established successfully.');
-    // await sequelize.sync({alter:true});
+    await sequelize.sync({alter:true});
     console.log('✅ Database synchronized successfully.');
     // Start server
     app.listen(PORT, () => {
+      
       console.log(`🚀 Server is running on port ${PORT}`);
       console.log(`📚 API Documentation available at: http://localhost:${PORT}/api-docs`);
     

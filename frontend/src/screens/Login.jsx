@@ -1,10 +1,22 @@
 import { Link, useNavigate } from "react-router-dom";
+import { useState } from "react";
 import { GoogleLogin } from "@react-oauth/google";
 import "./Login.css";
 
 
 function Login({ setUser }) {
   const navigate = useNavigate();
+
+  const [formData, setFormData] = useState({
+    email: "",
+    password:""
+  });
+  
+  function HandleInputChange(field, value){
+    setFormData((prev) => ({...prev, [field]: value }));
+  }
+
+  const isFormValid = formData.email && formData.password;
 
 
   async function handleLogin(credentialResponse) {
@@ -37,6 +49,10 @@ function Login({ setUser }) {
     }
   }
 
+  async function handleManualLogin(){
+    
+  }
+
   return (
     <main className="login-page">
       <div className="login-card">
@@ -45,16 +61,16 @@ function Login({ setUser }) {
 
         <form className="login-form">
           <label>Email</label>
-          <input type="email" placeholder="Enter your email" />
+          <input type="email" placeholder="Enter your email" value={formData.email} onChange={(e) => HandleInputChange("email",e.target.value)}/>
 
           <label>Password</label>
-          <input type="password" placeholder="Enter your password" />
+          <input type="password" placeholder="Enter your password" value={formData.password} onChange={(e) => HandleInputChange("password",e.target.value)}/>
 
           <div className="forgot">
             <Link to="/forgot">Forgot password?</Link>
           </div>
 
-          <button type="submit" className="login-btn">
+          <button type="submit" className="login-btn" disabled={!isFormValid}>
             Sign In
           </button>
         </form>

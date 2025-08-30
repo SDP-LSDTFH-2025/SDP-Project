@@ -55,6 +55,9 @@ function Signup({ setUser }) {
             <label>Email</label>
             <input type="email" placeholder="Enter your email" />
 
+            <label>Username</label>
+            <input placeholder="Optional" />
+
             <label>Password</label>
             <input type="password" placeholder="Enter your password" />
 

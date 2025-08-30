@@ -5,8 +5,6 @@ import {ScrollTrigger } from "gsap/ScrollTrigger";
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { useNavigate } from "react-router-dom";
-
 import img1 from "../assets/rhodes.png";
 import img2 from "../assets/stel.png";
 import img3 from "../assets/uct.png";

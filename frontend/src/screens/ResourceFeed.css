@@ -1,0 +1,29 @@
+.resources h2 {
+    margin-bottom: 10px;
+  }
+  
+  .resources input {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 15px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+  }
+  
+  .resource-card {
+    background: #f8f9ff;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 12px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+  }
+  
+  .resource-card h3 {
+    margin: 0 0 5px;
+  }
+  
+  .empty-text {
+    color: #999;
+    font-style: italic;
+  }
+  

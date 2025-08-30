@@ -144,8 +144,10 @@ export function Registration() {
             <div className="form-actions">
               <button
                 type="button"
-                className="form-button form-button-outline"
+
+                className="back"
                 onClick={() => navigate("..")}
+
               >
                 Back
               </button>

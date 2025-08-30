@@ -1,6 +1,10 @@
+/** This will contain the routes for all screens and pages
+ * It will also contain a localStorage to allow us to see if the user is known
+ */
+
 import React, { useEffect, useState } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { Home, Login, Signup } from "./screens";
+import { Home, Login, Signup ,Forgot} from "./screens";
 import { Welcome } from "./components/Welcome.jsx";
 import { Registration } from "./components/Registration.jsx";
 import { Interests } from "./components/Interests.jsx";
@@ -16,6 +20,7 @@ export default function App() {
     }
   }, []);
 
+  
   return (
     <BrowserRouter>
       <Routes>
@@ -30,7 +35,7 @@ export default function App() {
           path="/signup"
           element={<Signup setUser={setUser} />}
         >
-          <Route path="registration" element={<Registration />} />
+          <Route path="registration" element={<Registration user={user} />} />
           <Route path="interests" element={<Interests user={user} />} />
           <Route path="success" element={<Success setUser={setUser} />} />
         </Route>
@@ -44,7 +49,8 @@ export default function App() {
               : <Login setUser={setUser} />
           }
         />
-
+       
+       <Route path="/forgot" element={<Forgot />} />
         /* Home route - only for logged-in users */
         <Route
           path="/home"
@@ -60,4 +66,6 @@ export default function App() {
       </Routes>
     </BrowserRouter>
   );
+
+
 }

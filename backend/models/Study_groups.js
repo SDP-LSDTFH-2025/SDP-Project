@@ -22,7 +22,7 @@ const Study_groups = sequelize.define('study_groups',{
         allowNull:false,
     },
     scheduled_time:{
-        type:DataTypes.DATE,
+        type:DataTypes.TIME,
         allowNull:false,
     },
     location:{
@@ -31,13 +31,10 @@ const Study_groups = sequelize.define('study_groups',{
     },
     disabled:{
         type:DataTypes.BOOLEAN,
-        allowNull:false,
-        defaultValue: false
+        allowNull:false
     },
     created_at:{
-        type:DataTypes.DATE,
-        allowNull: false,
-        defaultValue: DataTypes.NOW
+        type:DataTypes.TIME
     }
 },{
     tableName: "study_groups",

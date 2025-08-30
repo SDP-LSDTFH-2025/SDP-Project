@@ -1,27 +1,20 @@
 const { sequelize } = require("../config/database");
 const { DataTypes } = require("sequelize");
 const { v4: uuidv4 } = require('uuid');
-const Group_chats = sequelize.define('group_chats', {
+const Follows_requests = sequelize.define('follows_requests', {
     id: {
         type: DataTypes.INTEGER,
         primaryKey: true,
         allowNull: false,
         unique: true,
+        autoIncrement:true
     },
-    group_id: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-    },
-    user_id: {
+    follower_id: {
         type: DataTypes.UUID,
         allowNull: false,
     },
-    message: {
-        type: DataTypes.TEXT,
-        allowNull: false,
-    },
-    deleted: {
-        type: DataTypes.BOOLEAN,
+    followee_id: { 
+        type: DataTypes.UUID,
         allowNull: false,
     },
     created_at: {
@@ -29,8 +22,8 @@ const Group_chats = sequelize.define('group_chats', {
         allowNull: false,
     }
 }, {
-    tableName: "group_chats",
+    tableName: "follows_requests",
     timestamps: false
 });
 
-module.exports = Group_chats;
+module.exports = Follows_requests;

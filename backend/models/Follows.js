@@ -1,19 +1,20 @@
 const { sequelize } = require("../config/database");
 const { DataTypes } = require("sequelize");
-
+const { v4: uuidv4 } = require('uuid');
 const Follows = sequelize.define('follows', {
     id: {
         type: DataTypes.INTEGER,
         primaryKey: true,
         allowNull: false,
         unique: true,
+        autoIncrement:true
     },
     follower_id: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.UUID,
         allowNull: false,
     },
     followee_id: { 
-        type: DataTypes.INTEGER,
+        type: DataTypes.UUID,
         allowNull: false,
     },
     created_at: {

@@ -1,5 +1,9 @@
-backend/node_modules
-backend/env.example
+# Ignore backend environment files
+backend/.env
+backend/.env.*
 
-backend/env
+# Ignore node_modules
+backend/node_modules/
 
+# Keep env.example for reference
+!backend/env.example

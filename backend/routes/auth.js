@@ -5,9 +5,8 @@ const { enhancedAuth} = require('../middleware/security');
 const router = express.Router();
 const { OAuth2Client } = require('google-auth-library');
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
-const {errorClass, isValidEmail, generateID} = require('../middleware/tools');
-const crypto = require('crypto');
-const bcript = require('bcrypt');
+const {errorClass, isValidEmail} = require('../middleware/tools');
+
 
 /**
  * @swagger
@@ -77,7 +76,7 @@ router.post('/google/verify', async (req, res) => {
     }
 
     const googleUser = payload;
-    console.log(googleUser);
+   // console.log(googleUser);
     
     // Find or create user in database
     let user = await User.findOne({
@@ -233,8 +232,9 @@ router.post('/logout', async (req, res) => {
  * @swagger
  * /api/v1/auth/signIn:
  *   post:
- *     summary: creates the new users, returns a message and a token,(if their email doesnt exists in firebase)
- *     tags: [Manual Authentication]
+ *     summary: Creates a new user, returns a message and a token
+ *     tags:
+ *       - Manual Authentication
  *     requestBody:
  *       required: true
  *       content:
@@ -244,7 +244,6 @@ router.post('/logout', async (req, res) => {
  *             required:
  *               - email
  *               - password
- *               - username (optional)
  *             properties:
  *               email:
  *                 type: string
@@ -254,7 +253,7 @@ router.post('/logout', async (req, res) => {
  *                 description: User's password
  *               username:
  *                 type: string
- *                 description: User's username
+ *                 description: User's username (optional)
  *     responses:
  *       200:
  *         description: User created successfully
@@ -267,8 +266,11 @@ router.post('/logout', async (req, res) => {
  *                   type: string
  *                   description: JWT token
  *                   example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+ *                 id:
+ *                   type: uuid
+ *                   description: user identification
  *       400:
- *         description: email/password not provided
+ *         description: Email or password not provided
  *       500:
  *         description: Internal server error
  */
@@ -285,7 +287,7 @@ router.post('/signIn', async (req, res) => {
         if (!req.body){
             return errorClass.insufficientInfo(res);
         }
-        let {email,password,username} = req.body;
+        let {email,password} = req.body;
 
         //check for validty of user details
         if (!email || !password){
@@ -296,12 +298,10 @@ router.post('/signIn', async (req, res) => {
           }
 
         //for null username
-        if (!username){
-          username='';
-          for (let i=0; i<email.length; i++){
-            if (email[i]=='@'){break}
-            username += email[i];
-          }
+        let username='';
+        for (let i=0; i<email.length; i++){
+          if (email[i]=='@'){break}
+          username += email[i];
         }
 
         //sign up the user
@@ -311,7 +311,7 @@ router.post('/signIn', async (req, res) => {
             const user = userCredential.user;
 
           //save user info to database
-          await User.create({
+          const endUser = await User.create({
             google_id: user.uid,
             username: username,
             is_active: true,
@@ -319,11 +319,11 @@ router.post('/signIn', async (req, res) => {
           });
           //generate token for more control
           const Token = jwt.sign(
-              { id: user.uid},
+              { id: endUser.id},
               process.env.JWT_SECRET,
               { expiresIn: '7d' }
           );
-          res.status(200).json({message:'successful operation',token:Token});
+          res.status(200).json({message:'successful operation',token:Token,id:endUser.id});
           console.log('user created successfully');
           })
           .catch((error) => {
@@ -374,8 +374,11 @@ router.post('/signIn', async (req, res) => {
  *                   type: string
  *                   description: JWT token
  *                   example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+ *                 id:
+ *                   type: uuid
+ *                   description: user identification
  *       400:
- *         description: email/password/username not provided
+ *         description: email/password not provided or invalid email
  *       500:
  *         description: Internal server error
  */
@@ -410,11 +413,11 @@ router.post('/logIn',async (req, res) => {
        
             //generate token for more control
             const Token = jwt.sign(
-                { id: user.uid},
+                { id: existance.id},
                 process.env.JWT_SECRET,
                 { expiresIn: '7d' }
             );
-            res.status(200).json({message:'successful operation',token:Token});
+            res.status(200).json({message:'successful operation',token:Token,id:existance.id});
             console.log('user logged in successfully');
           })
           .catch((error) => {

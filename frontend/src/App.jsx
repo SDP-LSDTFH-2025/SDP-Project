@@ -9,11 +9,10 @@ import { Welcome } from "./components/Welcome.jsx";
 import { Registration } from "./components/Registration.jsx";
 import { Interests } from "./components/Interests.jsx";
 import { Success } from "./components/Success.jsx";
-// import { Registration } from "./components/landing" ;
 
 export default function App() {
 
-  const [user, setUser] = useState({});
+  const [user, setUser] = useState(null);
   const [currentStep, setCurrentStep] = useState("welcome");
 
   useEffect(() => {

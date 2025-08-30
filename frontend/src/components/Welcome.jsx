@@ -3,6 +3,8 @@ import './styles/Welcome.css';
 import {gsap} from "gsap";
 import {ScrollTrigger } from "gsap/ScrollTrigger";
 import React, { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
+
 import img1 from "../assets/rhodes.png";
 import img2 from "../assets/stel.png";
 import img3 from "../assets/uct.png";
@@ -18,7 +20,6 @@ import img12 from "../assets/cput.png";
 import img13 from "../assets/VUT.png";
 import img14 from "../assets/msa.png";
 import logo from "../assets/logo.svg";
-import { useNavigate } from "react-router-dom";
 gsap.registerPlugin(ScrollTrigger);
 const cardData = [
   {
@@ -36,12 +37,13 @@ const cardData = [
 ];
 
 export function Welcome({ onStartRegistration }) {
+  const navigate= useNavigate();
+  
   const headingRef = useRef(null);
   const h3Ref = useRef(null);
   const fullText = "You're already juggling a lot.";
   const [displayedText, setDisplayedText] = useState("");
   const [hasTyped, setHasTyped] = useState(false);
-  const navigate= useNavigate();
 
   useEffect(() => {
     function onScroll() {

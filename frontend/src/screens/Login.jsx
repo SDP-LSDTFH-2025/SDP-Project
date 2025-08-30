@@ -26,6 +26,7 @@ function Login({ setUser }) {
       if (data.success) {
         console.log("logged in!");
         localStorage.setItem("user", JSON.stringify(data.data));
+       
         setUser(data.data);
         navigate("/home");
       } else {
@@ -68,7 +69,7 @@ function Login({ setUser }) {
         <div className="google-btn">
           <GoogleLogin
             onSuccess={handleLogin}
-            onError={() => console.log("Login failed")}
+            onError={() => alert(`Signin Failed + ${credentialResponse} `)}
           />
         </div>
 

@@ -8,6 +8,7 @@ const Study_groups = sequelize.define('study_groups',{
         primaryKey:true,
         allowNull:false,
         unique:true,
+        autoIncrement:true
     },
     name:{
         type:DataTypes.STRING,
@@ -15,26 +16,26 @@ const Study_groups = sequelize.define('study_groups',{
     },
     course_id:{
         type:DataTypes.INTEGER,
-        allowNull: false,
+        allowNull: true,
     },
-    creater_id:{
+    creator_id:{
         type:DataTypes.UUID,
         allowNull:false,
     },
     scheduled_time:{
         type:DataTypes.TIME,
-        allowNull:false,
+        allowNull:true,
     },
     location:{
         type:DataTypes.STRING,
-        allowNull:false
+        allowNull:true
     },
     disabled:{
         type:DataTypes.BOOLEAN,
         allowNull:false
     },
     created_at:{
-        type:DataTypes.TIME
+        type:DataTypes.DATE
     }
 },{
     tableName: "study_groups",

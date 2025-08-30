@@ -17,7 +17,6 @@ export default function App() {
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
-
     if (storedUser && !storedUser.includes("undefined")) {
       setUser(JSON.parse(storedUser));
     }

@@ -5,6 +5,8 @@ import {ScrollTrigger } from "gsap/ScrollTrigger";
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 
+import { useNavigate } from "react-router-dom";
+
 import img1 from "../assets/rhodes.png";
 import img2 from "../assets/stel.png";
 import img3 from "../assets/uct.png";
@@ -92,8 +94,8 @@ export function Welcome({ onStartRegistration }) {
         <span className="nav-brand">StudyBuddy</span>
       </div>
       <div className="nav-right">
-        <button className="nav-btn-outline" onClick={()=> navigate("/login")}>Log In</button>
-        <button className="nav-btn-filled" /*onClick={onStartRegistration}*/ onClick={()=> navigate("/signup")}>
+        <button className="nav-btn-outline" onClick={() => navigate("/login")} >Log In</button>
+        <button className="nav-btn-filled" /*onClick={onStartRegistration}*/ onClick={() =>navigate("/signup")} >
           Sign Up
         </button>
         
@@ -102,7 +104,7 @@ export function Welcome({ onStartRegistration }) {
         <section className="Hero">
             <h2>Why just study, when you can <span className="gradient-text">StudyBuddy ?</span></h2>
             <h3>Create a community, chat and discuss learning material, study, ace that test. Don't buffer, study smarter.</h3>
-            <button className="welcome-button" /*onClick={onStartRegistration}*/ onClick={()=> navigate("/signup")}>
+            <button className="welcome-button" /*onClick={onStartRegistration}*/ onClick={() =>navigate("/signup")}>
                 Get Started →
             </button>
             <section className="university-marquee">
@@ -262,7 +264,7 @@ export function Welcome({ onStartRegistration }) {
       </section>
 
       <div className="welcome-cta">
-        <button className="welcome-button" /*onClick={onStartRegistration}*/ onClick={()=> navigate("/signup")}>
+        <button className="welcome-button" /*onClick={onStartRegistration}*/ onClick={() =>navigate("/signup")} >
           Get Started
         </button>
       </div>

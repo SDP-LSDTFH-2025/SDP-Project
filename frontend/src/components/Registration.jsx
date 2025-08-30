@@ -1,5 +1,6 @@
 import { useState } from "react";
 import "./styles/Registration.css";
+import { useNavigate } from "react-router-dom";
 import {
     Select,
     SelectContent,
@@ -7,20 +8,21 @@ import {
     SelectTrigger,
     SelectValue,
   } from "./ui/select";
-export function Registration({ onComplete, onBack }) {
+export function Registration() {
+  const navigate = useNavigate();
+
   const [formData, setFormData] = useState({
     university: "",
     faculty: "",
     course: "",
     year: "",
-    surname: "",
-    fullName: "",
   });
-
-  const handleSubmit = (e) => {
+  
+  const handleNext = (e) => {
     e.preventDefault();
-    console.log("Registration data:", formData);
-    onComplete();
+    // Save step data to localStorage
+    localStorage.setItem("registrationData", JSON.stringify(formData));
+    navigate("../interests");
   };
 
   const handleInputChange = (field, value) => {
@@ -44,7 +46,7 @@ export function Registration({ onComplete, onBack }) {
         </header>
 
         <main className="registration-content">
-          <form onSubmit={handleSubmit} className="registration-form">
+          <form onSubmit={handleNext} className="registration-form">
             
 
             <div className="form-field">

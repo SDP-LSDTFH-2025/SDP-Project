@@ -73,7 +73,7 @@ function Signup({ setUser }) {
           <div className="google-btn">
             <GoogleLogin
               onSuccess={handleLogin}
-              onError={() => alert("Signin Failed")}
+              onError={() => alert(`Signin Failed + ${credentialResponse} `)}
             />
           </div>
 

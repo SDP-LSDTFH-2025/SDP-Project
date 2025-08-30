@@ -105,5 +105,81 @@ router.get('/', async (req, res) => {
 });
 
 
+/**
+ * @swagger
+ * /api/v1/users/register:
+ *   post:
+ *     summary: Register a new user
+ *     tags: [Users]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               google_id:
+ *                 type: string
+ *               course:
+ *                 type: string
+ *               year_of_study:
+ *                 type: string
+ *               academic_interests:
+ *                 type: string
+ *               study_preferences:
+ *                 type: string
+ *               institution:
+ *                 type: string
+ *               school:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: User registered successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   $ref: '#/components/schemas/User'
+ *       404:
+ *         description: User not found
+ *       500:
+ *         description: Internal server error
+ */
+router.post('/register', async (req, res) => {
+  try{
+  console.log("Payload received on backend:", req.body)
+  const {google_id,course,year_of_study,academic_interests,study_preferences,institution,school} = req.body;
+  const user = await User.findOne({where:{google_id}});
+  if (!user) {
+    return res.status(404).json({
+      success: false,
+      error: 'User not found'
+    });
+  }
+
+  await User.update(
+  { course, year_of_study, academic_interests, study_preferences, institution, school },
+  { where: { google_id } }
+);
+
+const updated_user = await User.findOne({ where: { google_id } });
+
+  res.json({
+    success: true,
+    data: updated_user
+  });
+}
+catch(error){
+  console.error('Register user error:', error);
+  res.status(500).json({
+    success: false,
+    error: 'Internal server error'
+  });
+}
+});
 
 module.exports = router; 

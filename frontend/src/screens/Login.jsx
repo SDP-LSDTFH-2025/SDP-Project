@@ -6,6 +6,35 @@ import "./Login.css";
 function Login({ setUser }) {
   const navigate = useNavigate();
 
+   async function handleLogin(credentialResponse){
+    try {
+      const SERVER = import.meta.env.VITE_PROD_SERVER || import.meta.env.VITE_DEV_SERVER ;
+      const token = credentialResponse.credential;
+
+      // Send token to backend for verification  /* this shall be changend to env*/
+      const res = await fetch(`${SERVER}/api/v1/auth/google/verify`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ access_token: token }),
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        console.log("logged in!");
+        localStorage.setItem("user", JSON.stringify(data.data));
+
+        setUser(data.data);
+        navigate("/home");
+      } else {
+        alert(data.success || "Authentication failed");
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+      alert("Something went wrong. Please try again.");
+    }
+  };
+
 
   async function handleLogin(credentialResponse) {
     try {
@@ -26,6 +55,7 @@ function Login({ setUser }) {
       if (data.success) {
         console.log("logged in!");
         localStorage.setItem("user", JSON.stringify(data.data));
+       
         setUser(data.data);
         navigate("/home");
       } else {
@@ -68,7 +98,7 @@ function Login({ setUser }) {
         <div className="google-btn">
           <GoogleLogin
             onSuccess={handleLogin}
-            onError={() => console.log("Login failed")}
+            onError={() => alert(`Signin Failed + ${credentialResponse} `)}
           />
         </div>
 

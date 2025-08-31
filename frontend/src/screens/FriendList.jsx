@@ -2,6 +2,9 @@ import React from "react";
 import "./FriendList.css";
 
 function FriendList({ friends }) {
+
+  // logic
+  
   return (
     <div className="study-buddies">
       <h3>Study Buddies</h3>

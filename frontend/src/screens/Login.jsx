@@ -50,7 +50,30 @@ function Login({ setUser }) {
   }
 
   async function handleManualLogin(){
-    
+    try{
+      const SERVER = import.meta.env.VITE_PROD_SERVER || import.meta.env.VITE_DEV_SERVER ;
+      const res = await fetch(`${SERVER}/api/v1/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({  }),
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        console.log("Signed up!");
+        localStorage.setItem("user", JSON.stringify(data.data));
+
+        setUser(data.data);
+        navigate("registration");
+      } else {
+        alert(data.success || "Authentication failed");
+      }
+
+    } catch (error) {
+      console.error("Sign up error:", error);
+      alert("Something went wrong. Please try again.");
+    }
   }
 
   return (
@@ -59,7 +82,7 @@ function Login({ setUser }) {
         <h1 className="logo">StudyBuddy</h1>
         <p className="subtitle">Welcome back! Sign in to your account</p>
 
-        <form className="login-form">
+        <form className="login-form" onSubmit={handleManualLogin}>
           <label>Email</label>
           <input type="email" placeholder="Enter your email" value={formData.email} onChange={(e) => HandleInputChange("email",e.target.value)}/>
 

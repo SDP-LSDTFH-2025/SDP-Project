@@ -1,8 +1,6 @@
 import React from "react";
 import "./Home.css";
 
-
-
 function Home({ user }){
   const logout = () => {
     localStorage.removeItem("user");

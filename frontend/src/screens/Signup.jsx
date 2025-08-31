@@ -6,7 +6,7 @@ import "./Signup.css";
 function Signup({ setUser }) {
   const navigate = useNavigate();
   const location = useLocation();
-  const isRoot = location.pathname === "/signup";
+  //const isRoot = location.pathname === "/signup";
 
   const [formData, setFormData] = useState({
     email: "",
@@ -78,9 +78,9 @@ function Signup({ setUser }) {
     }
   }
 
-  const isRegistering = location.pathname.endsWith("/registration");
+  /*const isRegistering = location.pathname.endsWith("/registration");
   const isInterests = location.pathname.endsWith("/interests");
-  const isSuccess = location.pathname.endsWith("/success");
+  const isSuccess = location.pathname.endsWith("/success");*/
 
   const isSignupRoot = location.pathname.endsWith("/signup") ||
   location.pathname === "/signup";

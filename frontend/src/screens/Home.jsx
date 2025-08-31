@@ -51,6 +51,12 @@ function Home({ user }) {
 				<Input className="search" placeholder="Search resources,friends,cources..."></Input>
 			
         <div className="nav-actions">
+		  <Button className="nav-button">
+			<Bell className="pics"></Bell>
+		  </Button>
+		  <Button className="nav-button">
+			<Settings className="pics"></Settings>
+		  </Button>
           <button className="nav-btn logout" onClick={logout}>Logout</button>
         </div>
       </nav>

@@ -55,7 +55,14 @@
     gap: 1rem; 
     align-items: center;
   }
-  
+  .nav-button{
+    width: 40px;
+    align-items: left;
+    border: 1px solid #e2e0e0;
+    border-radius: 0.5rem;
+    height: 35px;
+    background: #fff;
+  }
   /* Nav buttons */
   .nav-btn {
     padding: 8px 15px;

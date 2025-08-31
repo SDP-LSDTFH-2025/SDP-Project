@@ -7,13 +7,11 @@ const uploadRoutes = require('./upload');
 const notificationRoutes = require('./Notifications');
 const courseRoutes = require('./Courses');
 const userCourseRoutes = require('./UserCourses');
-<<<<<<< HEAD
+
 const Study_groupsRoutes = require('./Study_groups')
 const Follows_requests = require('./follows_requests');
-=======
-const Study_groupsRoutes = require('./Study_groups');
 const resourcesRoutes = require('./Resources')
->>>>>>> b9eb8d693c7c0a8ce646e0a49c287399e221450b
+
 // API Documentation
 /**
  * @swagger
@@ -64,4 +62,6 @@ router.use('/courses', courseRoutes);
 router.use('/user-courses', userCourseRoutes);
 router.use('/study_groups',Study_groupsRoutes);
 router.use('/friends',Follows_requests);
+router.use('/resources', resourcesRoutes);
+
 module.exports = router; 

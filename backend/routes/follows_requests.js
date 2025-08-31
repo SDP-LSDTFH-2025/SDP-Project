@@ -243,5 +243,83 @@ router.post('/request/response', async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /api/v1/followers:
+ *   post:
+ *     summary: Retrieve all followers of a given user
+ *     tags:
+ *       - Friends
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - token
+ *               - id
+ *             properties:
+ *               token:
+ *                 type: string
+ *                 description: Firebase JWT token
+ *                 example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+ *               id:
+ *                 type: string
+ *                 description: ID of the user whose followers are being retrieved
+ *                 example: 123
+ *     responses:
+ *       200:
+ *         description: Followers retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: successful
+ *                 followers:
+ *                   type: array
+ *                   description: List of followers
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: integer
+ *                         description: Record ID in the Follows table
+ *                       follower_id:
+ *                         type: integer
+ *                         description: ID of the follower
+ *                       followee_id:
+ *                         type: integer
+ *                         description: ID of the followee
+ *       400:
+ *         description: Token or user ID not provided
+ *       401:
+ *         description: Invalid Token
+ *       500:
+ *         description: Internal server error
+ */
 
+//retrieves all my followers
+router.post('/', async (req, res) => {
+    try {
+        const { token, id} = req.body;
+
+        if (!token||!id){
+            return errorClass.insufficientInfo(res);
+        }
+        if (!verifyToken.fireBaseToken(token, id)) {
+            return errorClass.errorRes('Invalid Token', res,401);
+        }
+        
+        const followers =await Follows.findAll({where:{followee_id:id}})
+        
+        res.status(200).json({ message: "successful", followers:followers });
+    } catch (error) {
+        errorClass.serverError(res);
+        console.log(error);
+    }
+});
 module.exports = router;

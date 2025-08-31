@@ -366,11 +366,167 @@ router.post('/leave',async(req,res)=>{
 
 router.get('/',async(req,res)=>{
     try{
-        const groups = await Study_groups.findAll({
-            attributes: { exclude: ['creator_id','disabled'] }
-            });
+        const groups = await Study_groups.findAll();
 
         res.status(200).json({message:"Successfully fetched all the groups", groups:groups});
+    }
+    catch(error){
+        errorClass.serverError(res);
+        console.log(error);
+    }
+})
+
+/**
+ * @swagger
+ * /byID/{id}:
+ *   get:
+ *     summary: Get a study group by ID
+ *     description: Fetches the details of a study group by its unique identifier.
+ *     tags:
+ *       - Groups
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: The unique ID of the study group to fetch
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Successfully fetched the specified group
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Successfully fetched the specified group
+ *                 group:
+ *                   type: object
+ *                   description: The study group object without `creator_id` and `disabled`
+ *       400:
+ *         description: Invalid request (e.g. malformed ID)
+ *       404:
+ *         description: Group not found
+ *       500:
+ *         description: Internal server error
+ */
+
+router.get('/byID/:id',async(req,res)=>{
+    try{
+        const id = req.params.id;
+        const group = await Study_groups.findOne({
+            attributes: { exclude: ['creator_id','disabled'] },
+            where:{id:id}
+            });
+
+        res.status(200).json({message:"Successfully fetched the specified group", group:group});
+    }
+    catch(error){
+        errorClass.serverError(res);
+        console.log(error);
+    }
+})
+/**
+ * @swagger
+ * /byName/{name}:
+ *   get:
+ *     summary: Get a study group by name
+ *     description: Fetches the details of a study group by its unique name.
+ *     tags:
+ *       - Groups
+ *     parameters:
+ *       - in: path
+ *         name: name
+ *         required: true
+ *         description: The name of the study group to fetch
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Successfully fetched the specified group
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Successfully fetched the specified group
+ *                 group:
+ *                   type: object
+ *                   description: The study group object without `creator_id` and `disabled`
+ *       400:
+ *         description: Invalid request (e.g. missing or malformed name)
+ *       404:
+ *         description: Group not found
+ *       500:
+ *         description: Internal server error
+ */
+
+router.get('/byName/:name',async(req,res)=>{
+    try{
+        const name = req.params.name;
+        const group = await Study_groups.findOne({
+            attributes: { exclude: ['creator_id','disabled'] },
+            where:{name:name}
+            });
+
+        res.status(200).json({message:"Successfully fetched the specified group", group:group});
+    }
+    catch(error){
+        errorClass.serverError(res);
+        console.log(error);
+    }
+})
+
+/**
+ * @swagger
+ * /byCreator/{creatorID}:
+ *   get:
+ *     summary: Get a study group by creator ID
+ *     description: Fetches the details of a study group created by a specific user.
+ *     tags:
+ *       - Groups
+ *     parameters:
+ *       - in: path
+ *         name: creatorID
+ *         required: true
+ *         description: The unique ID of the creator whose study group should be fetched
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Successfully fetched the specified group
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Successfully fetched the specified group
+ *                 group:
+ *                   type: object
+ *                   description: The study group object without `creator_id` and `disabled`
+ *       400:
+ *         description: Invalid request (e.g. missing or malformed creatorID)
+ *       404:
+ *         description: Group not found
+ *       500:
+ *         description: Internal server error
+ */
+
+router.get('/byCreator/:creatorID',async(req,res)=>{
+    try{
+        const creatorID = req.params.creatorID;
+        const group = await Study_groups.findOne({
+            attributes: { exclude: ['creator_id','disabled'] },
+            where:{creator_id:creatorID}
+            });
+
+        res.status(200).json({message:"Successfully fetched the specified group", group:group});
     }
     catch(error){
         errorClass.serverError(res);

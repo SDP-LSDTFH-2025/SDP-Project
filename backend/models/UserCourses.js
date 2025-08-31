@@ -1,6 +1,6 @@
 const { DataTypes } = require('sequelize');
 const { sequelize } = require('../config/database');
-
+const { v4: uuidv4 } = require('uuid');
 const UserCourses = sequelize.define('UserCourses', {
   id: {
     type: DataTypes.INTEGER,
@@ -8,7 +8,7 @@ const UserCourses = sequelize.define('UserCourses', {
     autoIncrement: true
   },
   user_id: {
-    type: DataTypes.STRING,    
+    type: DataTypes.UUID,    
     allowNull: false
   },
   course_id: {

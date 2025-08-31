@@ -1,6 +1,6 @@
 const { sequelize } = require('../config/database');
 const { DataTypes } = require('sequelize');
-
+const { v4: uuidv4 } = require('uuid');
 const PrivateChats = sequelize.define('PrivateChats', {
     id: {
         type: DataTypes.INTEGER,
@@ -8,11 +8,11 @@ const PrivateChats = sequelize.define('PrivateChats', {
         autoIncrement: true
     },
     sender_id: {
-        type: DataTypes.STRING,
+        type: DataTypes.UUID,
         allowNull: false
     },
     receiver_id: {
-        type: DataTypes.STRING,
+        type: DataTypes.UUID,
         allowNull: false
     },
     message: {

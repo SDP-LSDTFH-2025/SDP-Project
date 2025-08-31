@@ -1,13 +1,14 @@
 const { sequelize } = require("../config/database");
 const { DataTypes } = require("sequelize");
+const { v4: uuidv4 } = require('uuid');
 
-
-const Study_groups = sequelize.define('Study_groups',{
+const Study_groups = sequelize.define('study_groups',{
     id:{
         type:DataTypes.INTEGER,
         primaryKey:true,
         allowNull:false,
         unique:true,
+        autoIncrement:true
     },
     name:{
         type:DataTypes.STRING,
@@ -15,30 +16,33 @@ const Study_groups = sequelize.define('Study_groups',{
     },
     course_id:{
         type:DataTypes.INTEGER,
-        allowNull: false,
+        allowNull: true,
     },
-    creater_id:{
-        type:DataTypes.INTEGER,
+    creator_id:{
+        type:DataTypes.UUID,
         allowNull:false,
     },
     scheduled_time:{
-        type:DataTypes.TIME,
-        allowNull:false,
+        type:DataTypes.DATE,
+        allowNull:true,
     },
     location:{
         type:DataTypes.STRING,
-        allowNull:false
+        allowNull:true
     },
     disabled:{
         type:DataTypes.BOOLEAN,
-        allowNull:false
+        allowNull:false,
+        defaultValue: false
     },
     created_at:{
-        type:DataTypes.TIME
+        type:DataTypes.DATE,
+        allowNull: false,
+        defaultValue: DataTypes.NOW
     }
 },{
-    tableName: "Study_groups",
+    tableName: "study_groups",
     timestamps:false
 })
 
-module.exports = Study_groups
+module.exports = Study_groups;

@@ -1,7 +1,7 @@
 const { sequelize } = require("../config/database");
 const { DataTypes } = require("sequelize");
-
-const Progress = sequelize.define('Progress', {
+const { v4: uuidv4 } = require('uuid');
+const Progress = sequelize.define('progress', {
     id: {
         type: DataTypes.INTEGER,
         primaryKey: true,
@@ -9,7 +9,7 @@ const Progress = sequelize.define('Progress', {
         unique: true,
     },
     user_id: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.UUID,
         allowNull: false,
     },
     topic: {
@@ -29,7 +29,7 @@ const Progress = sequelize.define('Progress', {
         allowNull: false,
     }
 }, {
-    tableName: "Progress",
+    tableName: "progress",
     timestamps: false
 });
 

@@ -1,8 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const { UserCourses } = require('../models');
+const { UserCourses,Courses } = require('../models');
 const { Op } = require('sequelize');
-const { Courses } = require('../models');
+
 
 /**
  * @swagger
@@ -86,6 +86,15 @@ router.post('/enroll', async (req, res) => {
         error: 'user_id and course_id are required'
       });
     }
+    const course = await Courses.findOne({
+      where: { id: course_id }
+    });
+    if (!course) {
+      return res.status(400).json({
+        success: false,
+        error: 'Course not found'
+      });
+    }
     
     // Validate course_id is a number
     const parsedCourseId = parseInt(course_id);
@@ -104,7 +113,7 @@ router.post('/enroll', async (req, res) => {
     if (existingEnrollment) {
       return res.status(409).json({
         success: false,
-        error: 'User is already enrolled in this course'
+        error: 'You are already enrolled in this course'
       });
     }
     

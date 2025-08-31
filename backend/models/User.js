@@ -1,12 +1,18 @@
 const { DataTypes } = require('sequelize');
 const { sequelize } = require('../config/database');
-
+const { v4: uuidv4 } = require('uuid');
 
 const User = sequelize.define('User', {
+  id: {
+    type: DataTypes.UUID,
+    primaryKey: true,
+    allowNull: false,
+    unique: true,
+    defaultValue: () => uuidv4()
+  },
 
   google_id: {
     type: DataTypes.STRING,
-    primaryKey: true,
     allowNull: false,
     unique: true,
   },
@@ -15,7 +21,6 @@ const User = sequelize.define('User', {
     allowNull: false,
     unique: true,
   },
- 
   is_active: {
     type: DataTypes.BOOLEAN,
     defaultValue: true

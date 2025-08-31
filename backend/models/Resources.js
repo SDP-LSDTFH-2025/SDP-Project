@@ -2,7 +2,7 @@
     schema. */}
 
 const {DataTypes} = require('sequelize');
-
+const { v4: uuidv4 } = require('uuid');
 const {sequelize} = require("../config/database");
 
 const Resources = sequelize.define('Resources',{
@@ -44,8 +44,8 @@ const Resources = sequelize.define('Resources',{
     allowNull:false
 
  },
- upload_id: {
-    type:DataTypes.INTEGER,
+ user_id: {
+    type:DataTypes.UUID,
     allowNull:false
  },
  course_id: {
@@ -54,15 +54,13 @@ const Resources = sequelize.define('Resources',{
  },
  
  created_at: {
-    type:DataTypes.TIME,
+    type:DataTypes.DATE,
     allowNull:false,
     defaultValue:DataTypes.NOW
  }
 },{
     tableName: "resources",
-    timestamps:true,
-    createdAt: 'created_at',
-    updatedAt: false
+    timestamps: false
 });
 
 module.exports = Resources;

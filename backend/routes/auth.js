@@ -5,6 +5,8 @@ const { enhancedAuth} = require('../middleware/security');
 const router = express.Router();
 const { OAuth2Client } = require('google-auth-library');
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+const {errorClass, isValidEmail} = require('../middleware/tools');
+
 
 /**
  * @swagger
@@ -74,7 +76,7 @@ router.post('/google/verify', async (req, res) => {
     }
 
     const googleUser = payload;
-    console.log(googleUser);
+   // console.log(googleUser);
     
     // Find or create user in database
     let user = await User.findOne({
@@ -221,5 +223,222 @@ router.post('/logout', async (req, res) => {
     });
   }
 });
+
+
+//Manual signing in routes:
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * @swagger
+ * /api/v1/auth/signIn:
+ *   post:
+ *     summary: Creates a new user, returns a message and a token
+ *     tags:
+ *       - Manual Authentication
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 description: User's email address
+ *               password:
+ *                 type: string
+ *                 description: User's password
+ *               username:
+ *                 type: string
+ *                 description: User's username (optional)
+ *     responses:
+ *       200:
+ *         description: User created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 token:
+ *                   type: string
+ *                   description: JWT token
+ *                   example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+ *                 id:
+ *                   type: uuid
+ *                   description: user identification
+ *       400:
+ *         description: Email or password not provided
+ *       500:
+ *         description: Internal server error
+ */
+
+
+const { getAuth, createUserWithEmailAndPassword,signInWithEmailAndPassword  } = require("firebase/auth");
+const {firebaseConfig,app} = require('../config/fireBase');//looks like it isnt being used, but it is not the case. so don't removed them
+
+
+
+router.post('/signIn', async (req, res) => {
+    try{
+        //checking the availability of the request body
+        if (!req.body){
+            return errorClass.insufficientInfo(res);
+        }
+        let {email,password} = req.body;
+
+        //check for validty of user details
+        if (!email || !password){
+            return errorClass.insufficientInfo(res);
+        }
+        if (!isValidEmail(email)){
+              return errorClass.errorRes('invalid email syntax',res);
+          }
+
+        //for null username
+        let username='';
+        for (let i=0; i<email.length; i++){
+          if (email[i]=='@'){break}
+          username += email[i];
+        }
+
+        //sign up the user
+        const auth = getAuth();
+        createUserWithEmailAndPassword(auth, email, password)
+          .then(async(userCredential) => {
+            const user = userCredential.user;
+
+          //save user info to database
+          const endUser = await User.create({
+            google_id: user.uid,
+            username: username,
+            is_active: true,
+            last_login:new Date()
+          });
+          //generate token for more control
+          const Token = jwt.sign(
+              { id: endUser.id},
+              process.env.JWT_SECRET,
+              { expiresIn: '7d' }
+          );
+          res.status(200).json({message:'successful operation',token:Token,id:endUser.id});
+          console.log('user created successfully');
+          })
+          .catch((error) => {
+            const errorMessage = error.message;
+            errorClass.errorRes(errorMessage,res);
+          }); 
+        
+    }
+    catch(error){
+        errorClass.serverError(res);
+        console.log(error);
+    }
+});
+
+/**
+ * @swagger
+ * /api/v1/auth/logIn:
+ *   post:
+ *     summary: checks if user exists, if true then return a token
+ *     tags: [Manual Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - password
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 description: User's email address (provide either email or username)
+ *               username:
+ *                 type: string
+ *                 description: User's username (provide either email or username)
+ *               password:
+ *                 type: string
+ *                 description: User's password
+ *     responses:
+ *       200:
+ *         description: User exists, token returned
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 token:
+ *                   type: string
+ *                   description: JWT token
+ *                   example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+ *                 id:
+ *                   type: uuid
+ *                   description: user identification
+ *       400:
+ *         description: email/password not provided or invalid email
+ *       500:
+ *         description: Internal server error
+ */
+
+router.post('/logIn',async (req, res) => {
+    try{
+        //checking the availability of the request body
+        if (!req.body){
+            return errorClass.insufficientInfo(res);
+        }
+        const {email,password,username} = req.body;
+
+        //check for validty of user details
+        if (!email || !password){
+            return errorClass.insufficientInfo(res);
+        }
+        if (!isValidEmail(email)){
+              return errorClass.errorRes('invalid email syntax',res);
+          }
+
+        //sign up the user
+        const auth = getAuth();
+        signInWithEmailAndPassword(auth, email, password)
+          .then(async(userCredential) => {
+            const user = userCredential.user;
+
+            //check user existance;
+            const existance = await User.findOne({where:{google_id:user.uid}});
+            if (!existance){
+              return errorClass.errorRes('User does not exist',res);
+            }
+       
+            //generate token for more control
+            const Token = jwt.sign(
+                { id: existance.id},
+                process.env.JWT_SECRET,
+                { expiresIn: '7d' }
+            );
+            res.status(200).json({message:'successful operation',token:Token,id:existance.id});
+            console.log('user logged in successfully');
+          })
+          .catch((error) => {
+            const errorCode = error.code;
+            const errorMessage = error.message;
+
+            console.log(errorCode,errorMessage);
+            errorClass.errorRes(errorMessage,res);
+          }); 
+        
+    }
+    catch(error){
+      console.log('server says:\n\n\n')
+        errorClass.serverError(res);
+    }
+});
+
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
 
 module.exports = router; 

@@ -7,6 +7,7 @@ function Login({ setUser }) {
 
    async function handleLogin(credentialResponse){
     try {
+      const SERVER = import.meta.env.VITE_PROD_SERVER || import.meta.env.VITE_DEV_SERVER ;
       const token = credentialResponse.credential;
       const SERVER = import.meta.env.VITE_PROD_SERVER || import.meta.env.VITE_DEV_SERVER ;
 

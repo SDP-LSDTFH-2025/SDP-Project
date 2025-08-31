@@ -24,12 +24,6 @@
   .navigation .search{
     max-width: 400px;
   }
-  .inputsearch{
-    width:90%;
-    border:none;
-    font-size: 0.8rem;
-    
-  }
   .search{
     display:flex;
     flex: 1;
@@ -123,7 +117,8 @@
     border-radius: 0.8rem;
     overflow: hidden; 
     border: 1px solid var(--border);
-    padding: 16px;;
+    padding: 16px;
+    min-width: 88%;
   }
   .filters{
     color:#666;
@@ -148,9 +143,7 @@
     gap:0.8rem;
     justify-items: left;
   }
-  .filtersearch .search{
-    width:72%;
-  }
+  
   .badges{
     border: 1px solid var(--border);
     border-radius: 0.6rem;

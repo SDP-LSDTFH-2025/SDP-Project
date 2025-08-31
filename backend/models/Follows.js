@@ -20,6 +20,7 @@ const Follows = sequelize.define('follows', {
     created_at: {
         type: DataTypes.DATE,
         allowNull: false,
+        defaultValue: DataTypes.NOW
     }
 }, {
     tableName: "follows",

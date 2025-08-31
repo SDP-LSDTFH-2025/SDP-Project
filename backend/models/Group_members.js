@@ -20,6 +20,7 @@ const Group_members = sequelize.define('group_members', {
     joined_at: {
         type: DataTypes.DATE,
         allowNull: false,
+        defaultValue: DataTypes.NOW
     }
 }, {
     tableName: "group_members",

@@ -141,8 +141,12 @@ async function startServer() {
     // Test database connection
     await sequelize.authenticate();
     console.log('✅ Database connection established successfully.');
+<<<<<<< HEAD
     //await sequelize.sync({alter:true}); Server is too slow to start
     sequelize.sync();
+=======
+    //await sequelize.sync({alter:true});
+>>>>>>> b9eb8d693c7c0a8ce646e0a49c287399e221450b
     console.log('✅ Database synchronized successfully.');
     // Start server
     app.listen(PORT, () => {

@@ -4,7 +4,7 @@ const multer = require('multer');
 const crypto = require('crypto');
 const { validate: isUUID } = require('uuid');
 const CloudinaryService = require('../services/cloudinaryService');
-const { Resources, User } = require('../models/Resources');
+const { Resources, User } = require('../models');
 const { Op } = require('sequelize');
 
 // Configure multer for file uploads
@@ -238,6 +238,40 @@ router.post('/resources', upload.fields([{ name: 'file', maxCount: 1 }, { name: 
         res.json({ success: true, data: resource });
     } catch (error) {
         console.error('Resource creation failed:', error);
+        res.status(500).json({ success: false, error: 'Internal server error' });
+    }
+});
+
+/**
+ * @swagger
+ * /api/v1/resources/all:
+ *   get:
+ *     summary: Get all resources
+ *     tags: [Resources]
+ *     responses:
+ *       200:
+ *         description: List of all resources
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Resource'
+ *       500:
+ *         description: Internal server error
+ *        
+ */
+router.get('/all', async (req, res) => {
+    try{
+    const resources = await Resources.findAll();
+    res.json({ success: true, data: resources });
+    } catch (error) {
+        console.error('Get all resources error:', error);
         res.status(500).json({ success: false, error: 'Internal server error' });
     }
 });

@@ -7,6 +7,7 @@ const Follows = sequelize.define('follows', {
         primaryKey: true,
         allowNull: false,
         unique: true,
+        autoIncrement:true
     },
     follower_id: {
         type: DataTypes.UUID,

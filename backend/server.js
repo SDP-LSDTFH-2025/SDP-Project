@@ -142,7 +142,7 @@ async function startServer() {
     await sequelize.authenticate();
     console.log('✅ Database connection established successfully.');
     //await sequelize.sync({alter:true}); Server is too slow to start
-    sequelize.sync();
+   // sequelize.sync();
 
     console.log('✅ Database synchronized successfully.');
     // Start server
@@ -150,6 +150,7 @@ async function startServer() {
       
       console.log(`🚀 Server is running on port ${PORT}`);
       console.log(`📚 API Documentation available at: http://localhost:${PORT}/api-docs`);
+
     
     });
 

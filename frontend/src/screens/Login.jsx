@@ -19,6 +19,7 @@ function Login({ setUser }) {
   const isFormValid = formData.email && formData.password;
 
 
+
   async function handleLogin(credentialResponse) {
     try {
       const SERVER = import.meta.env.VITE_PROD_SERVER || import.meta.env.VITE_DEV_SERVER ;
@@ -110,7 +111,7 @@ function Login({ setUser }) {
         <div className="google-btn">
           <GoogleLogin
             onSuccess={handleLogin}
-            onError={() => console.log("Login failed")}
+            onError={() => alert(`Signin Failed + ${credentialResponse} `)}
           />
         </div>
 

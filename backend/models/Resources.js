@@ -54,13 +54,15 @@ const Resources = sequelize.define('Resources',{
  },
  
  created_at: {
-    type:DataTypes.DATE,
+    type:DataTypes.TIME,
     allowNull:false,
     defaultValue:DataTypes.NOW
  }
 },{
     tableName: "resources",
-    timestamps: false
+    timestamps:true,
+    createdAt: 'created_at',
+    updatedAt: false
 });
 
 module.exports = Resources;

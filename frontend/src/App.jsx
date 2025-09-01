@@ -7,7 +7,9 @@ import { Interests } from "./components/Interests.jsx";
 import { Success } from "./components/Success.jsx";
 
 export default function App() {
+
   const [user, setUser] = useState(null);
+  const [currentStep, setCurrentStep] = useState("welcome");
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
@@ -50,7 +52,7 @@ export default function App() {
         /* Home route - only for logged-in users */
         <Route
           path="/home"
-          element={user?.google_id ? <Home user={user} /> : <Navigate to="/login" />}
+          element={user?.google_id ? <Home user={user} /> : <Navigate to="/welcome" />}
         />
 
         /* Registration steps */

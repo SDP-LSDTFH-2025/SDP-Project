@@ -20,7 +20,6 @@ import img12 from "../assets/cput.png";
 import img13 from "../assets/VUT.png";
 import img14 from "../assets/msa.png";
 import logo from "../assets/logo.svg";
-
 gsap.registerPlugin(ScrollTrigger);
 const cardData = [
   {
@@ -37,15 +36,14 @@ const cardData = [
   }
 ];
 
-export function Welcome() {
-  const navigate = useNavigate();
-
+export function Welcome({ onStartRegistration }) {
+  const navigate= useNavigate();
+  
   const headingRef = useRef(null);
   const h3Ref = useRef(null);
   const fullText = "You're already juggling a lot.";
   const [displayedText, setDisplayedText] = useState("");
   const [hasTyped, setHasTyped] = useState(false);
-
 
   useEffect(() => {
     function onScroll() {
@@ -94,8 +92,8 @@ export function Welcome() {
         <span className="nav-brand">StudyBuddy</span>
       </div>
       <div className="nav-right">
-        <button className="nav-btn-outline" onClick={()=> navigate("/login")}>Log In</button>
-        <button className="nav-btn-filled" /*onClick={onStartRegistration}*/ onClick={()=> navigate("/signup")}>
+        <button className="nav-btn-outline" onClick={() => navigate("/login")} >Log In</button>
+        <button className="nav-btn-filled" /*onClick={onStartRegistration}*/ onClick={() =>navigate("/signup")} >
           Sign Up
         </button>
         
@@ -104,7 +102,7 @@ export function Welcome() {
         <section className="Hero">
             <h2>Why just study, when you can <span className="gradient-text">StudyBuddy ?</span></h2>
             <h3>Create a community, chat and discuss learning material, study, ace that test. Don't buffer, study smarter.</h3>
-            <button className="welcome-button" /*onClick={onStartRegistration}*/ onClick={()=> navigate("/signup")}>
+            <button className="welcome-button" /*onClick={onStartRegistration}*/ onClick={() =>navigate("/signup")}>
                 Get Started →
             </button>
             <section className="university-marquee">
@@ -264,7 +262,7 @@ export function Welcome() {
       </section>
 
       <div className="welcome-cta">
-        <button className="welcome-button" /*onClick={onStartRegistration}*/ onClick={()=> navigate("/signup")}>
+        <button className="welcome-button" /*onClick={onStartRegistration}*/ onClick={() =>navigate("/signup")} >
           Get Started
         </button>
       </div>

@@ -20,7 +20,9 @@ const Resource_tags = sequelize.define('Resource_tags',{
 
 },{
     tableName:"resource_tags",
-    timestamps: false
+    timestamps:true,
+    createdAt:'created_at',
+    updatedAt:false
 });
 
 module.exports = Resource_tags;

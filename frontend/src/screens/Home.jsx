@@ -1,93 +1,211 @@
-import React from "react";
+import React, { useEffect,useState,useRef } from "react";
+import { getAllUsers } from "../functions/users";
+import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
+import {Button} from "../components/ui/button";
+import {Input} from "../components/ui/input";
+import {Badge} from "../components/ui/badge";
+import { 
+	Search, 
+	Users, 
+	BookOpen, 
+	MessageSquare, 
+	UserPlus, 
+	Upload,
+	Heart,
+	Share2,
+	MessageCircle,
+	Filter,
+	Bell,
+	Settings
+  } from "lucide-react";
+import {DragAndDropArea} from "./DragAndDrop.jsx";
 import "./Home.css";
+{/*installed:
+  1.npm install lucide-react (svg)*/ }
+function Home({ user }) {
+  const [activeView, setActiveView] = useState("feed");
+  const fileInputRef = useRef(null); 
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        await getAllUsers();
+      } catch (error) {
+        console.error("Error in component:", error.message);
+      }
+    };
+    fetchUsers();
+  }, []);
 
-function Home({ user }){
   const logout = () => {
     localStorage.removeItem("user");
     window.location.reload();
   };
+
   const friends = user?.friends || [];
   const groups = user?.groups || [];
   const resources = user?.resources || [];
+
+  const handleNavigationClick = (view) => { 
+		setActiveView(view); 
+	};
+  const handleUploadClick = () => {
+    // Programmatically click the hidden file input
+    fileInputRef.current?.click();
+  };
+
+  const handleFileSelect = (event) => {
+    const files = event.target.files;
+    if (files && files.length > 0) {
+      // Switch to upload view and pass the selected files
+      setActiveView("upload");
+      // You can also pass the files to the upload view if needed
+      console.log('Files selected:', files);
+    }
+  };
   return (
-
-    <main className="dashboard">
-      {/* Navigation (left sidebar) */}
-      <aside className="sidebar">
-        <h2>Navigation</h2>
-        <ul>
-          <li>Resource Feed</li>
-          <li>Study Groups</li>
-          <li>Friend Requests</li>
-          <li>Upload Resource</li>
-        </ul>
-      </aside>
-
-
-      {/* Resource feed (center) */}
-      <section className="resources">
-        <h2>Share a Resource</h2>
-        <button className="upload-btn">Upload</button>
-        <input placeholder="What would you like to share?" />
-
-        {resources.length > 0 ? (
-          resources.map((res, i) => (
-            <div key={i} className="resource-card">
-              <h3>{res.title}</h3>
-              <p>{res.description}</p>
-            </div>
-          ))
-        ) : (
-          <p className="empty-text">No resources posted yet.</p>
-        )}
-      </section>
-
-      {/* Right sidebar */}
-      <aside className="rightbar">
-        {/* Study buddies */}
-        <div className="study-buddies">
-          <h3>Study Buddies</h3>
-          {friends.length > 0 ? (
-            friends.map((f, i) => (
-              <p key={i}>
-                {f.name} – {f.status}
-              </p>
-            ))
-          ) : (
-            <p className="empty-text">No friends yet.</p>
-          )}
+    <div className="home-container">
+      {/* Top Navigation Bar */}
+      <nav className="navigation">
+	  
+        <h1 className="logo">StudyBuddy</h1>
+			
+				<Input className="search" placeholder="Search resources,friends,cources..."></Input>
+			
+        <div className="nav-actions">
+		  <Button className="nav-button">
+			<Bell className="pics"></Bell>
+		  </Button>
+		  <Button className="nav-button">
+			<Settings className="pics"></Settings>
+		  </Button>
+          <button className="nav-btn logout" onClick={logout}>Logout</button>
         </div>
+      </nav>
 
-        {/* Active study groups */}
-        <div className="study-groups">
-          <h3>Active Study Groups</h3>
-          {groups.length > 0 ? (
-            groups.map((g, i) => (
-              <p key={i}>
-                {g.name} ({g.online} online)
-              </p>
-            ))
-          ) : (
-            <p className="empty-text">No groups yet.</p>
-          )}
-        </div>
-      </aside>
-      <section>
-        <button
-          onClick={logout}
-          style={{
-            color: "red",
-            border: "1px solid gray",
-            backgroundColor: "white",
-            padding: "0.5rem 1rem",
-            cursor: "pointer",
-          }}
-        >
-          Logout
-        </button>
-      </section>
-    </main>
+      <main className="dashboard">
+        {/* Sidebar Navigation */}
+        <aside className="sidebar">
+			<div className="navigate">
+			<Card className="shadow-card">
+			<CardHeader>
+				<CardTitle className="title">Navigation</CardTitle>
+			</CardHeader>
+			<CardContent>
+				<Button className={`buttons ${activeView === "feed" ? "active" : ""}`} 
+									onClick={() => handleNavigationClick("feed")}>
+					<BookOpen className="pics" />
+						Resource Feed
+				</Button>
+				<Button className="buttons">
+					<Users className="pics" />
+						Study Groups
+				</Button>
+				<Button className="buttons">
+					<UserPlus className="pics" />
+						Friend Requests
+				</Button>
+				<Button className={`buttons ${activeView === "upload" ? "active" : ""}`} 
+									onClick={() => handleNavigationClick("upload")}>
+					<Upload className="pics" />
+						Upload Resource
+				</Button>
+			</CardContent>
+			</Card>
+			</div>
+
+			<div className="filtersearch">
+				<Card className="shadow-card">
+				<CardHeader>
+					<CardTitle className="title">
+						<Filter className="pics"/>
+							Filters
+					</CardTitle>
+				</CardHeader>
+				<CardContent>
+					<div >
+					<label className="filters">Course</label>
+					<Input className="search" placeholder="Enter course code" />
+					</div>
+					<div>
+					<label className="filters">School</label>
+					<Input className="search" placeholder="Enter school name"  />
+					</div>
+					<div className="filter-badges">
+						<Badge className="badges" variant="outline">Mathematics</Badge>
+						<Badge className="badges" variant="outline">Chemistry</Badge>
+						<Badge className="badges" variant="outline">Physics</Badge>
+					</div>
+				</CardContent>
+				</Card>
+			</div>
+        </aside>
+			
+        {/* Resource feed (center) */}
+        <section className="resources">
+          <div className="col-span-6"> 
+            {activeView === "feed" && ( <div className="share-card"> 
+              <h2>Share a thought...</h2> 
+              <Input className="search" placeholder="What would you like to share with your buddies?" /> 
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileSelect}
+                className="hidden-file-input"
+                multiple
+                accept=".jpg,.jpeg,.png,.gif,.bmp,.webp"
+              />
+              
+              <Button className="upload-btn" onClick={handleUploadClick}> 
+                <Upload className="pics" /> Upload 
+              </Button> 
+                </div> 
+              )} 
+              {activeView === "upload" && ( <div id="Uploads" className="share-card"> 
+                <h2>Upload Study Resource</h2> 
+                <Input className="search" placeholder="Resource title" /> 
+                <Input className="search" placeholder="Course Code" /> 
+                <Input className="search" placeholder="Description" /> 
+                <DragAndDropArea onFilesSelected={(files) => { 
+                  console.log('Files ready for upload:', files); 
+                  }} /> 
+                  </div> 
+                )}
+              </div> 
+          </section>
+        {/* Right Sidebar */}
+        <aside className="rightbar">
+          <div className="study-buddies">
+            <h3 className="buddies">
+				<MessageSquare className="pics"/>
+					Study Buddies
+			</h3>
+            {friends.length > 0 ? (
+              friends.map((f, i) => (
+                <p key={i}>
+                  {f.name} – {f.status}
+                </p>
+              ))
+            ) : (
+              <p className="empty-text">No friends yet.</p>
+            )}
+          </div>
+
+          <div className="study-groups">
+            <h3>Active Study Groups</h3>
+            {groups.length > 0 ? (
+              groups.map((g, i) => (
+                <p key={i}>
+                  {g.name} ({g.online} online)
+                </p>
+              ))
+            ) : (
+              <p className="empty-text">No groups yet.</p>
+            )}
+          </div>
+        </aside>
+      </main>
+    </div>
   );
-};
+}
 
 export default Home;

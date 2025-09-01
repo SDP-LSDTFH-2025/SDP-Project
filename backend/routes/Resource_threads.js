@@ -66,7 +66,7 @@ const { Op } = require('sequelize');
  *       500:
  *         description: Internal server error
  */
-router.post('/resource_thread', async (req, res) => {
+router.post('/', async (req, res) => {
     const { user_id, resource_id, message, parent_id } = req.body;
 
     try {
@@ -106,7 +106,7 @@ router.post('/resource_thread', async (req, res) => {
 
 /**
  * @swagger
- * /api/v1/resource_thread:
+ * /api/v1/resource_thread/:
  *   get:
  *     summary: Get resource threads by message
  *     tags: [ResourceThreads]
@@ -149,7 +149,7 @@ router.post('/resource_thread', async (req, res) => {
  *       500:
  *         description: Internal server error
  */
-router.get('/resource_thread', async (req, res) => {
+router.get('/', async (req, res) => {
     try {
         const { message } = req.query;
         const where = message ? { message: { [Op.iLike]: `%${message}%` } } : {};
@@ -163,7 +163,7 @@ router.get('/resource_thread', async (req, res) => {
 
 /**
  * @swagger
- * /api/v1/resource_thread/{id}:
+ * /api/v1/resource_thread/:{id}:
  *   put:
  *     summary: Update a resource thread by ID
  *     tags: [ResourceThreads]
@@ -193,7 +193,7 @@ router.get('/resource_thread', async (req, res) => {
  *       500:
  *         description: Internal server error
  */
-router.put('/resource_thread/:id', async (req, res) => {
+router.put('/:id', async (req, res) => {
     const { message } = req.body;
 
     try {
@@ -218,7 +218,7 @@ router.put('/resource_thread/:id', async (req, res) => {
 
 /**
  * @swagger
- * /api/v1/resource_thread/{id}:
+ * /api/v1/resource_thread/:{id}:
  *   delete:
  *     summary: Delete a resource thread by ID
  *     tags: [ResourceThreads]
@@ -237,7 +237,7 @@ router.put('/resource_thread/:id', async (req, res) => {
  *       500:
  *         description: Internal server error
  */
-router.delete('/resource_thread/:id', async (req, res) => {
+router.delete('/:id', async (req, res) => {
     try {
         const resource_thread = await Resource_threads.findByPk(req.params.id);
         if (!resource_thread) {

@@ -23,12 +23,10 @@ const Group_chats = sequelize.define('group_chats', {
     deleted: {
         type: DataTypes.BOOLEAN,
         allowNull: false,
-        defaultValue: false
     },
     created_at: {
         type: DataTypes.DATE,
         allowNull: false,
-        defaultValue: DataTypes.NOW
     }
 }, {
     tableName: "group_chats",

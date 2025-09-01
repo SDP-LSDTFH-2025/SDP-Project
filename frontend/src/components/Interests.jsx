@@ -75,6 +75,8 @@ export function Interests({ user }) {
 
     try {
       const SERVER = import.meta.env.VITE_PROD_SERVER || import.meta.env.VITE_DEV_SERVER ;
+
+      // Send token to backend for verification  /* this shall be changend to env*/
       const res = await fetch(`${SERVER}/api/v1/users/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },

@@ -7,6 +7,7 @@ const Group_chats = sequelize.define('group_chats', {
         primaryKey: true,
         allowNull: false,
         unique: true,
+        autoIncrement:true
     },
     group_id: {
         type: DataTypes.INTEGER,

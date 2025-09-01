@@ -22,9 +22,9 @@ const Study_groups = sequelize.define('study_groups',{
         type:DataTypes.UUID,
         allowNull:false,
     },
-    scheduled_time:{
+    scheduled_time:{ 
         type:DataTypes.TIME,
-        allowNull:false,
+        allowNull:true,
     },
     location:{
         type:DataTypes.STRING,

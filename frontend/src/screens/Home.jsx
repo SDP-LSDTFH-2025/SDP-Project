@@ -167,7 +167,7 @@ function Home({ user }) {
                   onClick={() => handleNavigationClick("partners")}
                 >
                   <UserPlus className="pics" />
-                  Friend Requests
+                  Study Buddies
                 </Button>
                 <Button
                   className={`buttons ${activeView === "upload" ? "active" : ""}`}

@@ -417,7 +417,7 @@ router.post('/logIn',async (req, res) => {
                 process.env.JWT_SECRET,
                 { expiresIn: '7d' }
             );
-            res.status(200).json({message:'successful operation',token:Token,id:existance.id, data:existance,ok: true});
+            res.status(200).json({message:'successful operation',token:Token,id:existance.id, data:existance,ok: true});//existance is user
           })
           .catch((error) => {
             const errorCode = error.code;

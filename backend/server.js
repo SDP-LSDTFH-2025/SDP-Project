@@ -142,7 +142,6 @@ async function startServer() {
     await sequelize.authenticate();
     console.log('✅ Database connection established successfully.');
 
-  
 
     console.log('✅ Database synchronized successfully.');
     // Start server

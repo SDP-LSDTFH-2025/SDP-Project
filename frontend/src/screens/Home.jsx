@@ -1,4 +1,4 @@
-import React, { useEffect,useState } from "react";
+import React, { useEffect,useState,useRef } from "react";
 import { getAllUsers } from "../functions/users";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import {Button} from "../components/ui/button";
@@ -20,9 +20,11 @@ import {
   } from "lucide-react";
 import {DragAndDropArea} from "./DragAndDrop.jsx";
 import "./Home.css";
-
+{/*installed:
+  1.npm install lucide-react (svg)*/ }
 function Home({ user }) {
   const [activeView, setActiveView] = useState("feed");
+  const fileInputRef = useRef(null); 
   useEffect(() => {
     const fetchUsers = async () => {
       try {
@@ -46,6 +48,20 @@ function Home({ user }) {
   const handleNavigationClick = (view) => { 
 		setActiveView(view); 
 	};
+  const handleUploadClick = () => {
+    // Programmatically click the hidden file input
+    fileInputRef.current?.click();
+  };
+
+  const handleFileSelect = (event) => {
+    const files = event.target.files;
+    if (files && files.length > 0) {
+      // Switch to upload view and pass the selected files
+      setActiveView("upload");
+      // You can also pass the files to the upload view if needed
+      console.log('Files selected:', files);
+    }
+  };
   return (
     <div className="home-container">
       {/* Top Navigation Bar */}
@@ -128,10 +144,20 @@ function Home({ user }) {
         <section className="resources">
           <div className="col-span-6"> 
             {activeView === "feed" && ( <div className="share-card"> 
-              <h2>Share a Resource</h2> 
+              <h2>Share a thought...</h2> 
               <Input className="search" placeholder="What would you like to share with your buddies?" /> 
-              <Button className="upload-btn"> 
-                <Upload className="pics" /> Upload </Button> 
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileSelect}
+                className="hidden-file-input"
+                multiple
+                accept=".jpg,.jpeg,.png,.gif,.bmp,.webp"
+              />
+              
+              <Button className="upload-btn" onClick={handleUploadClick}> 
+                <Upload className="pics" /> Upload 
+              </Button> 
                 </div> 
               )} 
               {activeView === "upload" && ( <div id="Uploads" className="share-card"> 

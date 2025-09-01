@@ -157,6 +157,9 @@
   .filter-badges{
     padding-top: 0.6rem;;
   }
+  .hidden-file-input {
+    display: none;
+  }
   .badges{
     border: 1px solid var(--border);
     border-radius: 0.8rem;

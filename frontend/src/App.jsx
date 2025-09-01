@@ -1,7 +1,3 @@
-/** This will contain the routes for all screens and pages
- * It will also contain a localStorage to allow us to see if the user is known
- */
-
 import React, { useEffect, useState } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Home, Login, Signup ,Forgot} from "./screens";

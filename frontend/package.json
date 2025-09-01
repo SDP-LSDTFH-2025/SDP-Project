@@ -10,6 +10,7 @@
     "playwright:ui": "npx playwright test --ui",
     "playwright:debug": "npx playwright test --debug",
     "playwright:chrome": "npx playwright test --project=chromium",
+    "playwright:report": "npx playwright show-report",
     "playwright:codegen": "npx playwright codegen",
     "lint": "eslint .",
     "preview": "vite preview"

@@ -24,7 +24,7 @@ const Study_groups = sequelize.define('study_groups',{
     },
     scheduled_time:{
         type:DataTypes.TIME,
-        allowNull:false,
+        allowNull:true,
     },
     location:{
         type:DataTypes.STRING,

@@ -32,6 +32,7 @@ cd backend
 ### 2. Install Dependencies
 ```bash
 npm install
+npm install firebase
 ```
 
 ### 3. Environment Configuration

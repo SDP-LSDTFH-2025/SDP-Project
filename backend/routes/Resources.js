@@ -1,9 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const multer = require('multer');
-const crypto = require('crypto'); // Added for checksum calculation
+const crypto = require('crypto');
+const { validate: isUUID } = require('uuid');
 const CloudinaryService = require('../services/cloudinaryService');
-const { Resources, User } = require('../models/Resources');
+const { Resources, User } = require('../models');
 const { Op } = require('sequelize');
 
 // Configure multer for file uploads
@@ -31,7 +32,51 @@ const upload = multer({
 
 /**
  * @swagger
- * /api/v1/resource:
+ * components:
+ *   schemas:
+ *     Resource:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: integer
+ *           description: The auto-incrementing ID of the resource
+ *         title:
+ *           type: string
+ *           description: The title of the resource
+ *         description:
+ *           type: string
+ *           description: The description of the resource
+ *         likes:
+ *           type: integer
+ *           description: Number of likes for the resource
+ *         file_url:
+ *           type: string
+ *           description: URL of the uploaded PDF file
+ *         public_id:
+ *           type: string
+ *           description: Public ID of the file in Cloudinary
+ *         pictures_url:
+ *           type: string
+ *           description: URL of the uploaded image
+ *         checksum:
+ *           type: string
+ *           description: MD5 checksum of the uploaded file
+ *         user_id:
+ *           type: string
+ *           format: uuid
+ *           description: ID of the user who uploaded the resource
+ *         course_id:
+ *           type: integer
+ *           description: ID of the course associated with the resource
+ *         created_at:
+ *           type: string
+ *           format: date-time
+ *           description: Timestamp when the resource was created
+ */
+
+/**
+ * @swagger
+ * /api/v1/resources:
  *   post:
  *     summary: Create a new resource
  *     tags: [Resources]
@@ -43,19 +88,31 @@ const upload = multer({
  *             type: object
  *             properties:
  *               user_id:
- *                 type: integer
+ *                 type: string
+ *                 format: uuid
+ *                 description: The UUID of the user uploading the resource
  *               course_id:
  *                 type: integer
+ *                 description: The ID of the course
  *               title:
  *                 type: string
+ *                 description: The title of the resource
  *               description:
  *                 type: string
+ *                 description: The description of the resource
  *               file:
  *                 type: string
  *                 format: binary
+ *                 description: The PDF file to upload
  *               picture:
  *                 type: string
  *                 format: binary
+ *                 description: The image file to upload
+ *             required:
+ *               - user_id
+ *               - course_id
+ *               - title
+ *               - description
  *     responses:
  *       200:
  *         description: Resource created successfully
@@ -69,18 +126,50 @@ const upload = multer({
  *                 data:
  *                   $ref: '#/components/schemas/Resource'
  *       400:
- *         description: Bad request
+ *         description: Bad request (e.g., invalid input or missing file)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 error:
+ *                   type: string
  *       404:
  *         description: User not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 error:
+ *                   type: string
  *       500:
  *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 error:
+ *                   type: string
  */
-router.post('/resource', upload.fields([{ name: 'file', maxCount: 1 }, { name: 'picture', maxCount: 1 }]), async (req, res) => {
+router.post('/', upload.fields([{ name: 'file', maxCount: 1 }, { name: 'picture', maxCount: 1 }]), async (req, res) => {
     const { user_id, course_id, title, description } = req.body;
     const file = req.files?.file?.[0];
     const picture = req.files?.picture?.[0];
 
     try {
+        // Validate user_id as UUID
+        if (!isUUID(user_id)) {
+            return res.status(400).json({ success: false, error: 'Invalid user ID' });
+        }
+
         // Validate user
         const user = await User.findByPk(user_id);
         if (!user) {
@@ -90,6 +179,12 @@ router.post('/resource', upload.fields([{ name: 'file', maxCount: 1 }, { name: '
         // Validate required fields
         if (!title || !description || !course_id) {
             return res.status(400).json({ success: false, error: 'Title, description, and course_id are required' });
+        }
+
+        // Validate course_id as integer
+        const courseId = parseInt(course_id);
+        if (isNaN(courseId)) {
+            return res.status(400).json({ success: false, error: 'Invalid course ID' });
         }
 
         let file_url = null;
@@ -135,21 +230,55 @@ router.post('/resource', upload.fields([{ name: 'file', maxCount: 1 }, { name: '
             public_id,
             pictures_url,
             checksum,
-            upload_id: user_id,
-            course_id,
+            user_id, // Changed from upload_id to match model
+            course_id: courseId,
             created_at: new Date()
         });
 
         res.json({ success: true, data: resource });
     } catch (error) {
-        console.error("Resource creation failed:", error);
+        console.error('Resource creation failed:', error);
         res.status(500).json({ success: false, error: 'Internal server error' });
     }
 });
 
 /**
  * @swagger
- * /api/v1/resource/{id}:
+ * /api/v1/resources/all:
+ *   get:
+ *     summary: Get all resources
+ *     tags: [Resources]
+ *     responses:
+ *       200:
+ *         description: List of all resources
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Resource'
+ *       500:
+ *         description: Internal server error
+ *        
+ */
+router.get('/all', async (req, res) => {
+    try{
+    const resources = await Resources.findAll();
+    res.json({ success: true, data: resources });
+    } catch (error) {
+        console.error('Get all resources error:', error);
+        res.status(500).json({ success: false, error: 'Internal server error' });
+    }
+});
+
+/**
+ * @swagger
+ * /api/v1/resources/{id}:
  *   get:
  *     summary: Get a resource by ID
  *     tags: [Resources]
@@ -163,14 +292,56 @@ router.post('/resource', upload.fields([{ name: 'file', maxCount: 1 }, { name: '
  *     responses:
  *       200:
  *         description: Resource retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   $ref: '#/components/schemas/Resource'
  *       404:
  *         description: Resource not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 error:
+ *                   type: string
+ *       400:
+ *         description: Invalid resource ID
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 error:
+ *                   type: string
  *       500:
  *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 error:
+ *                   type: string
  */
-router.get('/resource/:id', async (req, res) => {
+router.get('/:id', async (req, res) => {
     try {
-        const resource = await Resources.findByPk(req.params.id);
+        const resourceId = parseInt(req.params.id);
+        if (isNaN(resourceId)) {
+            return res.status(400).json({ success: false, error: 'Invalid resource ID' });
+        }
+        const resource = await Resources.findByPk(resourceId);
         if (!resource) {
             return res.status(404).json({ success: false, error: 'Resource not found' });
         }
@@ -183,38 +354,284 @@ router.get('/resource/:id', async (req, res) => {
 
 /**
  * @swagger
- * /api/v1/resource:
+ * /api/v1/resources:
  *   get:
- *     summary: Get resources by title
+ *     summary: Get resources by title (optional) or all resources
  *     tags: [Resources]
  *     parameters:
  *       - name: title
  *         in: query
  *         required: false
- *         description: The title of the resource (partial match)
+ *         description: The title of the resource (partial match, case-insensitive)
  *         schema:
  *           type: string
+ *       - name: limit
+ *         in: query
+ *         required: false
+ *         description: Maximum number of resources to return
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 100
+ *       - name: offset
+ *         in: query
+ *         required: false
+ *         description: Number of resources to skip
+ *         schema:
+ *           type: integer
+ *           minimum: 0
+ *           default: 0
  *     responses:
  *       200:
  *         description: List of resources
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Resource'
+ *       400:
+ *         description: Invalid limit or offset
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 error:
+ *                   type: string
  *       500:
  *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 error:
+ *                   type: string
  */
-router.get('/resource', async (req, res) => {
+router.get('/', async (req, res) => {
     try {
-        const { title } = req.query;
+        const { title, limit = 100, offset = 0 } = req.query;
+        if (isNaN(limit) || isNaN(offset) || limit < 1 || offset < 0) {
+            return res.status(400).json({ success: false, error: 'Invalid limit or offset' });
+        }
         const where = title ? { title: { [Op.iLike]: `%${title}%` } } : {};
-        const resources = await Resources.findAll({ where });
+        const resources = await Resources.findAll({
+            where,
+            limit: parseInt(limit),
+            offset: parseInt(offset),
+        });
         res.json({ success: true, data: resources });
     } catch (error) {
-        console.error("Failed to fetch resources:", error);
+        console.error('Failed to fetch resources:', error);
         res.status(500).json({ success: false, error: 'Internal server error' });
     }
 });
 
 /**
  * @swagger
- * /api/v1/resource/{id}:
+ * /api/v1/resources/course/{id}:
+ *   get:
+ *     summary: Get resources by course ID
+ *     tags: [Resources]
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         description: The ID of the course
+ *         schema:
+ *           type: integer
+ *       - name: limit
+ *         in: query
+ *         required: false
+ *         description: Maximum number of resources to return
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 100
+ *       - name: offset
+ *         in: query
+ *         required: false
+ *         description: Number of resources to skip
+ *         schema:
+ *           type: integer
+ *           minimum: 0
+ *           default: 0
+ *     responses:
+ *       200:
+ *         description: List of resources for the specified course
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Resource'
+ *       400:
+ *         description: Invalid course ID
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 error:
+ *                   type: string
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 error:
+ *                   type: string
+ */
+router.get('/course/:id', async (req, res) => {
+    try {
+        const courseId = parseInt(req.params.id);
+        if (isNaN(courseId)) {
+            return res.status(400).json({ success: false, error: 'Invalid course ID' });
+        }
+        const { limit = 100, offset = 0 } = req.query;
+        if (isNaN(limit) || isNaN(offset) || limit < 1 || offset < 0) {
+            return res.status(400).json({ success: false, error: 'Invalid limit or offset' });
+        }
+        const resources = await Resources.findAll({
+            where: { course_id: courseId },
+            limit: parseInt(limit),
+            offset: parseInt(offset),
+        });
+        res.json({ success: true, data: resources });
+    } catch (error) {
+        console.error('Get resources through course id error:', error);
+        res.status(500).json({ success: false, error: 'Internal server error' });
+    }
+});
+
+/**
+ * @swagger
+ * /api/v1/resources/user/{id}:
+ *   get:
+ *     summary: Get resources by user ID
+ *     tags: [Resources]
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         description: The UUID of the user
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *       - name: limit
+ *         in: query
+ *         required: false
+ *         description: Maximum number of resources to return
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 100
+ *       - name: offset
+ *         in: query
+ *         required: false
+ *         description: Number of resources to skip
+ *         schema:
+ *           type: integer
+ *           minimum: 0
+ *           default: 0
+ *     responses:
+ *       200:
+ *         description: List of resources uploaded by the specified user
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Resource'
+ *       400:
+ *         description: Invalid user ID
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 error:
+ *                   type: string
+ *       404:
+ *         description: User not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 error:
+ *                   type: string
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 error:
+ *                   type: string
+ */
+router.get('/user/:id', async (req, res) => {
+    try {
+        const userId = req.params.id;
+        if (!isUUID(userId)) {
+            return res.status(400).json({ success: false, error: 'Invalid user ID' });
+        }
+        const user = await User.findByPk(userId);
+        if (!user) {
+            return res.status(404).json({ success: false, error: 'User not found' });
+        }
+        const { limit = 100, offset = 0 } = req.query;
+        if (isNaN(limit) || isNaN(offset) || limit < 1 || offset < 0) {
+            return res.status(400).json({ success: false, error: 'Invalid limit or offset' });
+        }
+        const resources = await Resources.findAll({
+            where: { user_id: userId },
+            limit: parseInt(limit),
+            offset: parseInt(offset),
+        });
+        res.json({ success: true, data: resources });
+    } catch (error) {
+        console.error('Failed to get resources by user_id:', error);
+        res.status(500).json({ success: false, error: 'Internal server error' });
+    }
+});
+
+/**
+ * @swagger
+ * /api/v1/resources/{id}:
  *   put:
  *     summary: Update a resource by ID
  *     tags: [Resources]
@@ -234,21 +651,65 @@ router.get('/resource', async (req, res) => {
  *             properties:
  *               title:
  *                 type: string
+ *                 description: The updated title of the resource
  *               description:
  *                 type: string
+ *                 description: The updated description of the resource
  *     responses:
  *       200:
  *         description: Resource updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   $ref: '#/components/schemas/Resource'
+ *       400:
+ *         description: Invalid resource ID
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 error:
+ *                   type: string
  *       404:
  *         description: Resource not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 error:
+ *                   type: string
  *       500:
  *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 error:
+ *                   type: string
  */
-router.put('/resource/:id', async (req, res) => {
+router.put('/resources/:id', async (req, res) => {
     const { title, description } = req.body;
 
     try {
-        const resource = await Resources.findByPk(req.params.id);
+        const resourceId = parseInt(req.params.id);
+        if (isNaN(resourceId)) {
+            return res.status(400).json({ success: false, error: 'Invalid resource ID' });
+        }
+        const resource = await Resources.findByPk(resourceId);
         if (!resource) {
             return res.status(404).json({ success: false, error: 'Resource not found' });
         }
@@ -266,7 +727,7 @@ router.put('/resource/:id', async (req, res) => {
 
 /**
  * @swagger
- * /api/v1/resource/{id}:
+ * /api/v1/resources/{id}:
  *   delete:
  *     summary: Delete a resource by ID
  *     tags: [Resources]
@@ -280,14 +741,56 @@ router.put('/resource/:id', async (req, res) => {
  *     responses:
  *       200:
  *         description: Resource deleted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *       400:
+ *         description: Invalid resource ID
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 error:
+ *                   type: string
  *       404:
  *         description: Resource not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 error:
+ *                   type: string
  *       500:
  *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 error:
+ *                   type: string
  */
-router.delete('/resource/:id', async (req, res) => {
+router.delete('/:id', async (req, res) => {
     try {
-        const resource = await Resources.findByPk(req.params.id);
+        const resourceId = parseInt(req.params.id);
+        if (isNaN(resourceId)) {
+            return res.status(400).json({ success: false, error: 'Invalid resource ID' });
+        }
+        const resource = await Resources.findByPk(resourceId);
         if (!resource) {
             return res.status(404).json({ success: false, error: 'Resource not found' });
         }

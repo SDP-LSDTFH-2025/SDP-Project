@@ -10,12 +10,15 @@ const Resources = require('./Resources');
 const Resource_tags = require('./Resource_tags');
 const Resource_threads = require('./Resource_threads');
 const Resource_reports = require('./Resource_reports');
+
+//Socialization
 const Follows = require('./Follows');
 const Group_chats = require('./Group_chats');
 const Group_members = require('./Group_members');
 const Progress = require('./Progress');
 const Study_groups = require('./Study_groups');
 const Study_sessions = require('./Study_sessions');
+const Follows_requests = require('./follows_requests');
 
 // Define associations
 // User associations
@@ -35,6 +38,8 @@ User.hasMany(Resource_reports, { foreignKey: 'user_id', sourceKey: 'id' });
 // Follow associations
 User.hasMany(Follows, { as: 'Followers', foreignKey: 'follower_id', sourceKey: 'id' });
 User.hasMany(Follows, { as: 'Followees', foreignKey: 'followee_id', sourceKey: 'id' });
+User.hasMany(Follows_requests, { as: 'Followers_requesting', foreignKey: 'follower_id', sourceKey: 'id' });
+User.hasMany(Follows_requests, { as: 'Followees_requested', foreignKey: 'followee_id', sourceKey: 'id' });
 
 // Course associations
 Courses.hasMany(Resources, { foreignKey: 'course_id', sourceKey: 'id' });
@@ -74,6 +79,8 @@ Resource_reports.belongsTo(Resources, { foreignKey: 'resource_id', targetKey: 'i
 Resource_reports.belongsTo(User, { foreignKey: 'user_id', targetKey: 'id' });
 Follows.belongsTo(User, { as: 'Follower', foreignKey: 'follower_id', targetKey: 'id' });
 Follows.belongsTo(User, { as: 'Followee', foreignKey: 'followee_id', targetKey: 'id' });
+Follows_requests.belongsTo(User, { as: 'Follower_requesting', foreignKey: 'follower_id', targetKey: 'id' });
+Follows_requests.belongsTo(User, { as: 'Followee_requested', foreignKey: 'followee_id', targetKey: 'id' });
 Courses.belongsTo(User, { foreignKey: 'created_by', targetKey: 'id' });
 
 module.exports = {
@@ -88,9 +95,10 @@ module.exports = {
   Resource_threads,
   Resource_reports,
   Follows,
+  Follows_requests,
   Group_chats,
   Group_members,
   Progress,
   Study_groups,
   Study_sessions
-}; 
+};

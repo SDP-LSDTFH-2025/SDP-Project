@@ -65,7 +65,7 @@ const { Op } = require('sequelize');
  *       500:
  *         description: Internal server error
  */
-router.post('/resource_report', async (req, res) => {
+router.post('/', async (req, res) => {
     const { resource_id, user_id, reason } = req.body;
 
     try {
@@ -102,7 +102,7 @@ router.post('/resource_report', async (req, res) => {
 
 /**
  * @swagger
- * /api/v1/resource_report:
+ * /api/v1/resource_report/:
  *   get:
  *     summary: Get resource reports by reason
  *     tags: [ResourceReports]
@@ -146,7 +146,7 @@ router.post('/resource_report', async (req, res) => {
  *       500:
  *         description: Internal server error
  */
-router.get('/resource_report', async (req, res) => {
+router.get('/', async (req, res) => {
     try {
         const { reason } = req.query;
         const where = reason ? { reason: { [Op.iLike]: `%${reason}%` } } : {};
@@ -160,7 +160,7 @@ router.get('/resource_report', async (req, res) => {
 
 /**
  * @swagger
- * /api/v1/resource_report/{id}:
+ * /api/v1/resource_report/:{id}:
  *   get:
  *     summary: Get a resource report by ID
  *     tags: [ResourceReports]
@@ -204,7 +204,7 @@ router.get('/resource_report', async (req, res) => {
  *       500:
  *         description: Internal server error
  */
-router.get('/resource_report/:id', async (req, res) => {
+router.get('/:id', async (req, res) => {
     try {
         const resource_report = await Resource_reports.findByPk(req.params.id);
         if (!resource_report) {
@@ -219,7 +219,7 @@ router.get('/resource_report/:id', async (req, res) => {
 
 /**
  * @swagger
- * /api/v1/resource_report/{id}:
+ * /api/v1/resource_report/:{id}:
  *   put:
  *     summary: Update a resource report by ID
  *     tags: [ResourceReports]
@@ -277,7 +277,7 @@ router.get('/resource_report/:id', async (req, res) => {
  *       500:
  *         description: Internal server error
  */
-router.put('/resource_report/:id', async (req, res) => {
+router.put('/:id', async (req, res) => {
     const { reason, response } = req.body;
 
     try {
@@ -303,7 +303,7 @@ router.put('/resource_report/:id', async (req, res) => {
 
 /**
  * @swagger
- * /api/v1/resource_report/{id}:
+ * /api/v1/resource_report/:{id}:
  *   delete:
  *     summary: Delete a resource report by ID
  *     tags: [ResourceReports]
@@ -331,7 +331,7 @@ router.put('/resource_report/:id', async (req, res) => {
  *       500:
  *         description: Internal server error
  */
-router.delete('/resource_report/:id', async (req, res) => {
+router.delete('/:id', async (req, res) => {
     try {
         const resource_report = await Resource_reports.findByPk(req.params.id);
         if (!resource_report) {

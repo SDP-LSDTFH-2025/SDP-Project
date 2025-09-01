@@ -1,7 +1,7 @@
 const { sequelize } = require("../config/database");
 const { DataTypes } = require("sequelize");
 const { v4: uuidv4 } = require('uuid');
-const Group_members = sequelize.define('group_members', {
+const Follows_requests = sequelize.define('follows_requests', {
     id: {
         type: DataTypes.INTEGER,
         primaryKey: true,
@@ -9,21 +9,21 @@ const Group_members = sequelize.define('group_members', {
         unique: true,
         autoIncrement:true
     },
-    group_id: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-    },
-    user_id: {
+    follower_id: {
         type: DataTypes.UUID,
         allowNull: false,
     },
-    joined_at: {
+    followee_id: { 
+        type: DataTypes.UUID,
+        allowNull: false,
+    },
+    created_at: {
         type: DataTypes.DATE,
         allowNull: false,
     }
 }, {
-    tableName: "group_members",
+    tableName: "follows_requests",
     timestamps: false
 });
 
-module.exports = Group_members;
+module.exports = Follows_requests;

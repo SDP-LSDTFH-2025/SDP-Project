@@ -4,7 +4,7 @@ const multer = require('multer');
 const crypto = require('crypto');
 const { validate: isUUID } = require('uuid');
 const CloudinaryService = require('../services/cloudinaryService');
-const { Resources, User } = require('../models/Resources');
+const { Resources, User } = require('../models');
 const { Op } = require('sequelize');
 
 // Configure multer for file uploads
@@ -159,7 +159,7 @@ const upload = multer({
  *                 error:
  *                   type: string
  */
-router.post('/resources', upload.fields([{ name: 'file', maxCount: 1 }, { name: 'picture', maxCount: 1 }]), async (req, res) => {
+router.post('/', upload.fields([{ name: 'file', maxCount: 1 }, { name: 'picture', maxCount: 1 }]), async (req, res) => {
     const { user_id, course_id, title, description } = req.body;
     const file = req.files?.file?.[0];
     const picture = req.files?.picture?.[0];
@@ -244,6 +244,40 @@ router.post('/resources', upload.fields([{ name: 'file', maxCount: 1 }, { name: 
 
 /**
  * @swagger
+ * /api/v1/resources/all:
+ *   get:
+ *     summary: Get all resources
+ *     tags: [Resources]
+ *     responses:
+ *       200:
+ *         description: List of all resources
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Resource'
+ *       500:
+ *         description: Internal server error
+ *        
+ */
+router.get('/all', async (req, res) => {
+    try{
+    const resources = await Resources.findAll();
+    res.json({ success: true, data: resources });
+    } catch (error) {
+        console.error('Get all resources error:', error);
+        res.status(500).json({ success: false, error: 'Internal server error' });
+    }
+});
+
+/**
+ * @swagger
  * /api/v1/resources/{id}:
  *   get:
  *     summary: Get a resource by ID
@@ -301,7 +335,7 @@ router.post('/resources', upload.fields([{ name: 'file', maxCount: 1 }, { name: 
  *                 error:
  *                   type: string
  */
-router.get('/resources/:id', async (req, res) => {
+router.get('/:id', async (req, res) => {
     try {
         const resourceId = parseInt(req.params.id);
         if (isNaN(resourceId)) {
@@ -384,7 +418,7 @@ router.get('/resources/:id', async (req, res) => {
  *                 error:
  *                   type: string
  */
-router.get('/resources', async (req, res) => {
+router.get('/', async (req, res) => {
     try {
         const { title, limit = 100, offset = 0 } = req.query;
         if (isNaN(limit) || isNaN(offset) || limit < 1 || offset < 0) {
@@ -469,7 +503,7 @@ router.get('/resources', async (req, res) => {
  *                 error:
  *                   type: string
  */
-router.get('/resources/course/:id', async (req, res) => {
+router.get('/course/:id', async (req, res) => {
     try {
         const courseId = parseInt(req.params.id);
         if (isNaN(courseId)) {
@@ -569,7 +603,7 @@ router.get('/resources/course/:id', async (req, res) => {
  *                 error:
  *                   type: string
  */
-router.get('/resources/user/:id', async (req, res) => {
+router.get('/user/:id', async (req, res) => {
     try {
         const userId = req.params.id;
         if (!isUUID(userId)) {
@@ -750,7 +784,7 @@ router.put('/resources/:id', async (req, res) => {
  *                 error:
  *                   type: string
  */
-router.delete('/resources/:id', async (req, res) => {
+router.delete('/:id', async (req, res) => {
     try {
         const resourceId = parseInt(req.params.id);
         if (isNaN(resourceId)) {

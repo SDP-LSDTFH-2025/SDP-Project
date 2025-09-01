@@ -87,7 +87,26 @@ app.use(speedLimiter);
 // Standard middleware
 app.use(compression());
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
+  origin: function(origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    const allowedOrigins = [
+      process.env.PROD_LIVE_HOST,
+      process.env.PROD_PREVIEW_HOST,
+      process.env.CORS_ORIGIN,
+      'http://localhost:5173',
+      'http://localhost:5174',
+      'http://localhost:3000'
+    ].filter(Boolean); // Remove undefined values
+    
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      console.log('CORS blocked origin:', origin);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
@@ -122,89 +141,13 @@ async function startServer() {
     // Test database connection
     await sequelize.authenticate();
     console.log('✅ Database connection established successfully.');
-    await sequelize.sync();
+    await sequelize.sync({alter:true});
     console.log('✅ Database synchronized successfully.');
     // Start server
     app.listen(PORT, () => {
       console.log(`🚀 Server is running on port ${PORT}`);
       console.log(`📚 API Documentation available at: http://localhost:${PORT}/api-docs`);
     
-    });
-
-    app.post('/signup', async (req, res) => {
-      try {
-        // console.log({ verified: verifyGoogleToken(req.body.credential) });
-        if (req.body.credential) {
-          const verificationResponse = await verifyGoogleToken(req.body.credential);
-
-          if (verificationResponse.error) {
-            return res.status(400).json({
-              message: verificationResponse.error,
-            });
-          }
-
-          const profile = verificationResponse?.payload;
-
-          DB.push(profile);
-
-          res.status(201).json({
-            message: 'Signup was successful',
-            user: {
-              firstName: profile?.given_name,
-              lastName: profile?.family_name,
-              picture: profile?.picture,
-              email: profile?.email,
-              token: jwt.sign({ email: profile?.email }, 'myScret', {
-                expiresIn: '1d',
-              }),
-            },
-          });
-        }
-      } catch (error) {
-        res.status(500).json({
-          message: 'An error occurred. Registration failed.',
-        });
-      }
-    });
-
-    app.post('/login', async (req, res) => {
-      try {
-        if (req.body.credential) {
-          const verificationResponse = await verifyGoogleToken(req.body.credential);
-          if (verificationResponse.error) {
-            return res.status(400).json({
-              message: verificationResponse.error,
-            });
-          }
-
-          const profile = verificationResponse?.payload;
-
-          const existsInDB = DB.find((person) => person?.email === profile?.email);
-
-          if (!existsInDB) {
-            return res.status(400).json({
-              message: 'You are not registered. Please sign up',
-            });
-          }
-
-          res.status(201).json({
-            message: 'Login was successful',
-            user: {
-              firstName: profile?.given_name,
-              lastName: profile?.family_name,
-              picture: profile?.picture,
-              email: profile?.email,
-              token: jwt.sign({ email: profile?.email }, process.env.JWT_SECRET, {
-                expiresIn: '1d',
-              }),
-            },
-          });
-        }
-      } catch (error) {
-        res.status(500).json({
-          message: error?.message || error,
-        });
-      }
     });
 
   } catch (error) {

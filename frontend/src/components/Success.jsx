@@ -1,7 +1,26 @@
 import { Button } from "./ui/button.jsx";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card.jsx";
-import "./styles/Success.css"
-export function Success({ onRestart }) {
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import "./styles/Success.css";
+
+export function Success({ setUser }) {
+const navigate = useNavigate();
+
+useEffect(() => {
+  const storedUser = localStorage.getItem("user");
+  if (storedUser) {
+    const userData = JSON.parse(storedUser);
+    setUser(userData);
+    // Redirect automatically after 1.5 seconds
+    const timer = setTimeout(() => navigate("/home"), 1500);
+    return () => clearTimeout(timer);
+  } else {
+    console.error("No user data found in localStorage");
+    navigate("/signup"); // Redirect to signup if no user data
+  }
+}, [setUser, navigate]);
+
   return (
     <div className="success-container">
       <div className="success-card">
@@ -38,16 +57,9 @@ export function Success({ onRestart }) {
             <button
               type="button"
               className="success-button success-button-primary"
-              onClick={() => alert("Welcome! This would normally redirect you to your dashboard.")}
+              onClick={() => navigate('/home')}
             >
               Go to Dashboard
-            </button>
-            <button
-              type="button"
-              className="success-button success-button-outline"
-              onClick={onRestart}
-            >
-              Start Over (Demo)
             </button>
           </div>
         </section>

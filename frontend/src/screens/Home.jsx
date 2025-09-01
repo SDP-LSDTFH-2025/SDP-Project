@@ -4,6 +4,8 @@ import { Card, CardHeader, CardTitle, CardContent } from "../components/ui/card"
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Badge } from "../components/ui/badge";
+import  Navigation  from "../components/navigation.jsx";
+import Buddies from "../pages/studybuddy.jsx";
 import {
   Search,
   Users,
@@ -12,8 +14,6 @@ import {
   UserPlus,
   Upload,
   Filter,
-  Bell,
-  Settings,
 } from "lucide-react";
 import { DragAndDropArea } from "./DragAndDrop.jsx";
 import "./Home.css";
@@ -136,25 +136,8 @@ function Home({ user }) {
 
   return (
     <div className="home-container">
-      {/* Top Navigation Bar */}
-      <nav className="navigation">
-        <h1 className="logo">StudyBuddy</h1>
-        <Input
-          className="search"
-          placeholder="Search resources, friends, courses..."
-        />
-        <div className="nav-actions">
-          <Button className="nav-button">
-            <Bell className="pics" />
-          </Button>
-          <Button className="nav-button">
-            <Settings className="pics" />
-          </Button>
-          <button className="nav-btn logout" onClick={logout}>
-            Logout
-          </button>
-        </div>
-      </nav>
+      {/* Top Navigation Bar, I change it from being here to being a file on its own */}
+      <Navigation logout={ logout } />
 
       <main className="dashboard">
         {/* Sidebar */}
@@ -172,13 +155,19 @@ function Home({ user }) {
                   <BookOpen className="pics" />
                   Resource Feed
                 </Button>
-                <Button className="buttons">
+                <Button 
+                  className={`buttons ${activeView === "groups" ? "active" : ""}`}
+                  onClick={() => handleNavigationClick("groups")}
+                >
                   <Users className="pics" />
                   Study Groups
                 </Button>
-                <Button className="buttons">
+                <Button 
+                  className={`buttons ${activeView === "partners" ? "active" : ""}`}
+                  onClick={() => handleNavigationClick("partners")}
+                >
                   <UserPlus className="pics" />
-                  Friend Requests
+                  Study Buddies
                 </Button>
                 <Button
                   className={`buttons ${activeView === "upload" ? "active" : ""}`}
@@ -263,7 +252,6 @@ function Home({ user }) {
                   <Input
                     className="search"
                     placeholder="Course Code"
-                    type="number"
                     value={courseId}
                     onChange={(e) => setCourseId(e.target.value)}
                     required
@@ -289,6 +277,24 @@ function Home({ user }) {
                   </Button>
                 </form>
               </div>
+            )}
+
+            {/* Study Buddies */}
+            {activeView === "groups" && (
+              <div className="p-6 space-y-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="text-2xl font-bold">Study Groups</h2>
+                    <p className="text-muted-foreground">Find and connect with other students in your courses</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Buddies feed / Study BUddies */}
+            {/* Study Buddies */}
+            {activeView === "partners" && (
+              <Buddies/>
             )}
           </div>
         </section>

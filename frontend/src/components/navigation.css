@@ -1,0 +1,111 @@
+:root {
+  --bg: #f9fafb;
+  --card: #ffffff;
+  --border: #e5e7eb;
+  --text: #111827;
+  --muted: #6b7280;
+  --brand-500: #7c3aed;
+  --brand-600: #6d28d9;
+  --brand-700: #4c1d95;
+  --radius: 12px;
+  --shadow: 0 1px 2px rgba(16,24,40,0.06);
+}
+
+.navigation {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 60px;
+  padding: 0 20px;
+  background-color: #ffffff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, system-ui, sans-serif;
+}
+
+.navigation .search {
+  max-width: 400px;
+}
+
+.search {
+  display: flex;
+  flex: 1;
+  max-width: 100%;
+  margin: 0 20px;
+  padding: 10px 15px;
+  border: 1px solid #e2e0e0;
+  border-radius: 0.5rem;
+  background-color: #fff;
+  font-size: 0.8rem;
+  outline: none;
+}
+
+.search:focus {
+  outline: none;
+  border-color: #8000ff;
+  box-shadow: 0 0 0 2px rgba(128, 0, 255, 0.2);
+}
+
+.logo {
+  font-size: 1.8rem;
+  font-weight: bold;
+  background: linear-gradient(90deg, #0000ff, #8000ff, #ff00ff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-top: auto;
+}
+
+.nav-actions {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.nav-button {
+  width: 40px;
+  align-items: left;
+  border: 1px solid #e2e0e0;
+  border-radius: 0.5rem;
+  height: 35px;
+  background: #fff;
+}
+
+.nav-btn {
+  padding: 8px 15px;
+  border: none;
+  border-radius: 20px;
+  background-color: #fff;
+  color: #000;
+  border: 1px solid #ccc;
+  font-size: 0.8em;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.logout {
+  background: #fff;
+  color: #000;
+  border: none;
+  border: 1px solid #ccc;
+}
+
+.logout:hover {
+  background: #000;
+  color: #fff;
+}
+
+  .prof {
+    background: #fff;
+    color: #000;
+  }
+
+  .prof:hover {
+    background: #000;
+    color: #fff;  
+  }
+
+.pics {
+  color: #000;
+  margin: 1.5px;
+  margin-right: 0.8rem;
+  height: 1rem;
+}

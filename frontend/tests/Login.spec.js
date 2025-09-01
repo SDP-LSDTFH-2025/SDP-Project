@@ -22,7 +22,7 @@ test.describe('Login spec', () => {
     await expect(page.locator('input[type="email"]')).toBeVisible();
     await expect(page.locator('input[type="password"]')).toBeVisible();
     // await expect(page.getByRole('button', { name: 'Sign In' })).toBeVisible();
-    await expect(page.getByRole('button', { name: /Sign in with Google/ }).first()).toBeVisible();  });
+    await expect(page.getByRole('button', { name: /Sign in with Google/ }).first()).toBeVisible() });
 
   });
 

@@ -323,7 +323,7 @@ router.post('/signIn', async (req, res) => {
               process.env.JWT_SECRET,
               { expiresIn: '7d' }
           );
-          res.status(200).json({message:'successful operation',token:Token,id:endUser.id});
+          res.status(200).json({message:'successful operation',token:Token,id:endUser.id,data:endUser,success:true});
           console.log('user created successfully');
           })
           .catch((error) => {
@@ -417,7 +417,7 @@ router.post('/logIn',async (req, res) => {
                 process.env.JWT_SECRET,
                 { expiresIn: '7d' }
             );
-            res.status(200).json({message:'successful operation',token:Token,id:existance.id});
+            res.status(200).json({message:'successful operation',token:Token,id:existance.id,data:existance,success:true});
             console.log('user logged in successfully');
           })
           .catch((error) => {

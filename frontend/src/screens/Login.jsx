@@ -1,17 +1,34 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useState } from "react";
 import { GoogleLogin } from "@react-oauth/google";
-import { useNavigate } from "react-router-dom";
+import "./Login.css";
+
 
 function Login({ setUser }) {
   const navigate = useNavigate();
 
-   async function handleLogin(credentialResponse){
+  const [formData, setFormData] = useState({
+    email: "",
+    password:""
+  });
+  
+  function HandleInputChange(field, value){
+    setFormData((prev) => ({...prev, [field]: value }));
+  }
+
+  const isFormValid = formData.email && formData.password;
+
+
+
+  async function handleLogin(credentialResponse) {
     try {
       const SERVER = import.meta.env.VITE_PROD_SERVER || import.meta.env.VITE_DEV_SERVER ;
       const token = credentialResponse.credential;
 
+
       // Send token to backend for verification  /* this shall be changend to env*/
       const res = await fetch(`${SERVER}/api/v1/auth/google/verify`, {
+
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ access_token: token }),
@@ -22,7 +39,6 @@ function Login({ setUser }) {
       if (data.success) {
         console.log("logged in!");
         localStorage.setItem("user", JSON.stringify(data.data));
-
         setUser(data.data);
         navigate("/home");
       } else {
@@ -32,37 +48,81 @@ function Login({ setUser }) {
       console.error("Login error:", error);
       alert("Something went wrong. Please try again.");
     }
-  };
+  }
+
+  async function handleManualLogin(){
+    try{
+      const SERVER = import.meta.env.VITE_PROD_SERVER || import.meta.env.VITE_DEV_SERVER ;
+      const res = await fetch(`${SERVER}/api/v1/auth/logIn`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password
+          }),
+      });
+
+      const data = await res.json();
+
+      if (data.ok) {
+        console.log("Signed In!");
+        localStorage.setItem("user", JSON.stringify(data.data)); // not safe
+
+        setUser(data.data);
+        navigate("registration");
+      } else {
+        alert(data.success || "Authentication failed");
+      }
+
+    } catch (error) {
+      console.error("Sign In error:", error);
+      alert("Something went wrong. Please try again.");
+    }
+  }
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4">
-      <section className="bg-white p-8 rounded-xl shadow-2xl w-full max-w-sm sm:max-w-md transform transition-all duration-300 hover:scale-[1.02]">
-        <header className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-800">Welcome Back</h1>
-          <p className="mt-2 text-gray-500 text-sm">Login to continue</p>
-        </header>
-        <section className="space-y-6">
-          <section className="flex justify-center">
-            <GoogleLogin
-              onSuccess={handleLogin}
-              onError={() => console.log("Login failed")}
-              theme="filled_blue"
-              size="large"
-              text="continue_with"
-              width="300"
-            />
-          </section>
-          <p className="text-center text-sm text-gray-600">
-            Don't have an account?{" "}
-            <Link
-              to="/signup"
-              className="text-blue-600 font-medium hover:underline transition-colors duration-200"
-            >
-              Sign up
-            </Link>
-          </p>
-        </section>
-      </section>
+    <main className="login-page">
+      <div className="login-card">
+        <h1 className="logo">StudyBuddy</h1>
+        <p className="subtitle">Welcome back! Sign in to your account</p>
+
+        <form className="login-form" onSubmit={handleManualLogin}>
+          <label>Email</label>
+          <input type="email" placeholder="Enter your email" value={formData.email} onChange={(e) => HandleInputChange("email",e.target.value)}/>
+
+          <label>Password</label>
+          <input type="password" placeholder="Enter your password" value={formData.password} onChange={(e) => HandleInputChange("password",e.target.value)}/>
+
+          <div className="forgot">
+            <Link to="/forgot">Forgot password?</Link>
+          </div>
+
+          <button type="submit" className="login-btn" disabled={!isFormValid}>
+            Sign In
+          </button>
+        </form>
+
+        
+        <div className="divider">
+          <span>or</span>
+        </div>
+
+        
+        <div className="google-btn">
+          <GoogleLogin
+            onSuccess={handleLogin}
+            onError={() => alert(`Signin Failed + ${credentialResponse} `)}
+          />
+        </div>
+
+        <p className="footer-text">
+          Don’t have an account?{" "}
+          <Link to="/signup" className="link">
+            Sign up
+          </Link>
+        </p>
+      </div>
+
     </main>
   );
 }

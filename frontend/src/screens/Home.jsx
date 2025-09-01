@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect,useState } from "react";
 import { getAllUsers } from "../functions/users";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import {Button} from "../components/ui/button";
@@ -18,9 +18,11 @@ import {
 	Bell,
 	Settings
   } from "lucide-react";
+import {DragAndDropArea} from "./DragAndDrop.jsx";
 import "./Home.css";
 
 function Home({ user }) {
+  const [activeView, setActiveView] = useState("feed");
   useEffect(() => {
     const fetchUsers = async () => {
       try {
@@ -41,6 +43,9 @@ function Home({ user }) {
   const groups = user?.groups || [];
   const resources = user?.resources || [];
 
+  const handleNavigationClick = (view) => { 
+		setActiveView(view); 
+	};
   return (
     <div className="home-container">
       {/* Top Navigation Bar */}
@@ -70,7 +75,8 @@ function Home({ user }) {
 				<CardTitle className="title">Navigation</CardTitle>
 			</CardHeader>
 			<CardContent>
-				<Button className="buttons">
+				<Button className={`buttons ${activeView === "feed" ? "active" : ""}`} 
+									onClick={() => handleNavigationClick("feed")}>
 					<BookOpen className="pics" />
 						Resource Feed
 				</Button>
@@ -82,7 +88,8 @@ function Home({ user }) {
 					<UserPlus className="pics" />
 						Friend Requests
 				</Button>
-				<Button className="buttons">
+				<Button className={`buttons ${activeView === "upload" ? "active" : ""}`} 
+									onClick={() => handleNavigationClick("upload")}>
 					<Upload className="pics" />
 						Upload Resource
 				</Button>
@@ -107,7 +114,7 @@ function Home({ user }) {
 					<label className="filters">School</label>
 					<Input className="search" placeholder="Enter school name"  />
 					</div>
-					<div >
+					<div className="filter-badges">
 						<Badge className="badges" variant="outline">Mathematics</Badge>
 						<Badge className="badges" variant="outline">Chemistry</Badge>
 						<Badge className="badges" variant="outline">Physics</Badge>
@@ -119,32 +126,26 @@ function Home({ user }) {
 			
         {/* Resource feed (center) */}
         <section className="resources">
-          
-          {/* Share a Resource card */}
-          <div className="share-card">
-            <h2>Share a Resource</h2>
-            <Input className="search" placeholder="What would you like to share with your buddies?" />
-            <Button className="upload-btn">
-				<Upload className="pics" />
-					Upload
-			</Button>
-          </div>
-
-          {/* Posted resources */}
-          <div className="resource-feed">
-            {resources.length > 0 ? (
-              resources.map((res, i) => (
-                <div key={i} className="resource-card">
-                  <h3>{res.title}</h3>
-                  <p>{res.description}</p>
-                </div>
-              ))
-            ) : (
-              <p className="empty-text">Connect with friends and share resources.</p>
-            )}
-          </div>
-        </section>
-
+          <div className="col-span-6"> 
+            {activeView === "feed" && ( <div className="share-card"> 
+              <h2>Share a Resource</h2> 
+              <Input className="search" placeholder="What would you like to share with your buddies?" /> 
+              <Button className="upload-btn"> 
+                <Upload className="pics" /> Upload </Button> 
+                </div> 
+              )} 
+              {activeView === "upload" && ( <div id="Uploads" className="share-card"> 
+                <h2>Upload Study Resource</h2> 
+                <Input className="search" placeholder="Resource title" /> 
+                <Input className="search" placeholder="Course Code" /> 
+                <Input className="search" placeholder="Description" /> 
+                <DragAndDropArea onFilesSelected={(files) => { 
+                  console.log('Files ready for upload:', files); 
+                  }} /> 
+                  </div> 
+                )}
+              </div> 
+          </section>
         {/* Right Sidebar */}
         <aside className="rightbar">
           <div className="study-buddies">

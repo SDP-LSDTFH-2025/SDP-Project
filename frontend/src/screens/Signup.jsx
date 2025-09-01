@@ -54,15 +54,20 @@ function Signup({ setUser }) {
   async function handleSignup(){
     try{
       const SERVER = import.meta.env.VITE_PROD_SERVER || import.meta.env.VITE_DEV_SERVER ;
-      const res = await fetch(`${SERVER}/api/v1/`, {
+      console.log("handle sign up");
+      const res = await fetch(`${SERVER}/api/v1/auth/signIn`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({  }),
+        body: JSON.stringify({ 
+          email: formData.email || "usermail@gmail.com",
+          username: formData.username || "user123",
+          password: formData.password || "password1"
+         }),
       });
 
       const data = await res.json();
 
-      if (data.success) {
+      if (res.ok) {
         console.log("Signed up!");
         localStorage.setItem("user", JSON.stringify(data.data));
 

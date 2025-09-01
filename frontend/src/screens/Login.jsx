@@ -52,17 +52,20 @@ function Login({ setUser }) {
   async function handleManualLogin(){
     try{
       const SERVER = import.meta.env.VITE_PROD_SERVER || import.meta.env.VITE_DEV_SERVER ;
-      const res = await fetch(`${SERVER}/api/v1/`, {
+      const res = await fetch(`${SERVER}/api/v1/auth/logIn`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({  }),
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password
+          }),
       });
 
       const data = await res.json();
 
-      if (data.success) {
-        console.log("Signed up!");
-        localStorage.setItem("user", JSON.stringify(data.data));
+      if (data.ok) {
+        console.log("Signed In!");
+        localStorage.setItem("user", JSON.stringify(data.data)); // not safe
 
         setUser(data.data);
         navigate("registration");
@@ -71,7 +74,7 @@ function Login({ setUser }) {
       }
 
     } catch (error) {
-      console.error("Sign up error:", error);
+      console.error("Sign In error:", error);
       alert("Something went wrong. Please try again.");
     }
   }

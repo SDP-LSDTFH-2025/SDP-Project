@@ -56,7 +56,7 @@ export default function App() {
         /* Home route - only for logged-in users */
         <Route
           path="/home"
-          element={user?.google_id ? <Home user={user} /> : <Navigate to="/login" />}
+          element={user?.google_id ? <Home user={user} /> : <Navigate to="/welcome" />}
         />
 
         /* Registration steps */

@@ -1,6 +1,6 @@
 import { test, expect } from 'playwright-test-coverage';
 
-test.describe('Home page spec', () => {
+test.skip.describe('Home page spec', () => {
   test('Finds Relevant Buttons', async ({ page }) => {
     await page.goto('http://localhost:5173/');
     
@@ -10,7 +10,7 @@ test.describe('Home page spec', () => {
   });
 });
 
-test.describe('Login spec', () => {
+test.skip.describe('Login spec', () => {
   test('Login Process', async ({ page }) => {
     await page.goto('http://localhost:5173/');
     

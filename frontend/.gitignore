@@ -28,4 +28,6 @@ dist-ssr
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+/coverage/
+/.nyc_output/
 .env

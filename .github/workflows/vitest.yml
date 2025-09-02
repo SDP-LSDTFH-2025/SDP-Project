@@ -39,19 +39,3 @@ jobs:
     - name: Run tests with Vitest
       run: npm run test:run
       working-directory: ./backend
-
-    - name: Upload test results
-      if: ${{ !cancelled() }}
-      uses: actions/upload-artifact@v4
-      with:
-        name: vitest-results
-        path: backend/test-results/
-        retention-days: 30
-
-    - name: Upload coverage report
-      if: ${{ !cancelled() }}
-      uses: actions/upload-artifact@v4
-      with:
-        name: coverage-report
-        path: backend/coverage/
-        retention-days: 30

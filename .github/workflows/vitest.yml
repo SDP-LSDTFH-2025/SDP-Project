@@ -22,11 +22,11 @@ jobs:
         cache: 'npm'
 
     - name: Install dependencies for frontend
-      run: npm ci
-      working-directory: frontend
+      run: npm install && npm ci
+      working-directory: ./frontend
 
     - name: Install dependencies for backend
-      run: npm ci
+      run: npm install && npm ci
       working-directory: ./backend
 
     - name: Start backend app

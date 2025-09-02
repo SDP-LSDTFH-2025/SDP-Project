@@ -20,7 +20,7 @@ export async function getAllUsers() {
     let users = await res.json();
 
     if (users.success) {
-      console.log("API Response:", users);
+      // console.log("API Response:", users);
       return users["data"];
     } else {
       console.error(`Failed to get users: ${users.message || "Unknown error"}`);

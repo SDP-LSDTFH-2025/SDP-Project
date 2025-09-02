@@ -1,0 +1,9 @@
+{
+  "all": true,
+  "include": ["src/**/*.{js,jsx}"],
+  "exclude": ["tests/**", "node_modules/**"],
+  "reporter": ["html", "lcov", "text"],
+  "report-dir": "./coverage",
+  "sourceMap": true,
+  "instrument": false
+}

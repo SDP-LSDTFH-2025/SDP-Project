@@ -317,9 +317,6 @@ router.post('/logout', async (req, res) => {
  *               password:
  *                 type: string
  *                 description: User's password
- *               username:
- *                 type: string
- *                 description: User's username (optional)
  *     responses:
  *       200:
  *         description: User created successfully
@@ -328,13 +325,14 @@ router.post('/logout', async (req, res) => {
  *             schema:
  *               type: object
  *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   description: User object
  *                 token:
  *                   type: string
  *                   description: JWT token
- *                   example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
- *                 id:
- *                   type: uuid
- *                   description: user identification
  *       400:
  *         description: Email or password not provided
  *       500:
@@ -389,7 +387,7 @@ router.post('/signIn', async (req, res) => {
               process.env.JWT_SECRET,
               { expiresIn: '7d' }
           );
-          res.status(200).json({message:'successful operation',token:Token,id:endUser.id});
+          res.status(200).json({token:Token,data:endUser,success:true});
           console.log('user created successfully');
           })
           .catch((error) => {
@@ -422,9 +420,6 @@ router.post('/signIn', async (req, res) => {
  *               email:
  *                 type: string
  *                 description: User's email address (provide either email or username)
- *               username:
- *                 type: string
- *                 description: User's username (provide either email or username)
  *               password:
  *                 type: string
  *                 description: User's password
@@ -436,13 +431,14 @@ router.post('/signIn', async (req, res) => {
  *             schema:
  *               type: object
  *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   description: User object
  *                 token:
  *                   type: string
  *                   description: JWT token
- *                   example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
- *                 id:
- *                   type: uuid
- *                   description: user identification
  *       400:
  *         description: email/password not provided or invalid email
  *       500:
@@ -483,7 +479,7 @@ router.post('/logIn',async (req, res) => {
                 process.env.JWT_SECRET,
                 { expiresIn: '7d' }
             );
-            res.status(200).json({message:'successful operation',token:Token,id:existance.id});
+            res.status(200).json({token:Token,data:existance,success:true});
             console.log('user logged in successfully');
           })
           .catch((error) => {

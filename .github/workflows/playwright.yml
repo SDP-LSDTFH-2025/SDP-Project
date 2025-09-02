@@ -20,7 +20,7 @@ jobs:
       working-directory: ./frontend
       run: npm install && npm ci
     - name: Install Playwright Browsers
-      run: npx playwright install chromium --skip-firefox-download --skip-webkit-download --with-deps
+      run: npx playwright install chromium --with-deps
     - name: Start backend dev server
       working-directory: ./backend
       run: npm run dev &

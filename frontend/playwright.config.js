@@ -6,13 +6,13 @@ import { defineConfig, devices } from "@playwright/test";
  * https://github.com/motdotla/dotenv
  */
 import dotenv from "dotenv";
-// dotenv.config();
 import path from "path";
 import { dirname } from "path";
 import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 dotenv.config({ path: path.resolve(__dirname, ".env") });
+const stateFile = path.join(__dirname, "./tests/state/storageState.json");
 
 /**
  * @see https://playwright.dev/docs/test-configuration
@@ -36,24 +36,34 @@ export default defineConfig({
 
 		/* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
 		trace: "on-first-retry",
+		storageState: stateFile,
 	},
+
+	globalSetup: "./tests/global.setup.js",
+	globalTeardown: './tests/global.teardown.js',
 
 	/* Configure projects for major browsers */
 	projects: [
 		{
 			name: "chromium",
 			workers: 1,
-			use: { ...devices["Desktop Chrome"] },
+			use: {
+				...devices["Desktop Chrome"],
+				// storageState: stateFile,
+			},
 		},
 
 		/*{
 			name: "firefox",
-			use: { ...devices["Desktop Firefox"] },
+			use: { ...devices["Desktop Firefox"],
+			storageState: stateFile,
+			},
+
 		},
 
 		{
 			name: "webkit",
-			use: { ...devices["Desktop Safari"] },
+			use: { ...devices["Desktop Safari"],storageState: stateFile, },
 		},*/
 
 		/* Test against mobile viewports. */

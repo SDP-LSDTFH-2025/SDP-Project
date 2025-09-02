@@ -30,4 +30,8 @@ dist-ssr
 /playwright/.cache/
 /coverage/
 /.nyc_output/
+
+#env files
+.env.*
+.env.**
 .env

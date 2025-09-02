@@ -7,3 +7,8 @@ backend/node_modules/
 
 # Keep env.example for reference
 !backend/env.example
+!frontend/env.example
+
+# Ignore backend environment files
+frontend/.env
+frontend/.env.*

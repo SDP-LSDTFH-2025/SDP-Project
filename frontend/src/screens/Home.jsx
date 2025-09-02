@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import { getAllUsers } from "../functions/users";
+import { getAllGroups } from "../functions/groups";
 import { Card, CardHeader, CardTitle, CardContent } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
@@ -17,7 +18,6 @@ import {
 } from "lucide-react";
 import { DragAndDropArea } from "./DragAndDrop.jsx";
 import "./Home.css";
-import { data } from "react-router-dom";
 
 function Home({ user }) {
   const [activeView, setActiveView] = useState("feed");

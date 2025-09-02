@@ -25,7 +25,6 @@ function Signup({ setUser }) {
       const SERVER = import.meta.env.VITE_PROD_SERVER || import.meta.env.VITE_DEV_SERVER ;
       const token = credentialResponse.credential;
 
-
       // Send token to backend for verification  /* this shall be changend to env*/
       const res = await fetch(`${SERVER}/api/v1/auth/google/verify`, {
         method: "POST",
@@ -97,7 +96,7 @@ function Signup({ setUser }) {
           <h1 className="logo">StudyBuddy</h1>
           <p className="subtitle">Welcome! Create your account to get started</p>
 
-          <form className="signup-form" onSubmit={handleSignup}>
+          <form className="signup-form" onSubmit={ (e) => {e.preventDefault(); handleSignup(); } }>
             <label>Email</label>
             <input type="email" placeholder="Enter your email" value={formData.email} onChange={(e) => HandleInputChange("email",e.target.value)}/>
 

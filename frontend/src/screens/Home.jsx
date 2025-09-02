@@ -18,7 +18,11 @@ import {
 import { DragAndDropArea } from "./DragAndDrop.jsx";
 import "./Home.css";
 
+import StudyPartnersPage from "../pages/StudyPartnersPage.jsx";
+import ProfilePage from "../pages/ProfilePage.jsx";
+
 function Home({ user }) {
+  
   const [activeView, setActiveView] = useState("feed");
   const fileInputRef = useRef(null);
   const [title, setTitle] = useState("");
@@ -93,6 +97,7 @@ function Home({ user }) {
     for (const pair of formData.entries()) {
       console.log(`${pair[0]}: ${pair[1]}`);
     }
+    console.log(user);
 
     try {
       const SERVER =
@@ -147,7 +152,9 @@ function Home({ user }) {
           <Button className="nav-button">
             <Bell className="pics" />
           </Button>
-          <Button className="nav-button">
+          <Button 
+          className={`buttons ${activeView === "profile" ? "active" : ""}`}
+          onClick={() => handleNavigationClick("profile")}>
             <Settings className="pics" />
           </Button>
           <button className="nav-btn logout" onClick={logout}>
@@ -172,11 +179,17 @@ function Home({ user }) {
                   <BookOpen className="pics" />
                   Resource Feed
                 </Button>
-                <Button className="buttons">
+                <Button 
+                  className={`buttons ${activeView === "groups" ? "active" : ""}`}
+                  onClick={() => handleNavigationClick("groups")}
+                >
                   <Users className="pics" />
                   Study Groups
                 </Button>
-                <Button className="buttons">
+                <Button 
+                  className={`buttons ${activeView === "partners" ? "active" : ""}`}
+                  onClick={() => handleNavigationClick("partners")}
+                  >
                   <UserPlus className="pics" />
                   Friend Requests
                 </Button>
@@ -290,6 +303,18 @@ function Home({ user }) {
                 </form>
               </div>
             )}
+
+            {activeView === "partners" && <StudyPartnersPage />}
+
+            {activeView === "profile" && <ProfilePage />}
+
+            {activeView === "groups" && (
+              <div className="share-card">
+                <h2>Groups Section to be implemented...</h2>
+
+              </div>
+            )}
+
           </div>
         </section>
 

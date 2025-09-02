@@ -20,7 +20,7 @@ jobs:
       working-directory: ./frontend
       run: npm install && npm ci
     - name: Install Playwright Browsers
-      run: npx playwright install --with-deps
+      run: npx playwright install chromium --skip-firefox-download --skip-webkit-download --with-deps
     - name: Start backend dev server
       working-directory: ./backend
       run: npm run dev &
@@ -31,4 +31,4 @@ jobs:
       run: sleep 10  # Adjust sleep time as needed to ensure servers are up
     - name: Run Playwright tests
       working-directory: ./frontend
-      run: npx playwright test --workers=1
+      run: npx playwright test --headed --workers=1

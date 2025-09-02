@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import { getAllUsers } from "../functions/users";
+import { getAllGroups } from "../functions/groups";
 import { Card, CardHeader, CardTitle, CardContent } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
@@ -28,24 +29,51 @@ function Home({ user }) {
   const [pictureFile, setPictureFile] = useState(null);
   const [error, setError] = useState("");
 
+ const [friendsList, setFriends] = useState([]);
+ const [groupList, setGroups] = useState([]);
+
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        await getAllUsers();
+        const data = await getAllUsers();
+        const friendsArray = data.map(user => ({
+          name: user.username, // Rename 'username' to 'name'
+          status: user.is_active ? 'Active' : 'Inactive', // Rename 'is_active' to 'status' and convert to string
+        }));
+        setFriends(friendsArray);
       } catch (error) {
+        setError(error.message);
         console.error("Error fetching users:", error.message);
       }
     };
     fetchUsers();
   }, []);
 
+  useEffect(() => {
+    const fetchGroups = async () => {
+      try {
+        const data = await getAllGroups();
+        const groupsArray = data.map(group => ({
+          name: group.name, 
+          online: Math.random() < 0.5 ? 'Online' : 'Offline',
+        }));
+        setGroups(groupsArray);
+      } catch (error) {
+        setError(error.message);
+        console.error("Error fetching groups:", error.message);
+      }
+    };
+    fetchGroups();
+  }, []);
+
   function logout() {
     localStorage.removeItem("user");
+    localStorage.removeItem("isLoggedIn");
     window.location.reload();
   }
 
-  const friends = user?.friends || [];
-  const groups = user?.groups || [];
+  const friends = friendsList || user?.friends || [];
+  const groups = groupList || user?.groups || [];
   const resources = user?.resources || [];
 
   function handleNavigationClick(view) {

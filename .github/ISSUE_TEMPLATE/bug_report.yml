@@ -1,10 +1,9 @@
+```yaml
 ---
 name: Bug_report
-about: Create a report to help us improve
-title: ''
+title: "[Bug] Brief description of the issue"
 labels: bug
-assignees: ''
-
+assignees: []
 ---
 
 ```yaml
@@ -45,8 +44,9 @@ bug_report:
     - Frequency of occurrence (e.g., Always, Sometimes)
     - Workarounds attempted
     - Related issues or dependencies
-  assigned_to: "Assignee Name or Team"
+  assignees: []
   resolution: |
     Details of how the bug was resolved (if applicable)
   last_updated: "2025-09-02"
+```
 ```

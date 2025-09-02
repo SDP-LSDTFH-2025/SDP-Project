@@ -33,4 +33,7 @@ jobs:
       run: sleep 10  # Adjust sleep time as needed to ensure servers are up
     - name: Run Playwright tests in headed mode
       working-directory: ./frontend
+      env:  # Environment variables for this specific step
+        GOOGLE_TEST_EMAIL: ${{ secrets.GOOGLE_TEST_EMAIL}}
+        GOOGLE_TEST_PASSWORD: ${{ secrets.GOOGLE_TEST_PASSWORD}}
       run: xvfb-run npx playwright test --workers=1 # Use xvfb-run for a headed browser

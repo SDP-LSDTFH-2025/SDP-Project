@@ -2,7 +2,7 @@ import { test, expect } from 'playwright-test-coverage';
 import { chromium } from "playwright-extra";
 import StealthPlugin from "puppeteer-extra-plugin-stealth";
 
-test.skip.("Google sign-in with stealth", async () => {
+test("Google sign-in with stealth", async () => {
 	chromium.use(StealthPlugin());
 	const browser = await chromium.launch({ headless: false });
 	const page = await browser.newPage();

@@ -9,7 +9,7 @@ const rateLimit = require('express-rate-limit');
 const swaggerJsdoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
 require('dotenv').config();
-
+const router = require('express').Router();
 const { sequelize } = require('./config/database');
 const routes = require('./routes');
 const errorHandler = require('./middleware/errorHandler');
@@ -120,6 +120,13 @@ app.use(limiter);
 
 // Swagger documentation
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
+router.get('/health', (req, res) => {
+  res.json({
+    success: true,
+    message: 'API is running'
+  });
+});
 
 // API routes
 app.use(process.env.API_PREFIX, routes);

@@ -1,10 +1,8 @@
 name: Bug Report
 description: File a bug report.
 title: "[Bug]: "
-labels: ["bug", "triage"]
-projects: ["octo-org/1", "octo-org/44"]
-assignees:
-  - octocat
+labels: ["bug"]
+projects: ["SDP-Project"]
 body:
   - type: markdown
     attributes:
@@ -33,8 +31,8 @@ body:
       label: Version
       description: What version of our software are you running?
       options:
-        - 1.0.2 (Default)
-        - 1.0.3 (Edge)
+        - v0.1 (Default)
+        - 2025.09.02.sprint2
       default: 0
     validations:
       required: true
@@ -54,11 +52,3 @@ body:
       label: Relevant log output
       description: Please copy and paste any relevant log output. This will be automatically formatted into code, so no need for backticks.
       render: shell
-  - type: checkboxes
-    id: terms
-    attributes:
-      label: Code of Conduct
-      description: By submitting this issue, you agree to follow our [Code of Conduct](https://example.com). 
-      options:
-        - label: I agree to follow this project's Code of Conduct
-          required: true

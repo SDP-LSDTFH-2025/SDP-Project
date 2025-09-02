@@ -29,13 +29,6 @@ jobs:
       run: npm install && npm ci
       working-directory: ./backend
 
-    - name: Start backend app
-      run: npm run dev &
-      working-directory: ./backend
-
-    - name: Wait for backend to be ready
-      run: sleep 10  # Adjust sleep time as needed to ensure backend is up
-
     - name: Run tests with Vitest
-      run: npm run test:run
+      run: npm run test
       working-directory: ./backend

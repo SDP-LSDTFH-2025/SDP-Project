@@ -11,7 +11,7 @@ const userCourseRoutes = require('./UserCourses');
 const Study_groupsRoutes = require('./Study_groups')
 const Follows_requests = require('./follows_requests');
 const resourcesRoutes = require('./Resources')
-
+const publicRoutes = require('./PublicApi');
 // API Documentation
 /**
  * @swagger
@@ -63,5 +63,5 @@ router.use('/user-courses', userCourseRoutes);
 router.use('/study_groups',Study_groupsRoutes);
 router.use('/friends',Follows_requests);
 router.use('/resources', resourcesRoutes);
-
+router.use('/public', publicRoutes);
 module.exports = router; 

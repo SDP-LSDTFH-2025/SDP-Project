@@ -19,7 +19,7 @@ const {errorClass, isValidEmail} = require('../middleware/tools');
  * @swagger
  * /api/v1/auth/google/verify:
  *   post:
- *     summary: Verify Google access token and create/update user
+ *     summary: Verify Google access token or ID token and create/update user
  *     tags: [Authentication]
  *     requestBody:
  *       required: true
@@ -27,10 +27,28 @@ const {errorClass, isValidEmail} = require('../middleware/tools');
  *         application/json:
  *           schema:
  *             type: object
+ *             required:
+ *               - access_token
  *             properties:
  *               access_token:
  *                 type: string
- *                 description: Google access token
+ *                 description: Google access token (ya29.* or 1//*) or ID token (JWT)
+ *               userInfo:
+ *                 type: object
+ *                 description: Optional user info when using access tokens
+ *                 properties:
+ *                   id:
+ *                     type: string
+ *                   email:
+ *                     type: string
+ *                   name:
+ *                     type: string
+ *                   picture:
+ *                     type: string
+ *                   given_name:
+ *                     type: string
+ *                   family_name:
+ *                     type: string
  *     responses:
  *       200:
  *         description: User authenticated successfully
@@ -47,13 +65,13 @@ const {errorClass, isValidEmail} = require('../middleware/tools');
  *                   type: string
  *                   description: JWT token
  *       400:
- *         description: Invalid access token
+ *         description: Invalid access token or token format
  *       500:
  *         description: Internal server error
  */
 router.post('/google/verify', async (req, res) => {
   try {
-    const { access_token } = req.body;
+    const { access_token, userInfo } = req.body;
     
     if (!access_token) {
       return res.status(400).json({
@@ -62,20 +80,68 @@ router.post('/google/verify', async (req, res) => {
       });
     }
 
-    const ticket = await client.verifyIdToken({
-      idToken: access_token,
-      audience: process.env.GOOGLE_CLIENT_ID,
-    });
+    let googleUser;
 
-    const payload = ticket.getPayload();
-    if (!payload) {
-      return res.status(400).json({
-        success: false,
-        error: 'Invalid access token' 
+    // Case 1: Access token
+    if (access_token.startsWith('ya29.') || access_token.startsWith('1//')) {
+      if (userInfo) {
+        // Use frontend-provided userInfo
+        googleUser = {
+          sub: userInfo.id,
+          email: userInfo.email,
+          name: userInfo.name,
+          picture: userInfo.picture,
+          given_name: userInfo.given_name,
+          family_name: userInfo.family_name
+        };
+      } else {
+        // Fetch user info from Google API
+        const googleRes = await fetch(
+          `https://www.googleapis.com/oauth2/v2/userinfo?access_token=${access_token}`
+        );
+        const userData = await googleRes.json();
+
+        if (userData.error) {
+          return res.status(400).json({ 
+            success: false, 
+            error: "Invalid Google access token" 
+          });
+        }
+
+        googleUser = {
+          sub: userData.id,
+          email: userData.email,
+          name: userData.name,
+          picture: userData.picture,
+          given_name: userData.given_name,
+          family_name: userData.family_name
+        };
+      }
+
+    // Case 2: ID token (JWT)
+    } else if (access_token.split('.').length === 3) {
+      const ticket = await client.verifyIdToken({
+        idToken: access_token,
+        audience: process.env.GOOGLE_CLIENT_ID,
+        clockTolerance: 300 // Allow 5 minutes clock skew
+      });
+
+      const payload = ticket.getPayload();
+      if (!payload) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid Google ID token'
+        });
+      }
+
+      googleUser = payload;
+
+    } else {
+      return res.status(400).json({ 
+        success: false, 
+        error: "Invalid token format" 
       });
     }
-
-    const googleUser = payload;
    // console.log(googleUser);
     
     // Find or create user in database
@@ -104,7 +170,7 @@ router.post('/google/verify', async (req, res) => {
 
     // Generate JWT token
     const token = jwt.sign(
-      { id: user.google_id, username: user.username },
+      { id: user.id, username: user.username },
       process.env.JWT_SECRET,
       { expiresIn: process.env.JWT_EXPIRES_IN || '24h' }
     );
@@ -251,9 +317,6 @@ router.post('/logout', async (req, res) => {
  *               password:
  *                 type: string
  *                 description: User's password
- *               username:
- *                 type: string
- *                 description: User's username (optional)
  *     responses:
  *       200:
  *         description: User created successfully
@@ -262,13 +325,14 @@ router.post('/logout', async (req, res) => {
  *             schema:
  *               type: object
  *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   description: User object
  *                 token:
  *                   type: string
  *                   description: JWT token
- *                   example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
- *                 id:
- *                   type: uuid
- *                   description: user identification
  *       400:
  *         description: Email or password not provided
  *       500:
@@ -323,7 +387,7 @@ router.post('/signIn', async (req, res) => {
               process.env.JWT_SECRET,
               { expiresIn: '7d' }
           );
-          res.status(200).json({message:'successful operation',token:Token,id:endUser.id});
+          res.status(200).json({token:Token,data:endUser,success:true});
           console.log('user created successfully');
           })
           .catch((error) => {
@@ -356,9 +420,6 @@ router.post('/signIn', async (req, res) => {
  *               email:
  *                 type: string
  *                 description: User's email address (provide either email or username)
- *               username:
- *                 type: string
- *                 description: User's username (provide either email or username)
  *               password:
  *                 type: string
  *                 description: User's password
@@ -370,13 +431,14 @@ router.post('/signIn', async (req, res) => {
  *             schema:
  *               type: object
  *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   description: User object
  *                 token:
  *                   type: string
  *                   description: JWT token
- *                   example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
- *                 id:
- *                   type: uuid
- *                   description: user identification
  *       400:
  *         description: email/password not provided or invalid email
  *       500:
@@ -417,7 +479,7 @@ router.post('/logIn',async (req, res) => {
                 process.env.JWT_SECRET,
                 { expiresIn: '7d' }
             );
-            res.status(200).json({message:'successful operation',token:Token,id:existance.id});
+            res.status(200).json({token:Token,data:existance,success:true});
             console.log('user logged in successfully');
           })
           .catch((error) => {

@@ -85,6 +85,9 @@ router.get('/test', async (req, res) => {
  *                 type: string
  *                 format: binary
  *                 description: Image file to upload
+ *               user_id:
+ *                 type: string
+ *                 description: User ID
  *      
  *     responses:
  *       200:
@@ -131,7 +134,7 @@ router.post('/single',
       }
 
       const uploadResult = await CloudinaryService.uploadImage(req.file.buffer, {
-        folder: `sdp-project/users/${'111857316950890974037'}`,
+        folder: `sdp-project/users/${req.user.id}`,
         transformation: [
           { quality: 'auto' },
           { fetch_format: 'auto' }
@@ -144,7 +147,19 @@ router.post('/single',
           error: uploadResult.error
         });
       }
-        
+      const user = await User.findByPk(req.user.id);
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          error: 'User not found'
+        });
+      }
+      await Resources.create({
+        user_id: user.id,
+        image_url: uploadResult.secure_url,
+        public_id: uploadResult.public_id,
+        created_at: new Date()
+      });
 
       res.json({
         success: true,
@@ -182,6 +197,9 @@ router.post('/single',
  *                   type: string
  *                   format: binary
  *                 description: Multiple image files to upload
+ *               user_id:
+ *                 type: string
+ *                 description: User ID
  *     responses:
  *       200:
  *         description: Images uploaded successfully
@@ -231,6 +249,21 @@ router.post('/multiple',
       const results = await Promise.all(uploadPromises);
       const successfulUploads = results.filter(result => result.success);
       const failedUploads = results.filter(result => !result.success);
+      const user = await User.findByPk(req.user.id);
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          error: 'User not found'
+        });
+      }
+     // create an array of resources
+      const resources = successfulUploads.map(result => ({
+        user_id: user.id,
+        image_url: result.secure_url,
+        public_id: result.public_id,
+        created_at: new Date()
+      }));
+      await Resources.bulkCreate(resources);
 
       res.json({
         success: true,
@@ -273,9 +306,6 @@ router.post('/multiple',
  *               user_id:
  *                 type: string
  *                 description: User ID
- *               resource_id:
- *                 type: integer
- *                 description: Resource ID
  *               course_id:
  *                 type: string
  *                 description: Course ID
@@ -301,20 +331,25 @@ router.post('/pdf', uploadPDF, handleUploadError, async (req, res) => {
     if (!user) {
       return res.status(404).json({ success: false, error: 'User not found' });
     }
+    if (!course_id) {
+      return res.status(400).json({ success: false, error: 'course_id is required' });
+    }
     // Upload to Cloudinary as PDF (raw)
     const uploadResult = await CloudinaryService.uploadPDF(req.file.buffer, { filename: req.file.originalname });
     if (!uploadResult.success) {
       return res.status(500).json({ success: false, error: uploadResult.error });
     }
+
+
     // Create resource with file_url and user_id
     const resource = await Resources.create({
       file_url: uploadResult.secure_url,
       public_id: uploadResult.public_id,
-      picture_url: "bdc ndvynudvybudy ",
       course_id: course_id,
       likes: 0,
       checksum: 0,
       upload_id: 0,
+      user_id: user.id,
       title: req.file.originalname,
       description: "gbqregbqergb",
       created_at: new Date()

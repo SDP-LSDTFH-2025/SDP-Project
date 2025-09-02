@@ -95,9 +95,9 @@ router.post('/request',async(req,res)=>{
         if (!token||!id||!username){
             return errorClass.insufficientInfo(res);
         }
-        if (!verifyToken.fireBaseToken(token,id)){
-            return errorClass.errorRes('Invalid Token',res,401);
-        }
+        // if (!verifyToken.fireBaseToken(token,id)){
+        //     return errorClass.errorRes('Invalid Token',res,401);
+        // }
         
 
         const friend =await User.findOne({where:{username:username}})
@@ -208,9 +208,9 @@ router.post('/request/response', async (req, res) => {
         if (!token||!id||!requestID||!response){
             return errorClass.insufficientInfo(res);
         }
-        if (!verifyToken.fireBaseToken(token, id)) {
-            return errorClass.errorRes('Invalid Token', res,401);
-        }
+        // if (!verifyToken.fireBaseToken(token, id)) {
+        //     return errorClass.errorRes('Invalid Token', res,401);
+        // }
         
         const request = await Follows_requests.findOne({ where: { id: requestID } });
         if (!request) {
@@ -310,9 +310,9 @@ router.post('/', async (req, res) => {
         if (!token||!id){
             return errorClass.insufficientInfo(res);
         }
-        if (!verifyToken.fireBaseToken(token, id)) {
-            return errorClass.errorRes('Invalid Token', res,401);
-        }
+        // if (!verifyToken.fireBaseToken(token, id)) {
+        //     return errorClass.errorRes('Invalid Token', res,401);
+        // }
         
         const followers =await Follows.findAll({where:{followee_id:id}})
         

@@ -1,0 +1,52 @@
+---
+name: Bug_report
+about: Create a report to help us improve
+title: ''
+labels: bug
+assignees: ''
+
+---
+
+```yaml
+---
+bug_report:
+  title: "Brief description of the bug"
+  date: "2025-09-02"
+  reported_by: "Your Name"
+  contact_email: "your.email@example.com"
+  project: "Project Name"
+  version: "1.0.0"
+  severity: "High|Medium|Low"
+  priority: "High|Medium|Low"
+  status: "Open|In Progress|Resolved|Closed"
+  environment:
+    os: "Operating System (e.g., Windows 11, macOS 14.5, Ubuntu 24.04)"
+    browser: "Browser Name and Version (if applicable)"
+    device: "Device details (if applicable)"
+    environment: "Production|Staging|Development"
+  description: |
+    A detailed description of the bug, including:
+    - What happened
+    - What was expected
+    - Any error messages or logs
+  steps_to_reproduce:
+    - Step 1: Describe the first step
+    - Step 2: Describe the second step
+    - Step 3: Describe additional steps as needed
+  expected_behavior: "What should have happened"
+  actual_behavior: "What actually happened"
+  attachments:
+    - filename: "screenshot1.png"
+      description: "Screenshot showing the issue"
+    - filename: "error_log.txt"
+      description: "Log file with error details"
+  additional_information: |
+    Any other relevant details, such as:
+    - Frequency of occurrence (e.g., Always, Sometimes)
+    - Workarounds attempted
+    - Related issues or dependencies
+  assigned_to: "Assignee Name or Team"
+  resolution: |
+    Details of how the bug was resolved (if applicable)
+  last_updated: "2025-09-02"
+```

@@ -30,6 +30,7 @@ function Home({ user }) {
   const [error, setError] = useState("");
 
  const [friendsList, setFriends] = useState([]);
+ const [groupList, setGroups] = useState([]);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -48,6 +49,23 @@ function Home({ user }) {
     fetchUsers();
   }, []);
 
+  useEffect(() => {
+    const fetchGroups = async () => {
+      try {
+        const data = await getAllGroups();
+        const groupsArray = data.map(group => ({
+          name: group.name, 
+          online: Math.random() < 0.5 ? 'Online' : 'Offline',
+        }));
+        setGroups(groupsArray);
+      } catch (error) {
+        setError(error.message);
+        console.error("Error fetching groups:", error.message);
+      }
+    };
+    fetchGroups();
+  }, []);
+
   function logout() {
     localStorage.removeItem("user");
     localStorage.removeItem("isLoggedIn");
@@ -55,7 +73,7 @@ function Home({ user }) {
   }
 
   const friends = friendsList || user?.friends || [];
-  const groups = user?.groups || [];
+  const groups = groupList || user?.groups || [];
   const resources = user?.resources || [];
 
   function handleNavigationClick(view) {

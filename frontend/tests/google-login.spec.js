@@ -4,7 +4,7 @@ import StealthPlugin from "puppeteer-extra-plugin-stealth";
 
 test("Google sign-in with stealth", async () => {
 	chromium.use(StealthPlugin());
-	const browser = await chromium.launch({ headless: false });
+	const browser = await chromium.launch({ headless: true });
 	const page = await browser.newPage();
 
 	const email = process.env.GOOGLE_TEST_EMAIL;

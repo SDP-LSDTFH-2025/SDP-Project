@@ -21,6 +21,8 @@ jobs:
       run: npm install && npm ci
     - name: Install Playwright Browsers
       run: npx playwright install chromium --with-deps
+    - name: Install xvfb
+      run: sudo apt-get install -y xvfb
     - name: Start backend dev server
       working-directory: ./backend
       run: npm run dev &
@@ -29,6 +31,6 @@ jobs:
       run: npm run dev &
     - name: Wait for servers to be ready
       run: sleep 10  # Adjust sleep time as needed to ensure servers are up
-    - name: Run Playwright tests
+    - name: Run Playwright tests in headed mode
       working-directory: ./frontend
-      run: npx playwright test --workers=1
+      run: xvfb-run npx playwright test --workers=1 # Use xvfb-run for a headed browser

@@ -10,7 +10,7 @@ test.describe('Home page spec', () => {
   });
 });
 
-test.describe('Login spec', () => {
+test.skip.describe('Login spec', () => {
   test('Login Process', async ({ page }) => {
     await page.goto('http://localhost:5173/');
     

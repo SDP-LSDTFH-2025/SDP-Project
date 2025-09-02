@@ -1,5 +1,4 @@
-import { test, expect } from '@playwright/test';
-import { chromium } from 'playwright-extra';
+import { test, expect } from 'playwright-test-coverage';
 
 test.describe('Home page spec', () => {
   test('Finds Relevant Buttons', async ({ page }) => {

@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from 'playwright-test-coverage';
 import { chromium } from "playwright-extra";
 import StealthPlugin from "puppeteer-extra-plugin-stealth";
 

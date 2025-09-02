@@ -20,6 +20,7 @@ html {
   }
   h1{
     color:#1a1a1a;
+    font-size: 2.2rem;
   }
   h2{
     color:#1a1a1a;
@@ -33,7 +34,7 @@ html {
  
   .gradient-text {
     font-size: 3rem;
-    background: linear-gradient(90deg, blue, pink);
+    background: linear-gradient(90deg, #0000ff, #8000ff,#ff00ff);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     /* For Firefox */
@@ -215,7 +216,7 @@ html {
 }
 
 .card {
-  background: #000;
+  background:blue;
   color: #fff;
   border-radius: 12px;
   padding: 1rem;

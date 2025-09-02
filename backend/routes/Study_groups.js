@@ -78,9 +78,9 @@ router.post('/create',async(req,res)=>{
         if (!token||!id||!name||!course_id){
             return errorClass.insufficientInfo(res);
         }
-        if (!verifyToken.fireBaseToken(token,id)){
-            return errorClass.errorRes('Invalid Token',res,401);
-        }
+        // if (!verifyToken.fireBaseToken(token,id)){
+        //     return errorClass.errorRes('Invalid Token',res,401);
+        // }
         
         const group = await Study_groups.create({
             name:name,
@@ -192,9 +192,9 @@ router.post('/join',async(req,res)=>{
         if (!token||!id||!groupID){
             return errorClass.insufficientInfo(res);
         }
-        if (!verifyToken.fireBaseToken(token,id)){
-            return errorClass.errorRes('Invalid Token',res,401);
-        }
+        // if (!verifyToken.fireBaseToken(token,id)){
+        //     return errorClass.errorRes('Invalid Token',res,401);
+        // }
         
         const joined = await Group_members.findOne({where:{user_id:id,group_id:groupID}});
         if (joined){
@@ -299,9 +299,9 @@ router.post('/leave',async(req,res)=>{
         if (!token||!id||!groupID){
             return errorClass.insufficientInfo(res);
         }
-        if (!verifyToken.fireBaseToken(token,id)){
-            return errorClass.errorRes('Invalid Token',res,401);
-        }
+        // if (!verifyToken.fireBaseToken(token,id)){
+        //     return errorClass.errorRes('Invalid Token',res,401);
+        // }
         
         const joined = await Group_members.findOne({where:{user_id:id,group_id:groupID}});
         if (!joined){

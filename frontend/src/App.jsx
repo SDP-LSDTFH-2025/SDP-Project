@@ -1,13 +1,15 @@
 import React, { useEffect, useState } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { Home, Login, Signup } from "./screens";
+import { Home, Login, Signup ,Forgot} from "./screens";
 import { Welcome } from "./components/Welcome.jsx";
 import { Registration } from "./components/Registration.jsx";
 import { Interests } from "./components/Interests.jsx";
 import { Success } from "./components/Success.jsx";
 
 export default function App() {
+
   const [user, setUser] = useState(null);
+  const [currentStep, setCurrentStep] = useState("welcome");
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
@@ -16,6 +18,7 @@ export default function App() {
     }
   }, []);
 
+  
   return (
     <BrowserRouter>
       <Routes>
@@ -30,7 +33,7 @@ export default function App() {
           path="/signup"
           element={<Signup setUser={setUser} />}
         >
-          <Route path="registration" element={<Registration />} />
+          <Route path="registration" element={<Registration user={user} />} />
           <Route path="interests" element={<Interests user={user} />} />
           <Route path="success" element={<Success setUser={setUser} />} />
         </Route>
@@ -44,11 +47,12 @@ export default function App() {
               : <Login setUser={setUser} />
           }
         />
-
+       
+       <Route path="/forgot" element={<Forgot />} />
         /* Home route - only for logged-in users */
         <Route
           path="/home"
-          element={user?.google_id ? <Home user={user} /> : <Navigate to="/login" />}
+          element={user?.google_id ? <Home user={user} /> : <Navigate to="/welcome" />}
         />
 
         /* Registration steps */
@@ -60,4 +64,6 @@ export default function App() {
       </Routes>
     </BrowserRouter>
   );
+
+
 }

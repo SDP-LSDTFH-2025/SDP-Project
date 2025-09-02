@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { DragAndDropArea } from "./DragAndDrop.jsx";
 import "./Home.css";
+import { data } from "react-router-dom";
 
 function Home({ user }) {
   const [activeView, setActiveView] = useState("feed");
@@ -28,11 +29,19 @@ function Home({ user }) {
   const [pictureFile, setPictureFile] = useState(null);
   const [error, setError] = useState("");
 
+ const [friendsList, setFriends] = useState([]);
+
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        await getAllUsers();
+        const data = await getAllUsers();
+        const friendsArray = data.map(user => ({
+          name: user.username, // Rename 'username' to 'name'
+          status: user.is_active ? 'Active' : 'Inactive', // Rename 'is_active' to 'status' and convert to string
+        }));
+        setFriends(friendsArray);
       } catch (error) {
+        setError(error.message);
         console.error("Error fetching users:", error.message);
       }
     };
@@ -41,10 +50,11 @@ function Home({ user }) {
 
   function logout() {
     localStorage.removeItem("user");
+    localStorage.removeItem("isLoggedIn");
     window.location.reload();
   }
 
-  const friends = user?.friends || [];
+  const friends = friendsList || user?.friends || [];
   const groups = user?.groups || [];
   const resources = user?.resources || [];
 

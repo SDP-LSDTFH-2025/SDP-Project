@@ -8,9 +8,9 @@ export async function getAllGroups() {
 
     let groups = await res.json();
 
-    if (groups.success) {
-      console.log("API Response:", groups);
-      return groups["data"];
+    if (groups.message) {
+      // console.log("API Response:", groups);
+      return groups["groups"];
     } else {
       console.error(`Failed to get groups: ${groups.message || "Unknown error"}`);
       throw new Error(groups.message || "Failed to fetch groups");

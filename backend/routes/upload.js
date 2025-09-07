@@ -68,7 +68,7 @@ router.get('/test', async (req, res) => {
 
 /**
  * @swagger
- * /api/v1/upload/single:
+ * /api/v1/upload/picture:
  *   post:
  *     summary: Upload a single image to Cloudinary
  *     tags: [Upload]
@@ -81,7 +81,7 @@ router.get('/test', async (req, res) => {
  *           schema:
  *             type: object
  *             properties:
- *               image:
+ *               picture:
  *                 type: string
  *                 format: binary
  *                 description: Image file to upload
@@ -120,11 +120,12 @@ router.get('/test', async (req, res) => {
  *       500:
  *         description: Server error
  */
-router.post('/single',
+router.post('/picture',
   
   uploadSingle,
   handleUploadError,
   async (req, res) => {
+    const {course_code, title, description,user_id} = req.body;
     try {
       if (!req.file) {
         return res.status(400).json({
@@ -134,7 +135,7 @@ router.post('/single',
       }
 
       const uploadResult = await CloudinaryService.uploadImage(req.file.buffer, {
-        folder: `sdp-project/users/${req.user.id}`,
+        folder: `sdp-project/users/${user_id}`,
         transformation: [
           { quality: 'auto' },
           { fetch_format: 'auto' }
@@ -147,19 +148,26 @@ router.post('/single',
           error: uploadResult.error
         });
       }
-      const user = await User.findByPk(req.user.id);
+      const user = await User.findByPk(user_id);
       if (!user) {
         return res.status(404).json({
           success: false,
           error: 'User not found'
         });
       }
-      await Resources.create({
-        user_id: user.id,
-        image_url: uploadResult.secure_url,
-        public_id: uploadResult.public_id,
-        created_at: new Date()
-      });
+        await Resources.create({
+          user_id: user.id,
+          pictures_url: uploadResult.secure_url,
+          course_code: course_code,
+          title: title,
+          likes: 0,
+          file_url: null,
+          
+          description: description,
+          checksum: 0,
+          public_id: uploadResult.public_id,
+          created_at: new Date()
+        });
 
       res.json({
         success: true,

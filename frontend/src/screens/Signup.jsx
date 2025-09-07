@@ -37,6 +37,7 @@ function Signup({ setUser }) {
       if (data.success) {
         console.log("Signed up!");
         localStorage.setItem("user", JSON.stringify(data.data));
+        localStorage.setItem("token", data.token);
 
         setUser(data.data);
         navigate("registration");

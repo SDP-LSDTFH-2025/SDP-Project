@@ -290,7 +290,7 @@ router.post('/multiple',
  * @swagger
  * /api/v1/upload/pdf:
  *   post:
- *     summary: Upload a PDF to pdfHost and store URL in Resources
+ *     summary: Upload a PDF to cloudinary and store URL in Resources
  *     tags: [Upload]
  *     requestBody:
  *       required: true
@@ -306,9 +306,15 @@ router.post('/multiple',
  *               user_id:
  *                 type: string
  *                 description: User ID
- *               course_id:
+ *               course_code:
  *                 type: string
- *                 description: Course ID
+ *                 description: Course Code
+ *               title:
+ *                 type: string
+ *                 description: Title
+ *               description:
+ *                 type: string
+ *                 description: Description
  *     responses:
  *       200:
  *         description: PDF uploaded and resource updated
@@ -319,20 +325,23 @@ router.post('/multiple',
  */
 router.post('/pdf', uploadPDF, handleUploadError, async (req, res) => {
   try {
-    const { user_id, course_id } = req.body;
+    const {user_id, course_code, title, description } = req.body;
     if (!req.file) {
       return res.status(400).json({ success: false, error: 'No PDF file provided' });
     }
-    if (!user_id) {
-      return res.status(400).json({ success: false, error: 'user_id is required' });
-    }
-    // Check user exists
+    // Use authenticated user from middleware
     const user = await User.findByPk(user_id);
     if (!user) {
-      return res.status(404).json({ success: false, error: 'User not found' });
+      return res.status(401).json({ success: false, error: 'User not authenticated' });
     }
-    if (!course_id) {
-      return res.status(400).json({ success: false, error: 'course_id is required' });
+    if (!course_code) {
+      return res.status(400).json({ success: false, error: 'course_code is required' });
+    }
+    if (!title) {
+      return res.status(400).json({ success: false, error: 'title is required' });
+    }
+    if (!description) {
+      return res.status(400).json({ success: false, error: 'description is required' });
     }
     // Upload to Cloudinary as PDF (raw)
     const uploadResult = await CloudinaryService.uploadPDF(req.file.buffer, { filename: req.file.originalname });
@@ -345,13 +354,13 @@ router.post('/pdf', uploadPDF, handleUploadError, async (req, res) => {
     const resource = await Resources.create({
       file_url: uploadResult.secure_url,
       public_id: uploadResult.public_id,
-      course_id: course_id,
+      course_code: course_code,
       likes: 0,
       checksum: 0,
       upload_id: 0,
-      user_id: user.id,
-      title: req.file.originalname,
-      description: "gbqregbqergb",
+        user_id: user.id,
+      title: title,
+      description: description,
       created_at: new Date()
     });
     res.json({ success: true, message: 'PDF uploaded and resource created', data: resource });

@@ -112,10 +112,10 @@ function Home({ user }) {
 
     const formData = new FormData();
     formData.append("user_id", user?.id || "test-user"); // Replace with actual user ID
-    formData.append("course_id", courseId);
+    formData.append("course_code", courseId);
     formData.append("title", title);
     formData.append("description", description);
-    formData.append("file", pdfFile);
+    formData.append("pdf", pdfFile);
     if (pictureFile) {
       formData.append("picture", pictureFile);
     }
@@ -132,7 +132,7 @@ function Home({ user }) {
         import.meta.env.VITE_PROD_SERVER ||
         import.meta.env.VITE_DEV_SERVER ||
         "http://localhost:3000";
-      const url = `${SERVER}/api/v1/resources`; // Verify this endpoint
+      const url = `${SERVER}/api/v1/upload/pdf`; // Verify this endpoint
       console.log("Request URL:", url);
 
       const response = await fetch(url, {

@@ -271,9 +271,10 @@ function Home({ user }) {
         {/* Resource feed / Upload section */}
         <section className="resources">
           <div className="col-span-6">
+
             {activeView === "feed" && (
               <div className="share-card">
-                <h2>Share a thought...</h2>
+                <h2>Share a Resource...</h2>
                 <Input
                   className="search"
                   placeholder="What would you like to share with your buddies?"
@@ -286,7 +287,7 @@ function Home({ user }) {
                   multiple
                   accept=".jpg,.jpeg,.png,.gif,.bmp,.webp,.pdf"
                 />
-                <Button className="upload-btn" onClick={handleUploadClick}>
+                <Button className="upload-btn" onClick={() => setActiveView("upload")}>
                   <Upload className="pics" /> Upload
                 </Button>
               </div>
@@ -307,7 +308,6 @@ function Home({ user }) {
                   <Input
                     className="search"
                     placeholder="Course Code"
-                    type="number"
                     value={courseId}
                     onChange={(e) => setCourseId(e.target.value)}
                     required
@@ -342,7 +342,6 @@ function Home({ user }) {
             {activeView === "groups" && (
               <div className="share-card">
                 <h2>Groups Section to be implemented...</h2>
-
               </div>
             )}
 

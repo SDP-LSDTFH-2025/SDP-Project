@@ -121,7 +121,7 @@ app.use(limiter);
 // Swagger documentation
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
-router.get('/health', (req, res) => {
+app.get('/health', (req, res) => {
   res.json({
     success: true,
     message: 'API is running'

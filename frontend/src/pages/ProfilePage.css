@@ -30,12 +30,14 @@ body { background: #f7f8fb; }
 
 .profile-info h1 {
   margin: 0;
+  text-align: left;
   font-size: 32px;        /* bigger, like the mock */
   font-weight: 700;
   line-height: 1.2;
 }
 
 .username {
+  text-align: left;
   color: #6b7280;
   margin: 4px 0 6px;
   font-size: 15px;
@@ -132,9 +134,54 @@ body { background: #f7f8fb; }
   color: #065f46;
   border-color: #bbf7d0;
 }
+.field-group {
+  margin-bottom: 10px;
+  display: flex;
+  flex-direction: column;
+}
+.field-group label {
+  font-size: 13px;
+  margin-bottom: 4px;
+  color: #374151;
+}
+.field-group input {
+  padding: 8px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+/* Status icon styling (online/offline) */
+.status-icon {
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
+/* Online status (inherits green from active state) */
+.status-icon.online {
+  color: green; /* Matches button's white text */
+}
+
+/* Offline status (inherits red from deactivated state) */
+.status-icon.offline {
+  color: red; /* Matches button's white text */
+}
+
+.button-group { display: flex; gap: 10px; margin-left: auto; }
+.cancel-button {
+  padding: 9px 16px;
+  background: #f3f4f6;
+  color: #374151;
+  border: 0;
+  border-radius: 10px;
+  cursor: pointer;
+}
+.cancel-button:hover { background: #e5e7eb; }
+
 
 /* Responsive: stack columns on small screens */
 @media (max-width: 780px) {
   .profile-body { grid-template-columns: 1fr; }
   .edit-button { position: static; align-self: flex-start; margin-left: auto; }
 }
+

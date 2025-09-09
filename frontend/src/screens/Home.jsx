@@ -21,6 +21,8 @@ import "./Home.css";
 
 import StudyPartnersPage from "../pages/StudyPartnersPage.jsx";
 import ProfilePage from "../pages/ProfilePage.jsx";
+import FriendRequests from "../pages/Friendrequests.jsx";
+import MyFriends from "../pages/FriendList.jsx";
 
 function Home({ user }) {
   
@@ -180,12 +182,10 @@ function Home({ user }) {
           placeholder="Search resources, friends, courses..."
         />
         <div className="nav-actions">
-          <Button className="nav-button">
+          <Button className="nav-btn">
             <Bell className="pics" />
           </Button>
-          <Button 
-          className={`buttons ${activeView === "profile" ? "active" : ""}`}
-          onClick={() => handleNavigationClick("profile")}>
+          <Button className={`nav-btn ${activeView === "profile" ? "active" : ""}`} onClick={() => handleNavigationClick("profile")}>
             <Settings className="pics" />
           </Button>
           <button className="nav-btn logout" onClick={logout}>
@@ -216,6 +216,13 @@ function Home({ user }) {
                 >
                   <Users className="pics" />
                   Study Groups
+                </Button>
+                <Button 
+                  className={`buttons ${activeView === "buddies" ? "active" : ""}`}
+                  onClick={() => handleNavigationClick("buddies")}
+                >
+                  <Users className="pics" />
+                  Study Buddies
                 </Button>
                 <Button 
                   className={`buttons ${activeView === "partners" ? "active" : ""}`}
@@ -335,7 +342,9 @@ function Home({ user }) {
               </div>
             )}
 
-            {activeView === "partners" && <StudyPartnersPage />}
+            {activeView === "buddies" && <StudyPartnersPage />}
+
+            {activeView === "partners" && <FriendRequests />}
 
             {activeView === "profile" && <ProfilePage />}
 

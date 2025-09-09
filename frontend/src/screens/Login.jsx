@@ -39,6 +39,7 @@ function Login({ setUser }) {
       if (data.success) {
         console.log("logged in!");
         localStorage.setItem("user", JSON.stringify(data.data));
+        localStorage.setItem("token", data.token);
         setUser(data.data);
         navigate("/home");
       } else {
@@ -67,6 +68,7 @@ function Login({ setUser }) {
       if (data.success) {
         console.log("Signed In!");
         localStorage.setItem("user", JSON.stringify(data.data)); // not safe
+        localStorage.setItem("token", data.token);
 
         setUser(data.data);
         navigate("/home");

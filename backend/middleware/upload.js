@@ -82,6 +82,13 @@ const handleUploadError = (error, req, res, next) => {
     });
   }
   
+  if (error.message === 'Only PDF files are allowed!') {
+    return res.status(400).json({
+      success: false,
+      error: 'Only PDF files are allowed.'
+    });
+  }
+  
   next(error);
 };
 

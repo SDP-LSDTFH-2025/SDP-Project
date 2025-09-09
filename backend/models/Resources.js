@@ -48,15 +48,16 @@ const Resources = sequelize.define('Resources',{
     type:DataTypes.UUID,
     allowNull:false
  },
- course_id: {
-    type:DataTypes.INTEGER,
-    allowNull:false
+ course_code: {
+    type:DataTypes.STRING,
+    allowNull:true
  },
  
  created_at: {
-    type:DataTypes.TIME,
+    type:DataTypes.DATE,
     allowNull:false,
     defaultValue:DataTypes.NOW
+
  }
 },{
     tableName: "resources",

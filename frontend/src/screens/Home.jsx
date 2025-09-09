@@ -21,8 +21,6 @@ import "./Home.css";
 
 import StudyPartnersPage from "../pages/StudyPartnersPage.jsx";
 import ProfilePage from "../pages/ProfilePage.jsx";
-import FriendRequests from "../pages/Friendrequests.jsx";
-import MyFriends from "../pages/FriendList.jsx";
 
 function Home({ user }) {
   
@@ -218,13 +216,6 @@ function Home({ user }) {
                   Study Groups
                 </Button>
                 <Button 
-                  className={`buttons ${activeView === "buddies" ? "active" : ""}`}
-                  onClick={() => handleNavigationClick("buddies")}
-                >
-                  <Users className="pics" />
-                  Study Buddies
-                </Button>
-                <Button 
                   className={`buttons ${activeView === "partners" ? "active" : ""}`}
                   onClick={() => handleNavigationClick("partners")}
                   >
@@ -342,9 +333,7 @@ function Home({ user }) {
               </div>
             )}
 
-            {activeView === "buddies" && <StudyPartnersPage />}
-
-            {activeView === "partners" && <FriendRequests />}
+            {activeView === "partners" && <StudyPartnersPage />}
 
             {activeView === "profile" && <ProfilePage />}
 

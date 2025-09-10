@@ -1,13 +1,76 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "./FileCard.css";
 import { Heart, MessageCircle, Share2, Download, X } from "lucide-react";
 
 const FileCard = ({ file }) => {
   const [commentText, setCommentText] = useState("");
-  const [comments, setComments] = useState([]); 
+  const [comments, setComments] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [likes, setLikes] = useState(file.likes || 0);
   const [liked, setLiked] = useState(false);
+
+  let initial_user = JSON.parse(localStorage.getItem("user")).username.split("_").map((n) => n[0]).join("").toUpperCase();
+  const SERVER =
+    import.meta.env.VITE_PROD_SERVER ||
+    import.meta.env.VITE_DEV_SERVER ||
+    "http://localhost:3000";
+
+  // ⬇️ Load comments when component mounts
+  useEffect(() => {
+    const fetchComments = async () => {
+      try {
+        const res = await fetch(
+          `${SERVER}/api/v1/resource_threads?resource_id=${file.id}`
+        );
+        const data = await res.json();
+
+        if (data.success) {
+          const enrichedComments = await Promise.all(
+            data.data.map(async (c) => {
+              try {
+                const userRes = await fetch(`${SERVER}/api/v1/users/${c.user_id}`);
+                const userData = await userRes.json();
+
+                if (userData.success) {
+                  const username = userData.data.username;
+                  const initials = username
+                    .split("_")
+                    .map((n) => n[0])
+                    .join("")
+                    .toUpperCase();
+                  
+                  return {
+                    id: c.id,
+                    text: c.message,
+                    author: username.replaceAll("_", " "),
+                    initials,
+                    time: new Date(c.created_at).toLocaleString(),
+                  };
+                }
+              } catch (err) {
+                console.error("User fetch error:", err);
+              }
+
+              // fallback if user fetch fails
+              return {
+                id: c.id,
+                text: c.message,
+                author: `User ${c.user_id}`,
+                initials: c.user_id.toString().slice(0, 2).toUpperCase(),
+                time: new Date(c.created_at).toLocaleString(),
+              };
+            })
+          );
+
+          setComments(enrichedComments);
+        }
+      } catch (err) {
+        console.error("Failed to fetch comments:", err);
+      }
+    };
+
+    fetchComments();
+  }, [file.id, SERVER]);
 
   const formatTimeAgo = (dateString) => {
     const createdAt = new Date(dateString);
@@ -27,48 +90,76 @@ const FileCard = ({ file }) => {
     return createdAt.toLocaleString(); // fallback to full date after 24h
   };
 
-// LIKE handler
-const handleLike = async () => {
-  if (liked) return; // prevent multiple likes from same user for now
+  // LIKE handler
+  const handleLike = async () => {
+    if (liked) return; // prevent multiple likes from same user for now
 
-  // optimistic update
-  setLiked(true);
-  setLikes(likes + 1);
+    setLiked(true);
+    setLikes(likes + 1);
 
-  try {
+    try {
+      const res = await fetch(`${SERVER}/api/v1/resources/${file.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+      });
 
-    const SERVER = import.meta.env.VITE_PROD_SERVER || import.meta.env.VITE_DEV_SERVER || "http://localhost:3000";
-    const res = await fetch(`${SERVER}/api/v1/resources/${file.id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-    });
+      const data = await res.json();
 
-    const data = await res.json();
-
-    if (data.success) {
-      setLikes(data.data.likes);
-    } else {
+      if (data.success) {
+        setLikes(data.data.likes);
+      } else {
+        setLiked(false);
+        setLikes(file.likes);
+      }
+    } catch (err) {
+      console.error("Like error:", err);
       setLiked(false);
-      setLikes(file.likes);
+      setLikes(likes);
     }
-  } catch (err) {
-    console.error("Like error:", err);
-    setLiked(false);
-    setLikes(likes);
-  }
-};
+  };
 
-
-  const handleAddComment = () => {
+  // Add Comment
+  const handleAddComment = async () => {
     if (!commentText.trim()) return;
+
+    const stored = JSON.parse(localStorage.getItem("user")); // assuming user saved as JSON
     const newComment = {
-      author: "John Doe",
-      initials: "JD",
-      text: commentText,
-      time: "Just now",
+      user_id: stored.id,
+      resource_id: file.id,
+      message: commentText.trim(),
+      parent_id: 0,
     };
-    setComments([...comments, newComment]);
-    setCommentText("");
+
+    try {
+      const res = await fetch(`${SERVER}/api/v1/resource_threads`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newComment),
+      });
+
+      const data = await res.json();
+      
+      if (data.success && data.data) {
+        const savedComment = {
+          id: data.data.id,
+          author: stored.username.replaceAll("_", " "),
+          initials: stored.username
+            .split("_")
+            .map((n) => n[0])
+            .join("")
+            .toUpperCase(),
+          text: data.data.message,
+          time: "Just now",
+        };
+
+        setComments([...comments, savedComment]);
+        setCommentText("");
+      } else {
+        console.error("Failed to save comment:", data);
+      }
+    } catch (err) {
+      console.error("Comment error:", err);
+    }
   };
 
   const handleDownload = async (url, filename) => {
@@ -84,14 +175,12 @@ const handleLike = async () => {
       link.click();
       document.body.removeChild(link);
 
-      // cleanup
       window.URL.revokeObjectURL(blobUrl);
     } catch (err) {
       console.error("Download failed:", err);
     }
   };
 
-  // detect file type (pdf vs image)
   const isPdf = file.file_url?.toLowerCase().endsWith(".pdf");
 
   return (
@@ -101,7 +190,7 @@ const handleLike = async () => {
         <div className="file-user">
           <div className="file-avatar">{file.initials}</div>
           <div>
-            <div className="file-author">{file.user_name.replaceAll('_', ' ')}</div>
+            <div className="file-author">{file.user_name.replaceAll("_", " ")}</div>
             <div className="file-meta">
               {formatTimeAgo(file.created_at)} • {file.course_code}
             </div>
@@ -114,16 +203,16 @@ const handleLike = async () => {
       <h3 className="file-title">{file.title}</h3>
       <p className="file-description">{file.description}</p>
 
-      {/* Preview (click to open fullscreen) */}
+      {/* Preview */}
       <div className="file-preview" onClick={() => setShowModal(true)}>
         {isPdf ? (
           <>
-          <div className="pdf-box">
-            <strong>{file.title}</strong>
-          </div>
-          <div className="pdf-viewer">
-            <iframe src={file.file_url} title={file.title}></iframe>
-          </div>
+            <div className="pdf-box">
+              <strong>{file.title}</strong>
+            </div>
+            <div className="pdf-viewer">
+              <iframe src={file.file_url} title={file.title}></iframe>
+            </div>
           </>
         ) : (
           <img
@@ -163,8 +252,8 @@ const handleLike = async () => {
 
       {/* Comments Section */}
       <div className="comments-section">
-        {comments.map((c, i) => (
-          <div key={i} className="comment">
+        {comments.map((c) => (
+          <div key={c.id} className="comment">
             <div className="comment-avatar">{c.initials}</div>
             <div className="comment-body">
               <strong>{c.author}</strong>
@@ -176,7 +265,7 @@ const handleLike = async () => {
 
         {/* Add Comment */}
         <div className="comment-input">
-          <div className="comment-avatar">JD</div>
+          <div className="comment-avatar"> {initial_user} </div>
           <input
             type="text"
             placeholder="Add a comment..."

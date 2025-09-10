@@ -103,10 +103,6 @@ function Home({ user }) {
     setActiveView(view);
   }
 
-  const handleUploadClick = () => {
-    fileInputRef.current?.click();
-  };
-
   const handleFileSelect = (event) => {
     const files = event.target.files;
     if (files && files.length > 0) {

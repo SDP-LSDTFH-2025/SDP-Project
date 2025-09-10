@@ -181,16 +181,22 @@ function Home({ user }) {
       {/* Top Navigation Bar */}
       <nav className="navigation">
         <h1 className="logo">StudyBuddy</h1>
-        <Input
-          className="search"
-          placeholder="Search resources, friends, courses..."
-        />
+          <Input
+            className="search"
+            placeholder="Search resources, friends, courses..."
+            
+          />
         <div className="nav-actions">
-          <Button className="nav-btn">
+          <Link to="/messages">
+            <Button className="nav-button">
+              <MessageCircle className="pics" />
+            </Button>
+          </Link>
+          <Button className="nav-button">
             <Bell className="pics" />
           </Button>
-          <Button className={`nav-btn ${activeView === "profile" ? "active" : ""}`} onClick={() => handleNavigationClick("profile")}>
-            <Settings className="pics" />
+          <Button className={`nav-button ${activeView === "profile" ? "active" : ""}`} onClick={() => handleNavigationClick("profile")}>
+            <User className="pics" />
           </Button>
           <button className="nav-btn logout" onClick={logout}>
             Logout
@@ -222,8 +228,8 @@ function Home({ user }) {
                   Study Groups
                 </Button>
                 <Button 
-                  className={`buttons ${activeView === "partners" ? "active" : ""}`}
-                  onClick={() => handleNavigationClick("partners")}
+                  className={`buttons ${activeView === "requests" ? "active" : ""}`}
+                  onClick={() => handleNavigationClick("requests")}
                   >
                   <UserPlus className="pics" />
                   Friend Requests
@@ -278,7 +284,7 @@ function Home({ user }) {
 
             {activeView === "feed" && (
               <div className="share-card">
-                <h2>Share a Resource...</h2>
+                <h2>Share a Thought...</h2>
                 <Input
                   className="search"
                   placeholder="What would you like to share with your buddies?"
@@ -292,15 +298,19 @@ function Home({ user }) {
                   accept=".jpg,.jpeg,.png,.gif,.bmp,.webp,.pdf"
                 />
                 <Button className="upload-btn" onClick={() => setActiveView("upload")}>
-                  <Upload className="pics" /> Upload
+                  <Share2 className="pics" /> Share
                 </Button>
               </div>
             )}
-
+            {activeView === "requests" && ( 
+              <div id="Request"> 
+                <FriendList/>
+              </div> 
+            )}
             {activeView === "upload" && (
               <div id="Uploads" className="share-card">
                 <h2>Upload Study Resource</h2>
-                {error && <p style={{ color: "red" }}>{error}</p>}
+                {error && <p style={{ color: "red" }}>{error}</p>} 
                 <form onSubmit={handleUploadSubmit}>
                   <Input
                     className="search"
@@ -339,7 +349,6 @@ function Home({ user }) {
               </div>
             )}
 
-            {activeView === "partners" && <StudyPartnersPage />}
 
             {activeView === "profile" && <ProfilePage />}
 

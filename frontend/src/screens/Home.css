@@ -25,10 +25,11 @@
   .navigation .search{
     max-width: 400px;
   }
+  
   .search{
     display:flex;
     flex: 1;
-    max-width:100%;
+    width:100%;
     margin: 0 20px;
     padding: 10px 15px;
     border: 1px solid #e2e0e0;
@@ -96,7 +97,7 @@
   /* ------- Layout ------- */
   .dashboard{
     display:grid;
-    grid-template-columns: 300px 1fr 320px; /* left | center | right like the screenshot */
+    grid-template-columns: 300px 1fr 320px; 
     gap:24px;
     padding:24px;
     width: 96%;
@@ -110,7 +111,7 @@
   /* Generic card look used everywhere in the mock */
   
   .rightbar > div{
-    background: var(--card);
+    background: #ffffff;
     border: 1px solid #e5e7eb;
     border-radius: 12px;
     text-align: center;
@@ -272,7 +273,8 @@
     transform: translateY(-5px);
   }
   .share-card .search{
-    width:auto;
+    width:87%;
+    align-self: left;
   }
   .resource-card h4 {
     margin: 0 0 10px;
@@ -300,14 +302,9 @@
     gap: 20px;
   }
   
-  .resource-feed h3 {
-    font-size: 1.3em;
-    color: #6a5acd;
-    margin-bottom: 10px;
-  }
   
   .resource-card {
-    background-color: #f8f5f1; /* Light background like the navbar */
+    background-color: #f8f5f1; 
     border-radius: 10px;
     padding: 15px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -316,25 +313,29 @@
   
   .resources .share-input{
     padding: 0.75rem;
-    border: 1px solid #ccc;    /* blue-ish border like mock */
+    border: 1px solid #ccc;    
     border-radius: 8px;
     outline: none;
     font-size: 0.95rem;
     background: #fff;
+    
   }
   
+  .shadow-card .search{
+    width:73%;
+  }
   /* resource post card */
   .resource-card{
-    border: 1px solid #e5e7eb;   /* light outline (not dark) like screenshot */
+    border: 1px solid #e5e7eb;   
     background: #fff;
     border-radius: 14px;
     padding: 14px;
     margin-bottom: 14px;
     box-shadow: var(--shadow);
   }
-  .resource-card h3{
+  .resource-card h2{
     margin: 0 0 6px;
-    font-size: 1.05rem;
+    font-size: 1.3rem;
     font-weight: 800;
     color: #0f172a;
   }
@@ -347,7 +348,7 @@
   /* Drag and Drop Area Styles */
 
   /* ------- Right column ------- */
-  .rightbar{ display:flex; flex-direction:column; gap:1rem; }
+  .rightbar{ display:flex; flex-direction:column; gap:1rem;align-self: start; }
   .rightbar > div{ padding: 16px; }
   .rightbar h3{
     margin:0 0 10px;
@@ -368,9 +369,10 @@
   }
   /* Empty states */
   .empty-text{
-    color: var(--muted);
+    color: #666;
     font-style: italic;
     padding: 8px 0;
+    font-size: 0.8rem;
   }
   
   /* ------- Responsive ------- */

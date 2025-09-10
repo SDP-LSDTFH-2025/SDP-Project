@@ -231,7 +231,7 @@
 /* Responsive adjustments */
 @media (max-width: 640px) {
   .friend-list-container {
-    max-width: 100%;
+    max-width: 520px;
     padding: 0 16px;
   }
   

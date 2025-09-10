@@ -33,12 +33,12 @@
     border: 1px solid #e2e0e0;
     border-radius: 0.5rem;
     background-color: #fff;
-    font-size: 0.8rem;
+    font-size: 0.9rem;
     outline: none;
   }
   .search:focus {
     outline: none;
-    border-color: #8000ff;
+    border-color: #720dd7;
     box-shadow: 0 0 0 2px rgba(128, 0, 255, 0.2);
   }
   /* Logo styling */
@@ -155,7 +155,7 @@
     margin-top: 0.6rem;
   }
   .filter-badges{
-    padding-top: 0.6rem;
+    padding-top: 0.8rem;
   }
   .hidden-file-input {
     display: none;

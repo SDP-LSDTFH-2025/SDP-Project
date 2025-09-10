@@ -4,7 +4,7 @@
 
 import React, { useEffect, useState } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { Home, Login, Signup ,Forgot} from "./screens";
+import { Home, Login, Signup ,Forgot,Message} from "./screens";
 import { Welcome } from "./components/Welcome.jsx";
 import { Registration } from "./components/Registration.jsx";
 import { Interests } from "./components/Interests.jsx";
@@ -51,7 +51,7 @@ export default function App() {
               : <Login setUser={setUser} />
           }
         />
-       
+       <Route path="/messages" element={<Message />} />
        <Route path="/forgot" element={<Forgot />} />
         /* Home route - only for logged-in users */
         <Route

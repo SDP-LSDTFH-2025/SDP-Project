@@ -46,7 +46,7 @@ export default async () => {
     await allowButton.click();
   }
 
-  await page.waitForURL("http://localhost:5173/home");
+  // await page.waitForURL("http://localhost:5173/home");
 
   await context.storageState({ path: stateFile });
 

@@ -1,22 +1,30 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect,useState,useRef } from "react";
+import { Link } from "react-router-dom";
 import { getAllUsers } from "../functions/users";
-import { getAllGroups } from "../functions/groups";
-import { Card, CardHeader, CardTitle, CardContent } from "../components/ui/card";
-import { Button } from "../components/ui/button";
-import { Input } from "../components/ui/input";
-import { Badge } from "../components/ui/badge";
-import {
-  Search,
-  Users,
-  BookOpen,
-  MessageSquare,
-  UserPlus,
-  Upload,
-  Filter,
-  Bell,
-  Settings,
-} from "lucide-react";
-import { DragAndDropArea } from "./DragAndDrop.jsx";
+import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
+import {Button} from "../components/ui/button";
+import {Input} from "../components/ui/input";
+import {Badge} from "../components/ui/badge";
+import { 
+	Search, 
+	Users, 
+	BookOpen, 
+	MessageSquare, 
+	UserPlus, 
+	Upload,
+	Heart,
+	Share2,
+	MessageCircle,
+	Filter,
+	Bell,
+  Menu,
+	Settings,
+  User,
+  X,
+  LogOut 
+  } from "lucide-react";
+import {DragAndDropArea} from "./DragAndDrop.jsx";
+import FriendList from "./FriendList.jsx";
 import "./Home.css";
 
 import StudyPartnersPage from "../pages/StudyPartnersPage.jsx";
@@ -37,7 +45,8 @@ function Home({ user }) {
 
  const [friendsList, setFriends] = useState([]);
  const [groupList, setGroups] = useState([]);
-
+ const [isMenuOpen, setIsMenuOpen] = useState(false);
+ const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
   // Validate form whenever inputs change
   useEffect(() => {
     const isValid = title.trim() !== '' && 
@@ -185,22 +194,77 @@ function Home({ user }) {
       {/* Top Navigation Bar */}
       <nav className="navigation">
         <h1 className="logo">StudyBuddy</h1>
-        <Input
-          className="search"
-          placeholder="Search resources, friends, courses..."
-        />
+          <Input
+            className="search"
+            placeholder="Search resources, friends, courses..."
+            
+          />
         <div className="nav-actions">
-          <Button className="nav-btn">
+          <Link to="/messages">
+            <Button className="nav-button">
+              <MessageCircle className="pics" />
+            </Button>
+          </Link>
+          <Button className="nav-button">
             <Bell className="pics" />
           </Button>
-          <Button className={`nav-btn ${activeView === "profile" ? "active" : ""}`} onClick={() => handleNavigationClick("profile")}>
-            <Settings className="pics" />
+          <Button className={`nav-button ${activeView === "profile" ? "active" : ""}`} onClick={() => handleNavigationClick("profile")}>
+            <User className="pics" />
           </Button>
           <button className="nav-btn logout" onClick={logout}>
             Logout
           </button>
+          <button className="nav-btn menu-btn mobile-only" onClick={toggleMenu}>
+              {isMenuOpen ? <X className="pics" size={24} /> : <Menu size={24} />}
+            </button>
         </div>
       </nav>
+      {isMenuOpen && (
+      <div className={`mobile-menu ${isMenuOpen ? "open" : ""}`}>
+        <ul>
+          <li>
+            <Button 
+              className={`buttons ${activeView === "feed" ? "active" : ""}`}
+              onClick={() => { handleNavigationClick("feed"); toggleMenu(); }}
+            >
+              <BookOpen className="pics" /> Resource Feed
+            </Button>
+          </li>
+          <li>
+            <Button 
+              className={`buttons ${activeView === "groups" ? "active" : ""}`}
+              onClick={() => { handleNavigationClick("groups"); toggleMenu(); }}
+            >
+              <Users className="pics" /> Study Groups
+            </Button>
+          </li>
+          <li>
+            <Button 
+              className={`buttons ${activeView === "requests" ? "active" : ""}`}
+              onClick={() => { handleNavigationClick("requests"); toggleMenu(); }}
+            >
+              <UserPlus className="pics" /> Friend Requests
+            </Button>
+          </li>
+          <li>
+            <Button 
+              className={`buttons ${activeView === "upload" ? "active" : ""}`}
+              onClick={() => { handleNavigationClick("upload"); toggleMenu(); }}
+            >
+              <Upload className="pics" /> Upload Resource
+            </Button>
+          </li>
+          <li>
+          <Button 
+            className="buttons" 
+            onClick={() => { logout(); setIsMenuOpen(false); }}
+          >
+             <LogOut className="pics"/>Logout
+          </Button>
+            </li>
+        </ul>
+      </div>
+    )}
 
       <main className="dashboard">
         {/* Sidebar */}
@@ -226,8 +290,8 @@ function Home({ user }) {
                   Study Groups
                 </Button>
                 <Button 
-                  className={`buttons ${activeView === "partners" ? "active" : ""}`}
-                  onClick={() => handleNavigationClick("partners")}
+                  className={`buttons ${activeView === "requests" ? "active" : ""}`}
+                  onClick={() => handleNavigationClick("requests")}
                   >
                   <UserPlus className="pics" />
                   Friend Requests
@@ -282,7 +346,7 @@ function Home({ user }) {
 
             {activeView === "feed" && (
               <div className="share-card">
-                <h2>Share a Resource...</h2>
+                <h2>Share a Thought...</h2>
                 <Input
                   className="search"
                   placeholder="What would you like to share with your buddies?"
@@ -296,18 +360,22 @@ function Home({ user }) {
                   accept=".jpg,.jpeg,.png,.gif,.bmp,.webp,.pdf"
                 />
                 <Button className="upload-btn" onClick={() => setActiveView("upload")}>
-                  <Upload className="pics" /> Upload
+                  <Share2 className="pics" /> Share
                 </Button>
 
                 <Feed />
 
               </div>
             )}
-
+            {activeView === "requests" && ( 
+              <div id="Request"> 
+                <FriendList/>
+              </div> 
+            )}
             {activeView === "upload" && (
               <div id="Uploads" className="share-card">
                 <h2>Upload Study Resource</h2>
-                {error && <p style={{ color: "red" }}>{error}</p>}
+                {error && <p style={{ color: "red" }}>{error}</p>} 
                 <form onSubmit={handleUploadSubmit}>
                   <Input
                     className="search"
@@ -346,7 +414,6 @@ function Home({ user }) {
               </div>
             )}
 
-            {activeView === "partners" && <StudyPartnersPage />}
 
             {activeView === "profile" && <ProfilePage />}
 
@@ -377,22 +444,24 @@ function Home({ user }) {
             )}
           </div>
 
-          <div className="study-groups">
-            <h3>Active Study Groups</h3>
-            {groups.length > 0 ? (
-              groups.map((g, i) => (
-                <p key={i}>
-                  {g.name} ({g.online} online)
-                </p>
-              ))
-            ) : (
-              <p className="empty-text">No groups yet.</p>
-            )}
-          </div>
-        </aside>
-      </main>
+
+				{/* Active study groups */}
+				<div className="study-groups">
+					<h3>Active Study Groups</h3>
+					{groups.length > 0 ? (
+						groups.map((g, i) => (
+							<p key={i}>
+								{g.name} ({g.online} online)
+							</p>
+						))
+					) : (
+						<p className="empty-text">No groups yet.</p>
+					)}
+				</div>
+			</aside>
+		</main>
     </div>
-  );
+	);
 }
 
 export default Home;

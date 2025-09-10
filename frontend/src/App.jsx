@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { Home, Login, Signup, Forgot } from "./screens";
+import { Home, Login, Signup ,Forgot,Message} from "./screens";
 import { Welcome } from "./components/Welcome.jsx";
 import { Registration } from "./components/Registration.jsx";
 import { Interests } from "./components/Interests.jsx";
@@ -48,11 +48,9 @@ export default function App() {
           path="/login"
           element={user ? <Navigate to="/home" replace /> : <Login setUser={setUser} />}
         />
-
-        {/* Forgot password */}
-        <Route path="/forgot" element={<Forgot />} />
-
-        {/* Protected home page */}
+       <Route path="/messages" element={<Message />} />
+       <Route path="/forgot" element={<Forgot />} />
+        /* Home route - only for logged-in users */
         <Route
           path="/home"
           element={

@@ -150,7 +150,7 @@ const ProfilePage = () => {
           ) : (
             <button className="edit-button" onClick={handleEdit}>
               <Edit size={16} className="icon" />
-              Edit Profile
+              Edit
             </button>
           )}
         </div>

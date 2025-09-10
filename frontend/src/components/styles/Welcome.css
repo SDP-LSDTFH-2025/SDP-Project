@@ -131,7 +131,7 @@ html {
     text-align: center;
     position: relative;
     width: auto;
-    height: auto;
+    height: fit-content;
     padding: 0.5rem;
     overflow: hidden;
     
@@ -192,7 +192,7 @@ html {
     text-align: center;
     gap: 2rem;
     width: auto;
-    min-height: 104vh;
+    height: auto;
     padding: 2rem;
     overflow: hidden;
 }

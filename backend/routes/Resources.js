@@ -631,7 +631,7 @@ router.get('/user/:id', async (req, res) => {
 
 /**
  * @swagger
- * /resources/{id}:
+ * /api/v1/resources/{id}:
  *   put:
  *     summary: Update a resource
  *     description: Update the title, description, or increment the likes of a specific resource.
@@ -698,7 +698,7 @@ router.get('/user/:id', async (req, res) => {
  *         description: Internal server error
  */
 
-router.put('/resources/:id', async (req, res) => {
+router.put('/:id', async (req, res) => {
     const { title, description,incrementLikes } = req.body;
 
     try {

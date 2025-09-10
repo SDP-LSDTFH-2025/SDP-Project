@@ -12,7 +12,7 @@ const { Op } = require('sequelize');
 
 /**
  * @swagger
- * /api/v1/resource_thread:
+ * /api/v1/resource_threads:
  *   post:
  *     summary: Create a new resource thread
  *     tags: [ResourceThreads]
@@ -106,7 +106,7 @@ router.post('/', async (req, res) => {
 
 /**
  * @swagger
- * /api/v1/resource_thread/:
+ * /api/v1/resource_threads/:
  *   get:
  *     summary: Get resource threads by message
  *     tags: [ResourceThreads]
@@ -163,7 +163,7 @@ router.get('/', async (req, res) => {
 
 /**
  * @swagger
- * /api/v1/resource_thread/:{id}:
+ * /api/v1/resource_threads/:{id}:
  *   put:
  *     summary: Update a resource thread by ID
  *     tags: [ResourceThreads]
@@ -218,7 +218,7 @@ router.put('/:id', async (req, res) => {
 
 /**
  * @swagger
- * /api/v1/resource_thread/:{id}:
+ * /api/v1/resource_threads/:{id}:
  *   delete:
  *     summary: Delete a resource thread by ID
  *     tags: [ResourceThreads]

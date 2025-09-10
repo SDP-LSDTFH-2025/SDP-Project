@@ -29,6 +29,24 @@ const ProfilePage = () => {
     }
   }, []);
 
+  const formatTimeAgo = (dateString) => {
+    const createdAt = new Date(dateString);
+    const now = new Date();
+    const diffMs = now - createdAt;
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+
+    if (diffHours < 1) {
+      const diffMinutes = Math.floor(diffMs / (1000 * 60));
+      return diffMinutes <= 1 ? "Just now" : `${diffMinutes} minutes ago`;
+    }
+
+    if (diffHours < 24) {
+      return `${diffHours} hours ago`;
+    }
+
+    return createdAt.toLocaleString(); // fallback to full date after 24h
+  };
+
   const handleEdit = () => setIsEditing(true);
   const handleCancel = () => setIsEditing(false);
   const handleSave = () => {
@@ -39,17 +57,20 @@ const ProfilePage = () => {
     setIsEditing(false);
   };
 
+
   if (!user || !editForm) return <p>No profile data found.</p>;
 
   return (
     <div className="profile-container">
       {/* Header */}
       <div className="profile-header">
-        <img
-          src="https://i.pravatar.cc/160?img=15"
-          alt={`${editForm.username}`}
-          className="profile-image"
-        />
+        <div className="profile-avatar">
+          {user.username
+            .split("_")
+            .map((p) => p[0])
+            .join("")
+            .toUpperCase()}
+        </div>
         <div className="profile-info">
           {isEditing ? (
             <>
@@ -81,7 +102,7 @@ const ProfilePage = () => {
                 />
               </div>
               <div className="field-group">
-                <label>Location</label>
+                <label>Faculty</label>
                 <input
                   value={editForm.location}
                   onChange={(e) =>
@@ -109,7 +130,7 @@ const ProfilePage = () => {
                 <span className="detail-item">
                 {user.is_active && <CircleDot className="status-icon online" size={12} />}
                 {!user.is_active && <Circle className="status-icon offline" size={12} />}
-                  {user.is_active ? "Active" : "Offline"}
+                  {user.is_active ? "Online" : "Offline"}
                 </span>
               </div>
             </>
@@ -162,7 +183,7 @@ const ProfilePage = () => {
           <div className="kv">
             <span className="label">Last Login</span>
             <span className="value">
-              {new Date(user.last_login).toLocaleString()}
+              {formatTimeAgo(user.last_login)}
             </span>
           </div>
         </div>

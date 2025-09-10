@@ -1,5 +1,7 @@
-/* page background like the screenshot */
-body { background: #f7f8fb; }
+/* Page background */
+body { 
+  background: #f7f8fb; 
+}
 
 .profile-container {
   max-width: 980px;
@@ -35,17 +37,11 @@ body { background: #f7f8fb; }
   color: white;
 }
 
-.profile-image {
-  width: 96px;
-  height: 96px;
-  border-radius: 9999px;
-  object-fit: cover;
-}
-
+/* User info */
 .profile-info h1 {
   margin: 0;
   text-align: left;
-  font-size: 32px;        /* bigger, like the mock */
+  font-size: 32px;
   font-weight: 700;
   line-height: 1.2;
 }
@@ -71,27 +67,15 @@ body { background: #f7f8fb; }
   font-size: 14px;
   color: #4b5563;
 }
-.detail-item { display: inline-flex; align-items: center; gap: 6px; }
-
-.edit-button {
-  position: absolute;
-  right: 22px;
-  top: 22px;
-  padding: 9px 16px;
-  background-color: #2563eb;
-  color: #fff;
-  border: 0;
-  border-radius: 10px;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 14px;
-  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.35);
+.detail-item { 
+  display: inline-flex; 
+  align-items: center; 
+  gap: 6px; 
 }
-.edit-button:hover { background-color: #1d4ed8; }
 
-.icon { vertical-align: middle; }
+.icon { 
+  vertical-align: middle; 
+}
 
 /* GRID LIKE THE FIRST SHOT: 2/1 columns */
 .profile-body {
@@ -129,7 +113,11 @@ body { background: #f7f8fb; }
 .activity .value { color: #111827; font-weight: 600; }
 
 /* TAG PILL STYLES */
-.tags { display: flex; flex-wrap: wrap; gap: 10px; }
+.tags { 
+  display: flex; 
+  flex-wrap: wrap; 
+  gap: 10px; 
+}
 .tags span {
   padding: 8px 14px;
   border-radius: 9999px;
@@ -148,54 +136,22 @@ body { background: #f7f8fb; }
   color: #065f46;
   border-color: #bbf7d0;
 }
-.field-group {
-  margin-bottom: 10px;
-  display: flex;
-  flex-direction: column;
-}
-.field-group label {
-  font-size: 13px;
-  margin-bottom: 4px;
-  color: #374151;
-}
-.field-group input {
-  padding: 8px 10px;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  font-size: 14px;
-}
 
-/* Status icon styling (online/offline) */
+/* Status icon styling */
 .status-icon {
   margin-left: 8px;
   vertical-align: middle;
 }
-
-/* Online status (inherits green from active state) */
 .status-icon.online {
-  color: green; /* Matches button's white text */
+  color: green;
 }
-
-/* Offline status (inherits red from deactivated state) */
 .status-icon.offline {
-  color: red; /* Matches button's white text */
+  color: red;
 }
-
-.button-group { display: flex; gap: 10px; margin-left: auto; }
-.cancel-button {
-  padding: 9px 16px;
-  background: #f3f4f6;
-  color: #374151;
-  border: 0;
-  border-radius: 10px;
-  cursor: pointer;
-}
-.cancel-button:hover { background: #e5e7eb; }
-
 
 /* Responsive: stack columns on small screens */
 @media (max-width: 780px) {
-  .profile-body { grid-template-columns: 1fr; }
-  .edit-button { position: static; align-self: flex-start; margin-left: auto; }
+  .profile-body { 
+    grid-template-columns: 1fr; 
+  }
 }
-

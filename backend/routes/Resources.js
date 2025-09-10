@@ -65,8 +65,8 @@ const upload = multer({
  *           type: string
  *           format: uuid
  *           description: ID of the user who uploaded the resource
- *         course_id:
- *           type: integer
+ *         course_code:
+ *           type: string
  *           description: ID of the course associated with the resource
  *         created_at:
  *           type: string

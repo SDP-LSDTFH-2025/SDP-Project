@@ -105,36 +105,39 @@ function Home({ user }) {
     setError("");
 
     // Validate inputs
-    if (!title || !courseId || !description || !pdfFile) {
+    if (!title || !courseId || !description || (!pdfFile && !pictureFile)) {
       setError("Please fill in all required fields and select a PDF file.");
       return;
     }
 
     const formData = new FormData();
     formData.append("user_id", user?.id || "test-user"); // Replace with actual user ID
-    formData.append("course_id", courseId);
+    formData.append("course_code", courseId);
     formData.append("title", title);
     formData.append("description", description);
-    formData.append("file", pdfFile);
-    if (pictureFile) {
-      formData.append("picture", pictureFile);
+      if (pictureFile) {
+        formData.append("image", pictureFile);
+      }
+    if (pdfFile) {
+      formData.append("pdf", pdfFile);
     }
-
     // Log FormData contents for debugging
     console.log("FormData contents:");
     for (const pair of formData.entries()) {
       console.log(`${pair[0]}: ${pair[1]}`);
     }
     console.log(user);
-
+    
     try {
       const SERVER =
         import.meta.env.VITE_PROD_SERVER ||
         import.meta.env.VITE_DEV_SERVER ||
         "http://localhost:3000";
-      const url = `${SERVER}/api/v1/resources`; // Verify this endpoint
+      
+      const url = pdfFile ? `${SERVER}/api/v1/upload/pdf` : `${SERVER}/api/v1/upload/picture`; // Verify this endpoint
+    
       console.log("Request URL:", url);
-
+      console.log("FormData:", formData);
       const response = await fetch(url, {
         method: "POST",
         body: formData, // No Content-Type header for FormData

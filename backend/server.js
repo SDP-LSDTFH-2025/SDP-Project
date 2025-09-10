@@ -111,8 +111,8 @@ app.use(cors({
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(express.json({ limit: '100mb' }));
+app.use(express.urlencoded({ extended: true, limit: '100mb' }));
 app.use(morgan('combined'));
 
 // Apply rate limiting to all requests
@@ -121,7 +121,7 @@ app.use(limiter);
 // Swagger documentation
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
-router.get('/health', (req, res) => {
+app.get('/health', (req, res) => {
   res.json({
     success: true,
     message: 'API is running'
@@ -148,6 +148,7 @@ async function startServer() {
     // Test database connection
     await sequelize.authenticate();
     console.log('✅ Database connection established successfully.');
+   // await sequelize.sync({ alter:true  });
 
 
     console.log('✅ Database synchronized successfully.');

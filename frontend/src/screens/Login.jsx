@@ -39,6 +39,7 @@ function Login({ setUser }) {
       if (data.success) {
         console.log("logged in!");
         localStorage.setItem("user", JSON.stringify(data.data));
+        localStorage.setItem("token", data.token);
         setUser(data.data);
         navigate("/home");
       } else {
@@ -64,12 +65,13 @@ function Login({ setUser }) {
 
       const data = await res.json();
 
-      if (data.ok) {
+      if (data.success) {
         console.log("Signed In!");
         localStorage.setItem("user", JSON.stringify(data.data)); // not safe
+        localStorage.setItem("token", data.token);
 
         setUser(data.data);
-        navigate("registration");
+        navigate("/home");
       } else {
         alert(data.success || "Authentication failed");
       }
@@ -86,7 +88,7 @@ function Login({ setUser }) {
         <h1 className="logo">StudyBuddy</h1>
         <p className="subtitle">Welcome back! Sign in to your account</p>
 
-        <form className="login-form" onSubmit={handleManualLogin}>
+        <form className="login-form" onSubmit={(e) => {e.preventDefault(); handleManualLogin();}}>
           <label>Email</label>
           <input type="email" placeholder="Enter your email" value={formData.email} onChange={(e) => HandleInputChange("email",e.target.value)}/>
 

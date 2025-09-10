@@ -1,4 +1,4 @@
-/* ------- Design tokens ------- */
+* ------- Design tokens ------- */
 :root{
     --bg: #f9fafb;
     --card: #ffffff;
@@ -107,8 +107,8 @@
   
   .rightbar > div{
     background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
     text-align: center;
   }
   
@@ -124,7 +124,7 @@
     background: white;
     border-radius: 0.8rem;
     overflow: hidden; 
-    border: 1px solid var(--border);
+    border: 1px solid #e5e7eb;
     padding: 16px;
     min-width: 88%;
   }
@@ -155,16 +155,16 @@
     margin-top: 0.6rem;
   }
   .filter-badges{
-    padding-top: 0.6rem;;
+    padding-top: 0.6rem;
   }
   .hidden-file-input {
     display: none;
   }
   .badges{
-    border: 1px solid var(--border);
+    border: 1px solid #e5e7eb;
     border-radius: 0.8rem;
     font-size: small;
-    margin: 10px 5px;
+    margin: 4px 2px;
     font-weight: 500;
     padding: 0.3rem;
     text-align: center;
@@ -321,7 +321,7 @@
   
   /* resource post card */
   .resource-card{
-    border: 1px solid var(--border);   /* light outline (not dark) like screenshot */
+    border: 1px solid #e5e7eb;   /* light outline (not dark) like screenshot */
     background: #fff;
     border-radius: 14px;
     padding: 14px;

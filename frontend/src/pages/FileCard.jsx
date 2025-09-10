@@ -27,30 +27,37 @@ const FileCard = ({ file }) => {
     return createdAt.toLocaleString(); // fallback to full date after 24h
   };
 
-    // LIKE handler
-  const handleLike = async () => {
-    if (liked) return; // prevent multiple likes from same user for now
-    setLiked(true);
-    setLikes(likes + 1);
+// LIKE handler
+const handleLike = async () => {
+  if (liked) return; // prevent multiple likes from same user for now
 
-    try {
-      const res = await fetch(`/api/v1/resources/${file.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ likes: likes + 1 })
-      });
-      const data = await res.json();
-      if (!data.success) {
-        setLiked(false);
-        setLikes(likes);
-      }
-    } catch (err) {
-      console.error("Like error:", err);
+  // optimistic update
+  setLiked(true);
+  setLikes(likes + 1);
+
+  try {
+
+    const SERVER = import.meta.env.VITE_PROD_SERVER || import.meta.env.VITE_DEV_SERVER || "http://localhost:3000";
+    const res = await fetch(`${SERVER}/api/v1/resources/${file.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+    });
+
+    const data = await res.json();
+
+    if (data.success) {
+      setLikes(data.data.likes);
+    } else {
       setLiked(false);
-      setLikes(likes);
+      setLikes(file.likes);
     }
+  } catch (err) {
+    console.error("Like error:", err);
+    setLiked(false);
+    setLikes(likes);
+  }
+};
 
-  };
 
   const handleAddComment = () => {
     if (!commentText.trim()) return;

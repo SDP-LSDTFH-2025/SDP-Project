@@ -24,65 +24,182 @@ import {
 import {DragAndDropArea} from "./DragAndDrop.jsx";
 import FriendList from "./FriendList.jsx";
 import "./Home.css";
-{/*installed:
-  1.npm install lucide-react (svg)*/ }
-function Home({ user }) {
-  const [activeView, setActiveView] = useState("feed");
-  const fileInputRef = useRef(null); 
 
+import StudyPartnersPage from "../pages/StudyPartnersPage.jsx";
+import ProfilePage from "../pages/ProfilePage.jsx";
+
+function Home({ user }) {
+  
+  const [activeView, setActiveView] = useState("feed");
+  const fileInputRef = useRef(null);
+  const [title, setTitle] = useState("");
+  const [courseId, setCourseId] = useState("");
+  const [description, setDescription] = useState("");
+  const [pdfFile, setPdfFile] = useState(null);
+  const [pictureFile, setPictureFile] = useState(null);
+  const [error, setError] = useState("");
+
+ const [friendsList, setFriends] = useState([]);
+ const [groupList, setGroups] = useState([]);
 
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        await getAllUsers();
+        const data = await getAllUsers();
+        const friendsArray = data.map(user => ({
+          name: user.username, // Rename 'username' to 'name'
+          status: user.is_active ? 'Active' : 'Inactive', // Rename 'is_active' to 'status' and convert to string
+        }));
+        setFriends(friendsArray);
       } catch (error) {
-        console.error("Error in component:", error.message);
+        setError(error.message);
+        console.error("Error fetching users:", error.message);
       }
     };
     fetchUsers();
   }, []);
 
-  const logout = () => {
-    localStorage.removeItem("user");
-    window.location.reload();
-  };
+  useEffect(() => {
+    const fetchGroups = async () => {
+      try {
+        const data = await getAllGroups();
+        const groupsArray = data.map(group => ({
+          name: group.name, 
+          online: Math.random() < 0.5 ? 'Online' : 'Offline',
+        }));
+        setGroups(groupsArray);
+      } catch (error) {
+        setError(error.message);
+        console.error("Error fetching groups:", error.message);
+      }
+    };
+    fetchGroups();
+  }, []);
 
-  const friends = user?.friends || [];
-  const groups = user?.groups || [];
+  function logout() {
+    localStorage.removeItem("user");
+    localStorage.removeItem("isLoggedIn");
+    window.location.reload();
+  }
+
+  const friends = friendsList || user?.friends || [];
+  const groups = groupList || user?.groups || [];
   const resources = user?.resources || [];
 
-  const handleNavigationClick = (view) => { 
-    setActiveView(view); 
+  function handleNavigationClick(view) {
+    setActiveView(view);
+  }
+
+  const handleUploadClick = () => {
+    fileInputRef.current?.click();
   };
-  
-  
-  
+
+  const handleFileSelect = (event) => {
+    const files = event.target.files;
+    if (files && files.length > 0) {
+      setActiveView("upload");
+      const pdf = Array.from(files).find((f) => f.type.includes("pdf"));
+      const image = Array.from(files).find((f) => f.type.startsWith("image/"));
+      if (pdf) setPdfFile(pdf);
+      if (image) setPictureFile(image);
+      console.log("Files selected:", { pdf, image });
+    }
+  };
+
+  const handleUploadSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+
+    // Validate inputs
+    if (!title || !courseId || !description || (!pdfFile && !pictureFile)) {
+      setError("Please fill in all required fields and select a PDF file.");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("user_id", user?.id || "test-user"); // Replace with actual user ID
+    formData.append("course_code", courseId);
+    formData.append("title", title);
+    formData.append("description", description);
+      if (pictureFile) {
+        formData.append("image", pictureFile);
+      }
+    if (pdfFile) {
+      formData.append("pdf", pdfFile);
+    }
+    // Log FormData contents for debugging
+    console.log("FormData contents:");
+    for (const pair of formData.entries()) {
+      console.log(`${pair[0]}: ${pair[1]}`);
+    }
+    console.log(user);
+    
+    try {
+      const SERVER =
+        import.meta.env.VITE_PROD_SERVER ||
+        import.meta.env.VITE_DEV_SERVER ||
+        "http://localhost:3000";
+      
+      const url = pdfFile ? `${SERVER}/api/v1/upload/pdf` : `${SERVER}/api/v1/upload/picture`; // Verify this endpoint
+    
+      console.log("Request URL:", url);
+      console.log("FormData:", formData);
+      const response = await fetch(url, {
+        method: "POST",
+        body: formData, // No Content-Type header for FormData
+      });
+
+      const data = await response.json();
+      console.log("API Response:", data, "Status:", response.status);
+
+      if (response.ok) {
+        console.log("Upload successful!");
+        setTitle("");
+        setCourseId("");
+        setDescription("");
+        setPdfFile(null);
+        setPictureFile(null);
+        setActiveView("feed");
+        alert("Resource uploaded successfully!"); // Replace with toast
+      } else {
+        const errorMessage =
+          data.message || `Upload failed with status ${response.status}`;
+        setError(errorMessage);
+      }
+    } catch (error) {
+      console.error("Upload error:", error, error.stack);
+      const errorMessage =
+        error.message === "Failed to fetch"
+          ? "Unable to connect to the server. Check your internet or server URL."
+          : error.message || "An unexpected error occurred.";
+      setError(errorMessage);
+    }
+  };
+
   return (
     <div className="home-container">
       {/* Top Navigation Bar */}
       <nav className="navigation">
         <h1 className="logo">StudyBuddy</h1>
-        <Input className="search" placeholder="Search resources,friends,cources..."></Input>
+        <Input
+          className="search"
+          placeholder="Search resources, friends, courses..."
+        />
         <div className="nav-actions">
-        <Link to="/messages">
-          <Button className="nav-button">
-            <MessageCircle className="pics" />
+          <Button className="nav-btn">
+            <Bell className="pics" />
           </Button>
-        </Link>
-          <Button className="nav-button">
-            <Bell className="pics"></Bell>
+          <Button className={`nav-btn ${activeView === "profile" ? "active" : ""}`} onClick={() => handleNavigationClick("profile")}>
+            <Settings className="pics" />
           </Button>
-          <Link to="/profile">
-          <Button className="nav-button">
-            <User className="pics"></User>
-          </Button>
-          </Link>
-          <button className="nav-btn logout" onClick={logout}>Logout</button>
+          <button className="nav-btn logout" onClick={logout}>
+            Logout
+          </button>
         </div>
       </nav>
 
       <main className="dashboard">
-        {/* Sidebar Navigation */}
+        {/* Sidebar */}
         <aside className="sidebar">
           <div className="navigate">
             <Card className="shadow-card">
@@ -90,23 +207,31 @@ function Home({ user }) {
                 <CardTitle className="title">Navigation</CardTitle>
               </CardHeader>
               <CardContent>
-                <Button className={`buttons ${activeView === "feed" ? "active" : ""}`} 
-                  onClick={() => handleNavigationClick("feed")}>
+                <Button
+                  className={`buttons ${activeView === "feed" ? "active" : ""}`}
+                  onClick={() => handleNavigationClick("feed")}
+                >
                   <BookOpen className="pics" />
                   Resource Feed
                 </Button>
-                <Button className={`buttons ${activeView === "studyGroup" ? "active" : ""}`} 
-                  onClick={() => handleNavigationClick("studyGroup")}>
+                <Button 
+                  className={`buttons ${activeView === "groups" ? "active" : ""}`}
+                  onClick={() => handleNavigationClick("groups")}
+                >
                   <Users className="pics" />
                   Study Groups
                 </Button>
-                <Button className={`buttons ${activeView === "requests" ? "active" : ""}`} 
-                  onClick={() => handleNavigationClick("requests")}>
+                <Button 
+                  className={`buttons ${activeView === "partners" ? "active" : ""}`}
+                  onClick={() => handleNavigationClick("partners")}
+                  >
                   <UserPlus className="pics" />
                   Friend Requests
                 </Button>
-                <Button className={`buttons ${activeView === "upload" ? "active" : ""}`} 
-                  onClick={() => handleNavigationClick("upload")}>
+                <Button
+                  className={`buttons ${activeView === "upload" ? "active" : ""}`}
+                  onClick={() => handleNavigationClick("upload")}
+                >
                   <Upload className="pics" />
                   Upload Resource
                 </Button>
@@ -118,7 +243,7 @@ function Home({ user }) {
             <Card className="shadow-card">
               <CardHeader>
                 <CardTitle className="title">
-                  <Filter className="pics"/>
+                  <Filter className="pics" />
                   Filters
                 </CardTitle>
               </CardHeader>
@@ -129,62 +254,109 @@ function Home({ user }) {
                 </div>
                 <div>
                   <label className="filters">School</label>
-                  <Input className="search" placeholder="Enter school name"  />
+                  <Input className="search" placeholder="Enter school name" />
                 </div>
                 <div className="filter-badges">
-                  <Badge className="badges" variant="outline">Mathematics</Badge>
-                  <Badge className="badges" variant="outline">Chemistry</Badge>
-                  <Badge className="badges" variant="outline">Physics</Badge>
+                  <Badge className="badges" variant="outline">
+                    Mathematics
+                  </Badge>
+                  <Badge className="badges" variant="outline">
+                    Chemistry
+                  </Badge>
+                  <Badge className="badges" variant="outline">
+                    Physics
+                  </Badge>
                 </div>
               </CardContent>
             </Card>
           </div>
         </aside>
-        
-        {/* Resource feed (center) */}
+
+        {/* Resource feed / Upload section */}
         <section className="resources">
-          <div className="col-span-6"> 
-            {activeView === "feed" && ( 
-              <div className="share-card"> 
-                <h2>Share a thought...</h2> 
-                <Input className="search" placeholder="What would you like to share with your buddies?" />
-                <Button className="upload-btn" > 
-                  <Share2 className="pics" />Share
-                </Button> 
-              </div> 
-            )} 
-            
-            {activeView === "studyGroup" && ( 
-              <div id="StudyGroup" className="share-card"> 
-                <h2><Users className="pics" />Study Groups</h2> 
-              </div> 
+          <div className="col-span-6">
+
+            {activeView === "feed" && (
+              <div className="share-card">
+                <h2>Share a Resource...</h2>
+                <Input
+                  className="search"
+                  placeholder="What would you like to share with your buddies?"
+                />
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileSelect}
+                  className="hidden-file-input"
+                  multiple
+                  accept=".jpg,.jpeg,.png,.gif,.bmp,.webp,.pdf"
+                />
+                <Button className="upload-btn" onClick={() => setActiveView("upload")}>
+                  <Upload className="pics" /> Upload
+                </Button>
+              </div>
             )}
-            
-            {activeView === "requests" && ( 
-              <div id="Request" > 
-                <FriendList/>
-              </div> 
+
+            {activeView === "upload" && (
+              <div id="Uploads" className="share-card">
+                <h2>Upload Study Resource</h2>
+                {error && <p style={{ color: "red" }}>{error}</p>}
+                <form onSubmit={handleUploadSubmit}>
+                  <Input
+                    className="search"
+                    placeholder="Resource title"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    required
+                  />
+                  <Input
+                    className="search"
+                    placeholder="Course Code"
+                    value={courseId}
+                    onChange={(e) => setCourseId(e.target.value)}
+                    required
+                  />
+                  <Input
+                    className="search"
+                    placeholder="Description"
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    required
+                  />
+                  <DragAndDropArea
+                    onFilesSelected={(files) => {
+                      console.log("Files ready for upload:", files);
+                      const pdf = files.find((f) => f.type.includes("pdf"));
+                      const image = files.find((f) => f.type.startsWith("image/"));
+                      if (pdf) setPdfFile(pdf);
+                      if (image) setPictureFile(image);
+                    }}
+                  />
+                  <Button type="submit" className="upload-btn">
+                    Submit Upload
+                  </Button>
+                </form>
+              </div>
             )}
-            
-            {activeView === "upload" && ( 
-              <div id="Uploads" className="share-card"> 
-                <h2>Upload Study Resource</h2> 
-                <Input className="search" placeholder="Resource title" /> 
-                <Input className="search" placeholder="Course Code" /> 
-                <Input className="search" placeholder="Description" /> 
-                <DragAndDropArea onFilesSelected={(files) => { 
-                  console.log('Files ready for upload:', files); 
-                }} /> 
-              </div> 
+
+            {activeView === "partners" && <StudyPartnersPage />}
+
+            {activeView === "profile" && <ProfilePage />}
+
+            {activeView === "groups" && (
+              <div className="share-card">
+                <h2>Groups Section to be implemented...</h2>
+              </div>
             )}
-          </div> 
+
+          </div>
         </section>
-        
+
         {/* Right Sidebar */}
         <aside className="rightbar">
           <div className="study-buddies">
             <h3 className="buddies">
-              <MessageSquare className="pics"/>
+              <MessageSquare className="pics" />
               Study Buddies
             </h3>
             {friends.length > 0 ? (

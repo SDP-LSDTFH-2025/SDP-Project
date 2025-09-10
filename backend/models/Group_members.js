@@ -7,6 +7,7 @@ const Group_members = sequelize.define('group_members', {
         primaryKey: true,
         allowNull: false,
         unique: true,
+        autoIncrement:true
     },
     group_id: {
         type: DataTypes.INTEGER,

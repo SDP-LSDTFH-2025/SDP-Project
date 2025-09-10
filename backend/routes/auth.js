@@ -5,6 +5,8 @@ const { enhancedAuth} = require('../middleware/security');
 const router = express.Router();
 const { OAuth2Client } = require('google-auth-library');
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+const {errorClass, isValidEmail} = require('../middleware/tools');
+
 
 /**
  * @swagger
@@ -17,7 +19,7 @@ const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
  * @swagger
  * /api/v1/auth/google/verify:
  *   post:
- *     summary: Verify Google access token and create/update user
+ *     summary: Verify Google access token or ID token and create/update user
  *     tags: [Authentication]
  *     requestBody:
  *       required: true
@@ -25,10 +27,28 @@ const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
  *         application/json:
  *           schema:
  *             type: object
+ *             required:
+ *               - access_token
  *             properties:
  *               access_token:
  *                 type: string
- *                 description: Google access token
+ *                 description: Google access token (ya29.* or 1//*) or ID token (JWT)
+ *               userInfo:
+ *                 type: object
+ *                 description: Optional user info when using access tokens
+ *                 properties:
+ *                   id:
+ *                     type: string
+ *                   email:
+ *                     type: string
+ *                   name:
+ *                     type: string
+ *                   picture:
+ *                     type: string
+ *                   given_name:
+ *                     type: string
+ *                   family_name:
+ *                     type: string
  *     responses:
  *       200:
  *         description: User authenticated successfully
@@ -45,13 +65,13 @@ const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
  *                   type: string
  *                   description: JWT token
  *       400:
- *         description: Invalid access token
+ *         description: Invalid access token or token format
  *       500:
  *         description: Internal server error
  */
 router.post('/google/verify', async (req, res) => {
   try {
-    const { access_token } = req.body;
+    const { access_token, userInfo } = req.body;
     
     if (!access_token) {
       return res.status(400).json({
@@ -60,20 +80,68 @@ router.post('/google/verify', async (req, res) => {
       });
     }
 
-    const ticket = await client.verifyIdToken({
-      idToken: access_token,
-      audience: process.env.GOOGLE_CLIENT_ID,
-    });
+    let googleUser;
 
-    const payload = ticket.getPayload();
-    if (!payload) {
-      return res.status(400).json({
-        success: false,
-        error: 'Invalid access token' 
+    // Case 1: Access token
+    if (access_token.startsWith('ya29.') || access_token.startsWith('1//')) {
+      if (userInfo) {
+        // Use frontend-provided userInfo
+        googleUser = {
+          sub: userInfo.id,
+          email: userInfo.email,
+          name: userInfo.name,
+          picture: userInfo.picture,
+          given_name: userInfo.given_name,
+          family_name: userInfo.family_name
+        };
+      } else {
+        // Fetch user info from Google API
+        const googleRes = await fetch(
+          `https://www.googleapis.com/oauth2/v2/userinfo?access_token=${access_token}`
+        );
+        const userData = await googleRes.json();
+
+        if (userData.error) {
+          return res.status(400).json({ 
+            success: false, 
+            error: "Invalid Google access token" 
+          });
+        }
+
+        googleUser = {
+          sub: userData.id,
+          email: userData.email,
+          name: userData.name,
+          picture: userData.picture,
+          given_name: userData.given_name,
+          family_name: userData.family_name
+        };
+      }
+
+    // Case 2: ID token (JWT)
+    } else if (access_token.split('.').length === 3) {
+      const ticket = await client.verifyIdToken({
+        idToken: access_token,
+        audience: process.env.GOOGLE_CLIENT_ID,
+        clockTolerance: 300 // Allow 5 minutes clock skew
+      });
+
+      const payload = ticket.getPayload();
+      if (!payload) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid Google ID token'
+        });
+      }
+
+      googleUser = payload;
+
+    } else {
+      return res.status(400).json({ 
+        success: false, 
+        error: "Invalid token format" 
       });
     }
-
-    const googleUser = payload;
    // console.log(googleUser);
     
     // Find or create user in database
@@ -102,7 +170,7 @@ router.post('/google/verify', async (req, res) => {
 
     // Generate JWT token
     const token = jwt.sign(
-      { id: user.google_id, username: user.username },
+      { id: user.id, username: user.username },
       process.env.JWT_SECRET,
       { expiresIn: process.env.JWT_EXPIRES_IN || '24h' }
     );
@@ -221,5 +289,218 @@ router.post('/logout', async (req, res) => {
     });
   }
 });
+
+
+//Manual signing in routes:
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * @swagger
+ * /api/v1/auth/signIn:
+ *   post:
+ *     summary: Creates a new user, returns a message and a token
+ *     tags:
+ *       - Manual Authentication
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 description: User's email address
+ *               password:
+ *                 type: string
+ *                 description: User's password
+ *     responses:
+ *       200:
+ *         description: User created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   description: User object
+ *                 token:
+ *                   type: string
+ *                   description: JWT token
+ *       400:
+ *         description: Email or password not provided
+ *       500:
+ *         description: Internal server error
+ */
+
+
+const { getAuth, createUserWithEmailAndPassword,signInWithEmailAndPassword  } = require("firebase/auth");
+const {firebaseConfig,app} = require('../config/fireBase');//looks like it isnt being used, but it is not the case. so don't removed them
+
+
+
+router.post('/signIn', async (req, res) => {
+    try{
+        //checking the availability of the request body
+        if (!req.body){
+            return errorClass.insufficientInfo(res);
+        }
+        let {email,password} = req.body;
+
+        //check for validty of user details
+        if (!email || !password){
+            return errorClass.insufficientInfo(res);
+        }
+        if (!isValidEmail(email)){
+              return errorClass.errorRes('invalid email syntax',res);
+          }
+
+        //for null username
+        let username='';
+        for (let i=0; i<email.length; i++){
+          if (email[i]=='@'){break}
+          username += email[i];
+        }
+
+        //sign up the user
+        const auth = getAuth();
+        createUserWithEmailAndPassword(auth, email, password)
+          .then(async(userCredential) => {
+            const user = userCredential.user;
+
+          //save user info to database
+          const endUser = await User.create({
+            google_id: user.uid,
+            username: username,
+            is_active: true,
+            last_login:new Date()
+          });
+          //generate token for more control
+          const Token = jwt.sign(
+              { id: endUser.id},
+              process.env.JWT_SECRET,
+              { expiresIn: '7d' }
+          );
+          res.status(200).json({token:Token,data:endUser,success:true});
+          console.log('user created successfully');
+          })
+          .catch((error) => {
+            const errorMessage = error.message;
+            errorClass.errorRes(errorMessage,res);
+          }); 
+        
+    }
+    catch(error){
+        errorClass.serverError(res);
+        console.log(error);
+    }
+});
+
+/**
+ * @swagger
+ * /api/v1/auth/logIn:
+ *   post:
+ *     summary: checks if user exists, if true then return a token
+ *     tags: [Manual Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - password
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 description: User's email address (provide either email or username)
+ *               password:
+ *                 type: string
+ *                 description: User's password
+ *     responses:
+ *       200:
+ *         description: User exists, token returned
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   description: User object
+ *                 token:
+ *                   type: string
+ *                   description: JWT token
+ *       400:
+ *         description: email/password not provided or invalid email
+ *       500:
+ *         description: Internal server error
+ */
+
+router.post('/logIn',async (req, res) => {
+    try{
+        //checking the availability of the request body
+        if (!req.body){
+            return errorClass.insufficientInfo(res);
+        }
+        const {email,password,username} = req.body;
+
+        //check for validty of user details
+        if (!email || !password){
+            return errorClass.insufficientInfo(res);
+        }
+        if (!isValidEmail(email)){
+              return errorClass.errorRes('invalid email syntax',res);
+          }
+
+        //sign up the user
+        const auth = getAuth();
+        signInWithEmailAndPassword(auth, email, password)
+          .then(async(userCredential) => {
+            const user = userCredential.user;
+
+            //check user existance;
+            const existance = await User.findOne({where:{google_id:user.uid}});
+            if (!existance){
+              return errorClass.errorRes('User does not exist',res);
+            }
+       
+            //generate token for more control
+            const Token = jwt.sign(
+                { id: existance.id},
+                process.env.JWT_SECRET,
+                { expiresIn: '7d' }
+            );
+            res.status(200).json({token:Token,data:existance,success:true});
+            console.log('user logged in successfully');
+          })
+          .catch((error) => {
+            const errorCode = error.code;
+            const errorMessage = error.message;
+
+            console.log(errorCode,errorMessage);
+            errorClass.errorRes(errorMessage,res);
+          }); 
+        
+    }
+    catch(error){
+      console.log('server says:\n\n\n')
+        errorClass.serverError(res);
+    }
+});
+
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
 
 module.exports = router; 

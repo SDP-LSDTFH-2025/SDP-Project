@@ -56,7 +56,7 @@ const { Op } = require('sequelize');
  *       500:
  *         description: Internal server error
  */
-router.post('/resource_tag', async (req, res) => {
+router.post('/', async (req, res) => {
     const { resource_id, tag } = req.body;
 
     try {
@@ -86,7 +86,7 @@ router.post('/resource_tag', async (req, res) => {
 
 /**
  * @swagger
- * /api/v1/resource_tag:
+ * /api/v1/resource_tag/:
  *   get:
  *     summary: Get resource tags by tag name
  *     tags: [ResourceTags]
@@ -124,7 +124,7 @@ router.post('/resource_tag', async (req, res) => {
  *       500:
  *         description: Internal server error
  */
-router.get('/resource_tag', async (req, res) => {
+router.get('/', async (req, res) => {
     try {
         const { tag } = req.query;
         const where = tag ? { tag: { [Op.iLike]: `%${tag}%` } } : {};
@@ -138,7 +138,7 @@ router.get('/resource_tag', async (req, res) => {
 
 /**
  * @swagger
- * /api/v1/resource_tag/{id}:
+ * /api/v1/resource_tag/:{id}:
  *   get:
  *     summary: Get a resource tag by ID
  *     tags: [ResourceTags]
@@ -176,7 +176,7 @@ router.get('/resource_tag', async (req, res) => {
  *       500:
  *         description: Internal server error
  */
-router.get('/resource_tag/:id', async (req, res) => {
+router.get('/:id', async (req, res) => {
     try {
         const resource_tag = await Resource_tags.findByPk(req.params.id);
         if (!resource_tag) {
@@ -191,7 +191,7 @@ router.get('/resource_tag/:id', async (req, res) => {
 
 /**
  * @swagger
- * /api/v1/resource_tag/{id}:
+ * /api/v1/resource_tag/:{id}:
  *   put:
  *     summary: Update a resource tag by ID
  *     tags: [ResourceTags]
@@ -240,7 +240,7 @@ router.get('/resource_tag/:id', async (req, res) => {
  *       500:
  *         description: Internal server error
  */
-router.put('/resource_tag/:id', async (req, res) => {
+router.put('/:id', async (req, res) => {
     const { tag } = req.body;
 
     try {
@@ -265,7 +265,7 @@ router.put('/resource_tag/:id', async (req, res) => {
 
 /**
  * @swagger
- * /api/v1/resource_tag/{id}:
+ * /api/v1/resource_tag/:{id}:
  *   delete:
  *     summary: Delete a resource tag by ID
  *     tags: [ResourceTags]
@@ -293,7 +293,7 @@ router.put('/resource_tag/:id', async (req, res) => {
  *       500:
  *         description: Internal server error
  */
-router.delete('/resource_tag/:id', async (req, res) => {
+router.delete('/:id', async (req, res) => {
     try {
         const resource_tag = await Resource_tags.findByPk(req.params.id);
         if (!resource_tag) {

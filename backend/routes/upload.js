@@ -68,7 +68,7 @@ router.get('/test', async (req, res) => {
 
 /**
  * @swagger
- * /api/v1/upload/single:
+ * /api/v1/upload/picture:
  *   post:
  *     summary: Upload a single image to Cloudinary
  *     tags: [Upload]
@@ -81,10 +81,13 @@ router.get('/test', async (req, res) => {
  *           schema:
  *             type: object
  *             properties:
- *               image:
+ *               picture:
  *                 type: string
  *                 format: binary
  *                 description: Image file to upload
+ *               user_id:
+ *                 type: string
+ *                 description: User ID
  *      
  *     responses:
  *       200:
@@ -117,11 +120,12 @@ router.get('/test', async (req, res) => {
  *       500:
  *         description: Server error
  */
-router.post('/single',
+router.post('/picture',
   
   uploadSingle,
   handleUploadError,
   async (req, res) => {
+    const {course_code, title, description,user_id} = req.body;
     try {
       if (!req.file) {
         return res.status(400).json({
@@ -131,7 +135,7 @@ router.post('/single',
       }
 
       const uploadResult = await CloudinaryService.uploadImage(req.file.buffer, {
-        folder: `sdp-project/users/${'111857316950890974037'}`,
+        folder: `sdp-project/users/${user_id}`,
         transformation: [
           { quality: 'auto' },
           { fetch_format: 'auto' }
@@ -144,7 +148,26 @@ router.post('/single',
           error: uploadResult.error
         });
       }
-        
+      const user = await User.findByPk(user_id);
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          error: 'User not found'
+        });
+      }
+        await Resources.create({
+          user_id: user.id,
+          pictures_url: uploadResult.secure_url,
+          course_code: course_code,
+          title: title,
+          likes: 0,
+          file_url: null,
+          
+          description: description,
+          checksum: 0,
+          public_id: uploadResult.public_id,
+          created_at: new Date()
+        });
 
       res.json({
         success: true,
@@ -182,6 +205,9 @@ router.post('/single',
  *                   type: string
  *                   format: binary
  *                 description: Multiple image files to upload
+ *               user_id:
+ *                 type: string
+ *                 description: User ID
  *     responses:
  *       200:
  *         description: Images uploaded successfully
@@ -231,6 +257,21 @@ router.post('/multiple',
       const results = await Promise.all(uploadPromises);
       const successfulUploads = results.filter(result => result.success);
       const failedUploads = results.filter(result => !result.success);
+      const user = await User.findByPk(req.user.id);
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          error: 'User not found'
+        });
+      }
+     // create an array of resources
+      const resources = successfulUploads.map(result => ({
+        user_id: user.id,
+        image_url: result.secure_url,
+        public_id: result.public_id,
+        created_at: new Date()
+      }));
+      await Resources.bulkCreate(resources);
 
       res.json({
         success: true,
@@ -257,7 +298,7 @@ router.post('/multiple',
  * @swagger
  * /api/v1/upload/pdf:
  *   post:
- *     summary: Upload a PDF to pdfHost and store URL in Resources
+ *     summary: Upload a PDF to cloudinary and store URL in Resources
  *     tags: [Upload]
  *     requestBody:
  *       required: true
@@ -273,12 +314,15 @@ router.post('/multiple',
  *               user_id:
  *                 type: string
  *                 description: User ID
- *               resource_id:
- *                 type: integer
- *                 description: Resource ID
- *               course_id:
+ *               course_code:
  *                 type: string
- *                 description: Course ID
+ *                 description: Course Code
+ *               title:
+ *                 type: string
+ *                 description: Title
+ *               description:
+ *                 type: string
+ *                 description: Description
  *     responses:
  *       200:
  *         description: PDF uploaded and resource updated
@@ -289,34 +333,42 @@ router.post('/multiple',
  */
 router.post('/pdf', uploadPDF, handleUploadError, async (req, res) => {
   try {
-    const { user_id, course_id } = req.body;
+    const {user_id, course_code, title, description } = req.body;
     if (!req.file) {
       return res.status(400).json({ success: false, error: 'No PDF file provided' });
     }
-    if (!user_id) {
-      return res.status(400).json({ success: false, error: 'user_id is required' });
-    }
-    // Check user exists
+    // Use authenticated user from middleware
     const user = await User.findByPk(user_id);
     if (!user) {
-      return res.status(404).json({ success: false, error: 'User not found' });
+      return res.status(401).json({ success: false, error: 'User not authenticated' });
+    }
+    if (!course_code) {
+      return res.status(400).json({ success: false, error: 'course_code is required' });
+    }
+    if (!title) {
+      return res.status(400).json({ success: false, error: 'title is required' });
+    }
+    if (!description) {
+      return res.status(400).json({ success: false, error: 'description is required' });
     }
     // Upload to Cloudinary as PDF (raw)
     const uploadResult = await CloudinaryService.uploadPDF(req.file.buffer, { filename: req.file.originalname });
     if (!uploadResult.success) {
       return res.status(500).json({ success: false, error: uploadResult.error });
     }
+
+
     // Create resource with file_url and user_id
     const resource = await Resources.create({
       file_url: uploadResult.secure_url,
       public_id: uploadResult.public_id,
-      picture_url: "bdc ndvynudvybudy ",
-      course_id: course_id,
+      course_code: course_code,
       likes: 0,
       checksum: 0,
       upload_id: 0,
-      title: req.file.originalname,
-      description: "gbqregbqergb",
+        user_id: user.id,
+      title: title,
+      description: description,
       created_at: new Date()
     });
     res.json({ success: true, message: 'PDF uploaded and resource created', data: resource });

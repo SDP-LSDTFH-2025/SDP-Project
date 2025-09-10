@@ -1,10 +1,7 @@
 import * as React from "react"
 import * as AvatarPrimitive from "@radix-ui/react-avatar"
 
-// simple cn (className merge) utility
-function cn(...classes) {
-  return classes.filter(Boolean).join(" ")
-}
+import { cn } from "./utils"
 
 const Avatar = React.forwardRef(({ className, ...props }, ref) => (
   <AvatarPrimitive.Root
@@ -16,7 +13,7 @@ const Avatar = React.forwardRef(({ className, ...props }, ref) => (
     {...props}
   />
 ))
-Avatar.displayName = "Avatar"
+Avatar.displayName = AvatarPrimitive.Root.displayName
 
 const AvatarImage = React.forwardRef(({ className, ...props }, ref) => (
   <AvatarPrimitive.Image
@@ -25,7 +22,7 @@ const AvatarImage = React.forwardRef(({ className, ...props }, ref) => (
     {...props}
   />
 ))
-AvatarImage.displayName = "AvatarImage"
+AvatarImage.displayName = AvatarPrimitive.Image.displayName
 
 const AvatarFallback = React.forwardRef(({ className, ...props }, ref) => (
   <AvatarPrimitive.Fallback
@@ -37,6 +34,6 @@ const AvatarFallback = React.forwardRef(({ className, ...props }, ref) => (
     {...props}
   />
 ))
-AvatarFallback.displayName = "AvatarFallback"
+AvatarFallback.displayName = AvatarPrimitive.Fallback.displayName
 
 export { Avatar, AvatarImage, AvatarFallback }

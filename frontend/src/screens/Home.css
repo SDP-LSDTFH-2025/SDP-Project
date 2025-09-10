@@ -15,6 +15,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    max-width: 100%;
     height: 60px; 
     padding: 0 20px;
     background-color: #ffffff;
@@ -69,12 +70,15 @@
     padding: 8px 15px;
     border: none;
     border-radius: 20px;
-    background-color: #fff;
+    background-color: #fff !important;
     color: #000;
     border: 1px solid #ccc;
     font-size: 0.8em;
     cursor: pointer;
     transition: background-color 0.3s;
+  }
+  .nav-btn:hover {
+  background-color: #f0f0f0 !important; /* Slightly darker on hover */ 
   }
   
   /* Logout button specific style */
@@ -86,8 +90,8 @@
   }
 
   .logout:hover {
-    background: #000; 
-    color: #fff;
+    background: #000 !important; 
+    color: #fff !important;
   }
   /* ------- Layout ------- */
   .dashboard{
@@ -95,7 +99,7 @@
     grid-template-columns: 300px 1fr 320px; /* left | center | right like the screenshot */
     gap:24px;
     padding:24px;
-    max-width: 1280px;
+    width: 96%;
     margin: 0 auto;
     min-height: 100vh;
     background: var(--bg);

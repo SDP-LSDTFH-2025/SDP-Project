@@ -2,6 +2,9 @@ import React from "react";
 import "./GroupList.css";
 
 function GroupList({ groups }) {
+
+  //logic
+
   return (
     <div className="study-groups">
       <h3>Active Study Groups</h3>

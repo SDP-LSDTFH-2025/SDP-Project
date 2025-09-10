@@ -633,15 +633,18 @@ router.get('/user/:id', async (req, res) => {
  * @swagger
  * /api/v1/resources/{id}:
  *   put:
- *     summary: Update a resource by ID
- *     tags: [Resources]
+ *     summary: Update a resource
+ *     description: Update the title, description, or increment the likes of a specific resource.
+ *     tags:
+ *       - Resources
  *     parameters:
- *       - name: id
- *         in: path
+ *       - in: path
+ *         name: id
  *         required: true
- *         description: The ID of the resource
+ *         description: ID of the resource to update
  *         schema:
  *           type: integer
+ *           example: 1
  *     requestBody:
  *       required: true
  *       content:
@@ -651,10 +654,16 @@ router.get('/user/:id', async (req, res) => {
  *             properties:
  *               title:
  *                 type: string
- *                 description: The updated title of the resource
+ *                 example: "Updated Resource Title"
  *               description:
  *                 type: string
- *                 description: The updated description of the resource
+ *                 example: "Updated description of the resource."
+ *               incrementLikes:
+ *                 type: boolean
+ *                 example: true
+ *             description: >
+ *               - Use `title` and/or `description` to update content.  
+ *               - Use `incrementLikes: true` to increase the resource's likes by 1.
  *     responses:
  *       200:
  *         description: Resource updated successfully
@@ -665,44 +674,32 @@ router.get('/user/:id', async (req, res) => {
  *               properties:
  *                 success:
  *                   type: boolean
+ *                   example: true
  *                 data:
- *                   $ref: '#/components/schemas/Resource'
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: integer
+ *                       example: 1
+ *                     title:
+ *                       type: string
+ *                       example: "Updated Resource Title"
+ *                     description:
+ *                       type: string
+ *                       example: "Updated description of the resource."
+ *                     likes:
+ *                       type: integer
+ *                       example: 6
  *       400:
  *         description: Invalid resource ID
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                 error:
- *                   type: string
  *       404:
  *         description: Resource not found
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                 error:
- *                   type: string
  *       500:
  *         description: Internal server error
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                 error:
- *                   type: string
  */
-router.put('/resources/:id', async (req, res) => {
-    const { title, description } = req.body;
+
+router.put('/:id', async (req, res) => {
+    const { title, description,incrementLikes } = req.body;
 
     try {
         const resourceId = parseInt(req.params.id);
@@ -716,7 +713,14 @@ router.put('/resources/:id', async (req, res) => {
 
         if (title) resource.title = title;
         if (description) resource.description = description;
-        await resource.save();
+        
+        // Increment likes if requested
+        if (incrementLikes) {
+            await resource.increment('likes', { by: 1 });
+            await resource.reload(); // refresh to get new value
+        } else {
+            await resource.save();
+        }
 
         res.json({ success: true, data: resource });
     } catch (error) {

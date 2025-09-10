@@ -22,6 +22,8 @@ const Resources = sequelize.define('Resources',{
  },
  likes: {
     type:DataTypes.INTEGER,
+    defaultValue:0,
+    validate: { min: 0 },
     allowNull:true
 
  },

@@ -33,9 +33,19 @@ function Home({ user }) {
   const [pdfFile, setPdfFile] = useState(null);
   const [pictureFile, setPictureFile] = useState(null);
   const [error, setError] = useState("");
+  const [isFormValid, setIsFormValid] = useState(false);
 
  const [friendsList, setFriends] = useState([]);
  const [groupList, setGroups] = useState([]);
+
+  // Validate form whenever inputs change
+  useEffect(() => {
+    const isValid = title.trim() !== '' && 
+                    courseId.trim() !== '' && 
+                    description.trim() !== '' && 
+                    (pdfFile || pictureFile);
+    setIsFormValid(isValid);
+  }, [title, courseId, description, pdfFile, pictureFile]);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -328,8 +338,8 @@ function Home({ user }) {
                       if (pdf) setPdfFile(pdf);
                       if (image) setPictureFile(image);
                     }}
-                  />
-                  <Button type="submit" className="upload-btn">
+                  />              
+                  <Button type="submit" className={`w-full p-2 rounded upload-btn ${isFormValid ? 'bg-blue-500 text-white hover:bg-blue-600' : 'bg-gray-300 text-gray-500 cursor-not-allowed'}`} disabled={!isFormValid}>
                     Submit Upload
                   </Button>
                 </form>

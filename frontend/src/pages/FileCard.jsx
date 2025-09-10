@@ -9,6 +9,24 @@ const FileCard = ({ file }) => {
   const [likes, setLikes] = useState(file.likes || 0);
   const [liked, setLiked] = useState(false);
 
+  const formatTimeAgo = (dateString) => {
+    const createdAt = new Date(dateString);
+    const now = new Date();
+    const diffMs = now - createdAt;
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+
+    if (diffHours < 1) {
+      const diffMinutes = Math.floor(diffMs / (1000 * 60));
+      return diffMinutes <= 1 ? "Just now" : `${diffMinutes} minutes ago`;
+    }
+
+    if (diffHours < 24) {
+      return `${diffHours} hours ago`;
+    }
+
+    return createdAt.toLocaleString(); // fallback to full date after 24h
+  };
+
     // LIKE handler
   const handleLike = async () => {
     if (liked) return; // prevent multiple likes from same user for now
@@ -22,7 +40,7 @@ const FileCard = ({ file }) => {
         body: JSON.stringify({ likes: likes + 1 })
       });
       const data = await res.json();
-      if (data.success) {
+      if (!data.success) {
         setLiked(false);
         setLikes(likes);
       }
@@ -46,13 +64,24 @@ const FileCard = ({ file }) => {
     setCommentText("");
   };
 
-  const handleDownload = (url, filename) => {
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = filename || "file";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  const handleDownload = async (url, filename) => {
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = filename || "file";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      // cleanup
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (err) {
+      console.error("Download failed:", err);
+    }
   };
 
   // detect file type (pdf vs image)
@@ -63,11 +92,11 @@ const FileCard = ({ file }) => {
       {/* Header */}
       <div className="file-header">
         <div className="file-user">
-          <div className="file-avatar"></div>
+          <div className="file-avatar">{file.initials}</div>
           <div>
-            <div className="file-author">User {file.user_id.slice(0, 4)}</div>
+            <div className="file-author">{file.user_name.replaceAll('_', ' ')}</div>
             <div className="file-meta">
-              {new Date(file.created_at).toLocaleString()} • {file.course_code}
+              {formatTimeAgo(file.created_at)} • {file.course_code}
             </div>
           </div>
         </div>

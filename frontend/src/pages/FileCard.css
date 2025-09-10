@@ -27,8 +27,15 @@
 .file-avatar {
   width: 36px;
   height: 36px;
-  background: #eee;
   border-radius: 50%;
+  background: #eee;
+  color: #555;
+  font-weight: 600;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-transform: uppercase;
 }
 
 .file-author {

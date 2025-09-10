@@ -27,6 +27,7 @@ import "./Home.css";
 
 import StudyPartnersPage from "../pages/StudyPartnersPage.jsx";
 import ProfilePage from "../pages/ProfilePage.jsx";
+import Feed from "../pages/Feed.jsx";
 
 function Home({ user }) {
   
@@ -84,7 +85,6 @@ function Home({ user }) {
 
   const friends = friendsList || user?.friends || [];
   const groups = groupList || user?.groups || [];
-  const resources = user?.resources || [];
 
   function handleNavigationClick(view) {
     setActiveView(view);
@@ -300,6 +300,9 @@ function Home({ user }) {
                 <Button className="upload-btn" onClick={() => setActiveView("upload")}>
                   <Share2 className="pics" /> Share
                 </Button>
+
+                <Feed />
+
               </div>
             )}
             {activeView === "requests" && ( 

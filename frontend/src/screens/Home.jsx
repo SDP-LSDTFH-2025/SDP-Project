@@ -17,9 +17,11 @@ import {
 	MessageCircle,
 	Filter,
 	Bell,
-
+  Menu,
 	Settings,
-  User
+  User,
+  X,
+  LogOut 
   } from "lucide-react";
 import {DragAndDropArea} from "./DragAndDrop.jsx";
 import FriendList from "./FriendList.jsx";
@@ -42,7 +44,8 @@ function Home({ user }) {
 
  const [friendsList, setFriends] = useState([]);
  const [groupList, setGroups] = useState([]);
-
+ const [isMenuOpen, setIsMenuOpen] = useState(false);
+ const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
   useEffect(() => {
     const fetchUsers = async () => {
       try {
@@ -201,8 +204,57 @@ function Home({ user }) {
           <button className="nav-btn logout" onClick={logout}>
             Logout
           </button>
+          <button className="nav-btn menu-btn mobile-only" onClick={toggleMenu}>
+              {isMenuOpen ? <X className="pics" size={24} /> : <Menu size={24} />}
+            </button>
         </div>
       </nav>
+      {isMenuOpen && (
+      <div className={`mobile-menu ${isMenuOpen ? "open" : ""}`}>
+        <ul>
+          <li>
+            <Button 
+              className={`buttons ${activeView === "feed" ? "active" : ""}`}
+              onClick={() => { handleNavigationClick("feed"); toggleMenu(); }}
+            >
+              <BookOpen className="pics" /> Resource Feed
+            </Button>
+          </li>
+          <li>
+            <Button 
+              className={`buttons ${activeView === "groups" ? "active" : ""}`}
+              onClick={() => { handleNavigationClick("groups"); toggleMenu(); }}
+            >
+              <Users className="pics" /> Study Groups
+            </Button>
+          </li>
+          <li>
+            <Button 
+              className={`buttons ${activeView === "requests" ? "active" : ""}`}
+              onClick={() => { handleNavigationClick("requests"); toggleMenu(); }}
+            >
+              <UserPlus className="pics" /> Friend Requests
+            </Button>
+          </li>
+          <li>
+            <Button 
+              className={`buttons ${activeView === "upload" ? "active" : ""}`}
+              onClick={() => { handleNavigationClick("upload"); toggleMenu(); }}
+            >
+              <Upload className="pics" /> Upload Resource
+            </Button>
+          </li>
+          <li>
+          <Button 
+            className="buttons" 
+            onClick={() => { logout(); setIsMenuOpen(false); }}
+          >
+             <LogOut className="pics"/>Logout
+          </Button>
+            </li>
+        </ul>
+      </div>
+    )}
 
       <main className="dashboard">
         {/* Sidebar */}
@@ -346,7 +398,7 @@ function Home({ user }) {
                     }}
                   />
                   <Button type="submit" className="upload-btn">
-                    Submit Upload
+                    <Share2 className="pics"/>Share
                   </Button>
                 </form>
               </div>

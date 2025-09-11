@@ -26,7 +26,7 @@ const Resource_threads = sequelize.define('Resource_threads',{
         allowNull:true
     },
     created_at:{
-        type:DataTypes.TIME,
+        type:DataTypes.DATE,
         allowNull:false,
         defaultValue:DataTypes.NOW
     }

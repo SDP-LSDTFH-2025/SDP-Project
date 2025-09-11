@@ -12,7 +12,7 @@ const { Op } = require('sequelize');
 
 /**
  * @swagger
- * /api/v1/resource_thread:
+ * /api/v1/resource_threads:
  *   post:
  *     summary: Create a new resource thread
  *     tags: [ResourceThreads]
@@ -106,17 +106,17 @@ router.post('/', async (req, res) => {
 
 /**
  * @swagger
- * /api/v1/resource_thread/:
+ * /api/v1/resource_threads/:
  *   get:
- *     summary: Get resource threads by message
+ *     summary: Get resource threads
  *     tags: [ResourceThreads]
  *     parameters:
- *       - name: message
+ *       - name: resource_id
  *         in: query
  *         required: false
- *         description: Partial message to filter threads (case-insensitive)
+ *         description: Filter threads by resource_id
  *         schema:
- *           type: string
+ *           type: integer
  *     responses:
  *       200:
  *         description: List of resource threads
@@ -150,20 +150,29 @@ router.post('/', async (req, res) => {
  *         description: Internal server error
  */
 router.get('/', async (req, res) => {
-    try {
-        const { message } = req.query;
-        const where = message ? { message: { [Op.iLike]: `%${message}%` } } : {};
-        const resource_threads = await Resource_threads.findAll({ where });
-        res.json({ success: true, data: resource_threads });
-    } catch (error) {
-        console.error("Failed to fetch resource threads:", error);
-        res.status(500).json({ success: false, error: 'Internal server error' });
+  try {
+    const { resource_id } = req.query;
+
+    const where = {};
+    if (resource_id) {
+      where.resource_id = resource_id; // ✅ filter by resource_id
     }
+
+    const resource_threads = await Resource_threads.findAll({
+      where,
+      order: [['created_at', 'ASC']] // optional: chronological order
+    });
+
+    res.json({ success: true, data: resource_threads });
+  } catch (error) {
+    console.error("Failed to fetch resource threads:", error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
 });
 
 /**
  * @swagger
- * /api/v1/resource_thread/:{id}:
+ * /api/v1/resource_threads/:{id}:
  *   put:
  *     summary: Update a resource thread by ID
  *     tags: [ResourceThreads]
@@ -218,7 +227,7 @@ router.put('/:id', async (req, res) => {
 
 /**
  * @swagger
- * /api/v1/resource_thread/:{id}:
+ * /api/v1/resource_threads/:{id}:
  *   delete:
  *     summary: Delete a resource thread by ID
  *     tags: [ResourceThreads]

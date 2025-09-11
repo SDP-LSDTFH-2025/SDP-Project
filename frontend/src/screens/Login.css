@@ -18,9 +18,13 @@
     width: 100%;
     max-width: 400px;
     text-align: center;
+    transition: all 0.3s ease;
   }
+  .login-card:hover {
+    box-shadow: 0 8px 20px rgba(128, 0, 255, 0.2);
+    transform: translateY(-3px);
+   }
   
- 
   .logo {
     font-size: 2.5rem;
     font-weight: bold;
@@ -116,6 +120,7 @@
     margin: 0 0.5rem;
     color: #888;
     font-size: 0.85rem;
+
   }
   
   

@@ -242,12 +242,18 @@ router.put('/update/:id', async (req, res) => {
  *         description: Course ID
  *         schema:
  *           type: integer
-*    requestbody:
-*     - created_by: id
-*      required: true
-*      description: creator id
-*      schema:
-*      type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - created_by
+ *             properties:
+ *               created_by:
+ *                 type: string
+ *                 description: Creator ID
  *     responses:
  *       200:
  *         description: Course deleted successfully
@@ -768,7 +774,7 @@ router.put('/reject/:id', async (req, res) => {
  *       - name: limit
  *         in: query
  *         required: false
- *         description: Number of courses to return (default: 10)
+ *         description: Number of courses to return (default 10)
  *         schema:
  *           type: integer
  *           default: 10

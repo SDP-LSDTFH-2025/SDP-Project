@@ -17,7 +17,7 @@
   margin-bottom: 20px;
   overflow: hidden;
   align-items: center;
-  justify-items:center;
+  /* justify-items:center; */
 }
 
 .card-header {

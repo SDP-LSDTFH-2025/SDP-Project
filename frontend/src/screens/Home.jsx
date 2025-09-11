@@ -27,7 +27,6 @@ import {DragAndDropArea} from "./DragAndDrop.jsx";
 import FriendList from "./FriendList.jsx";
 import "./Home.css";
 
-import StudyPartnersPage from "../pages/StudyPartnersPage.jsx";
 import ProfilePage from "../pages/ProfilePage.jsx";
 import Feed from "../pages/Feed.jsx";
 

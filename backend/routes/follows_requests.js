@@ -444,8 +444,8 @@ router.post('/request/pending', async (req, res) => {
  *                   type: boolean
  *                   example: true
  *                 followers:
- *                   type: array
- *                   description: List of user objects who sent follow requests
+ *                   type: object
+ *                   description: List of user objects who sent follow requests + the request info
  *                   items:
  *                     $ref: '#/components/schemas/User'
  *       400:

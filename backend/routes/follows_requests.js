@@ -328,4 +328,78 @@ router.post('/', async (req, res) => {
         console.log(error);
     }
 });
+
+/**
+ * @swagger
+ * /request/pending:
+ *   post:
+ *     summary: Get pending follow requests
+ *     description: Retrieves all pending follow requests for a given user.
+ *     tags:
+ *       - Friends
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - token
+ *               - id
+ *             properties:
+ *               token:
+ *                 type: string
+ *                 description: Authentication token for the user.
+ *                 example: "eyJhbGciOiJIUzI1NiIsInR5cCI6..."
+ *               id:
+ *                 type: string
+ *                 description: The ID of the user whose follow requests are being fetched.
+ *                 example: "12345"
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved pending follow requests.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: successful
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 followers:
+ *                   type: array
+ *                   description: List of pending follow requests
+ *                   items:
+ *                     type: object
+ *                     description: Follow request object from the database
+ *       400:
+ *         description: Missing required fields (token or id).
+ *       401:
+ *         description: Invalid token provided.
+ *       500:
+ *         description: Internal server error.
+ */
+
+router.post('/request/pending', async (req, res) => {
+    try {
+        const { token, id} = req.body;
+
+        if (!token||!id){
+            return errorClass.insufficientInfo(res);
+        }
+        // if (!verifyToken.fireBaseToken(token, id)) {
+        //     return errorClass.errorRes('Invalid Token', res,401);
+        // }
+        
+        const followers =await Follows_requests.findAll({where:{followee_id:id}})
+        
+        res.status(200).json({ message: "successful", followers:followers,success:true });
+    } catch (error) {
+        errorClass.serverError(res);
+        console.log(error);
+    }
+});
 module.exports = router;

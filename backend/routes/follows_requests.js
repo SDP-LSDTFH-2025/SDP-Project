@@ -331,7 +331,7 @@ router.post('/', async (req, res) => {
 
 /**
  * @swagger
- * /request/pending:
+ * /api/v1/friends/request/pending:
  *   post:
  *     summary: Get pending follow requests
  *     description: Retrieves all pending follow requests for a given user.
@@ -405,7 +405,7 @@ router.post('/request/pending', async (req, res) => {
 
 /**
  * @swagger
- * /request/pending/users:
+ * /api/v1/friends/request/pending/users:
  *   post:
  *     summary: Get pending follow request users
  *     description: Returns a list of users who have sent follow requests to a given followee.

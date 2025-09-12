@@ -77,6 +77,48 @@ body {
   vertical-align: middle; 
 }
 
+/* 🔹 Friend action row */
+.friend-action {
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.friend-btn {
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: background 0.2s;
+}
+
+.friend-btn.add {
+  background: #2563eb;
+  color: white;
+}
+
+.friend-btn.add:hover {
+  background: #1d4ed8;
+}
+
+.friend-btn.unfriend {
+  background: #ef4444;
+  color: white;
+}
+
+.friend-btn.unfriend:hover {
+  background: #dc2626;
+}
+
+.friend-status {
+  font-size: 14px;
+  color: #4b5563;
+  font-weight: 500;
+}
+
 /* GRID LIKE THE FIRST SHOT: 2/1 columns */
 .profile-body {
   display: grid;

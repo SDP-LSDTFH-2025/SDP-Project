@@ -21,7 +21,7 @@ const Feed = () => {
                   `${SERVER}/api/v1/users/${resource.user_id}`
                 );
                 const userData = await userRes.json();
-
+                console.log(userData);
                 if (userData.success) {
                   const username = userData.data.username;
                   const initials = username

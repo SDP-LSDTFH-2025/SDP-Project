@@ -9,22 +9,21 @@ const FriendList = ({ handleNavigationClick, setSelectedUser }) => {
   const [loadingRequests, setLoadingRequests] = useState([]);
 
   useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const SERVER =
+
+    const SERVER =
           import.meta.env.VITE_PROD_SERVER ||
           import.meta.env.VITE_DEV_SERVER ||
           "http://localhost:3000";
+
+    const fetchUsers = async () => {
+      try {
 
         const res = await fetch(`${SERVER}/api/v1/users`);
         const json = await res.json();
 
         if (json.success && Array.isArray(json.data)) {
           const allUsers = json.data;
-
-          // demo split
-          setFriendRequests(allUsers.slice(0, 2));
-          setSuggestedFriends(allUsers.slice(2));
+          setSuggestedFriends(allUsers);
         } else {
           console.error("Invalid API response format", json);
         }
@@ -33,8 +32,39 @@ const FriendList = ({ handleNavigationClick, setSelectedUser }) => {
       }
     };
 
+    const fetchFriendRequests = async () => {
+      try {
+        const receivee = JSON.parse(localStorage.getItem("user"));
+        const token = JSON.parse(localStorage.getItem("user"));
+        console.log(token);
+        const res = await fetch(`${SERVER}/request/pending/users`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            token,
+            id: receivee.id,
+          }),
+        });
+
+        const json = await res.json();
+
+        if (json.success && Array.isArray(json.data)) {
+          setFriendRequests(json.data);
+        } else {
+          console.error("Invalid pending requests format", json);
+        }
+      } catch (err) {
+        console.error("Error fetching friend requests", err);
+      }
+    };
+
     fetchUsers();
+    fetchFriendRequests();
   }, []);
+
+
 
   // --- Action handlers ---
   const handleAccept = (user, e) => {

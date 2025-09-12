@@ -40,7 +40,6 @@ const Feed = () => {
                 console.error("User fetch error:", err);
               }
 
-              // fallback if user fetch fails
               return {
                 ...resource,
                 user_name: `User ${resource.user_id.slice(0, 4)}`,

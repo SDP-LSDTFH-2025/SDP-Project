@@ -5,23 +5,19 @@ import "./Friends.css";
 export default function Friends({ setSelectedUser, handleNavigationClick }) {
   const [search, setSearch] = useState("");
   const [friends, setFriends] = useState([]);
-  const [suggested, setSuggested] = useState([]);
+  /*const [suggested, setSuggested] = useState([]);*/
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchUsers = async () => {
+    const fetchFriends = async () => {
       try {
-        const SERVER =
-          import.meta.env.VITE_PROD_SERVER ||
-          import.meta.env.VITE_DEV_SERVER ||
-          "http://localhost:3000";
+        const SERVER = import.meta.env.VITE_PROD_SERVER || import.meta.env.VITE_DEV_SERVER || "http://localhost:3000";
 
         const res = await fetch(`${SERVER}/api/v1/users`);
         const json = await res.json();
 
         if (json.success && Array.isArray(json.data)) {
-          setFriends(json.data.slice(0, 3));
-          setSuggested(json.data.slice(3, 10));
+          setFriends(json.data);
         } else {
           console.error("Invalid response:", json);
         }
@@ -32,7 +28,7 @@ export default function Friends({ setSelectedUser, handleNavigationClick }) {
       }
     };
 
-    fetchUsers();
+    fetchFriends();
   }, []);
 
   const filterList = (list) =>
@@ -44,14 +40,14 @@ export default function Friends({ setSelectedUser, handleNavigationClick }) {
         f.academic_interests?.toLowerCase().includes(search.toLowerCase())
     );
 
-  const handleAddFriend = (friend) => {
+  /*const handleAddFriend = (friend) => {
     setSuggested((prev) => prev.filter((f) => f.id !== friend.id));
     setFriends((prev) => [...prev, friend]);
-  };
+  };*/
 
   const handleProfileClick = (friend) => {
-    setSelectedUser(friend); // store user object in parent
-    handleNavigationClick("usersprof"); // navigate to profile view
+    setSelectedUser(friend); 
+    handleNavigationClick("usersprof");
   };
 
   if (loading) return <p>Loading friends...</p>;
@@ -69,7 +65,7 @@ export default function Friends({ setSelectedUser, handleNavigationClick }) {
 
       {/* My Friends */}
       <header className="friends-header">
-        <h2>My Friends</h2>
+        <h2>My Buddies</h2>
         <span className="count">{friends.length} friends</span>
       </header>
 
@@ -123,7 +119,7 @@ export default function Friends({ setSelectedUser, handleNavigationClick }) {
         ))}
       </div>
 
-      {/* Suggested Friends */}
+      {/* Suggested Friends 
       <header className="friends-header">
         <h2>Suggested Friends</h2>
         <span className="count">{suggested.length} suggestions</span>
@@ -173,6 +169,7 @@ export default function Friends({ setSelectedUser, handleNavigationClick }) {
           </div>
         ))}
       </div>
+      */}
     </section>
   );
 }

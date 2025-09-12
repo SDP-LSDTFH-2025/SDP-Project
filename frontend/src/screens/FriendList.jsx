@@ -8,12 +8,10 @@ const FriendList = ({ handleNavigationClick, setSelectedUser }) => {
   const [sentRequests, setSentRequests] = useState([]);
   const [loadingRequests, setLoadingRequests] = useState([]);
 
-  useEffect(() => {
 
-    const SERVER =
-          import.meta.env.VITE_PROD_SERVER ||
-          import.meta.env.VITE_DEV_SERVER ||
-          "http://localhost:3000";
+  useEffect(() => {
+    const receivee = JSON.parse(localStorage.getItem("user"));
+    const SERVER = import.meta.env.VITE_PROD_SERVER || import.meta.env.VITE_DEV_SERVER || "http://localhost:3000";
 
     const fetchUsers = async () => {
       try {
@@ -34,10 +32,9 @@ const FriendList = ({ handleNavigationClick, setSelectedUser }) => {
 
     const fetchFriendRequests = async () => {
       try {
-        const receivee = JSON.parse(localStorage.getItem("user"));
         const token = JSON.parse(localStorage.getItem("user"));
         console.log(token);
-        const res = await fetch(`${SERVER}/request/pending/users`, {
+        const res = await fetch(`${SERVER}/api/v1/friends/request/pending/users`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -50,8 +47,8 @@ const FriendList = ({ handleNavigationClick, setSelectedUser }) => {
 
         const json = await res.json();
 
-        if (json.success && Array.isArray(json.data)) {
-          setFriendRequests(json.data);
+        if (json.success && Array.isArray(json.followers)) {
+          setFriendRequests(json.followers);
         } else {
           console.error("Invalid pending requests format", json);
         }
@@ -64,13 +61,40 @@ const FriendList = ({ handleNavigationClick, setSelectedUser }) => {
     fetchFriendRequests();
   }, []);
 
+// --- Action handlers ---
+const handleAccept = async (request, e) => {
+  e.stopPropagation();
 
+  try {
+    const receivee = JSON.parse(localStorage.getItem("user"));
+    const SERVER = import.meta.env.VITE_PROD_SERVER || import.meta.env.VITE_DEV_SERVER || "http://localhost:3000";
+    const token = localStorage.getItem("user");
+    const res = await fetch(`${SERVER}/api/v1/friends/request/response`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        token,
+        senderId: receivee.id,            // the target user (follower)
+        receiverId: request.id, // depends on how your backend gives it
+        response: "accept",
+      }),
+    });
 
-  // --- Action handlers ---
-  const handleAccept = (user, e) => {
-    e.stopPropagation();
-    console.log("✅ Accepted:", user.username);
-  };
+    const data = await res.json();
+
+    if (data.success) {
+      console.log("✅ Friend request accepted:", receivee.username);
+      // Optional: update UI (remove from pending list, move to friends list, etc.)
+    } else {
+      console.error("❌ Failed to accept:", data.error || data.message);
+    }
+  } catch (err) {
+    console.error("⚠️ Error accepting request:", err);
+  }
+};
+
 
   const handleDecline = (user, e) => {
     e.stopPropagation();

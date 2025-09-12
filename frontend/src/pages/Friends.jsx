@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { MessageCircle, UserPlus, User, Users } from "lucide-react";
+import { MessageCircle, UserPlus, User, Users, Circle, CircleDot } from "lucide-react";
 import "./Friends.css";
 
 export default function Friends({ setSelectedUser, handleNavigationClick }) {
@@ -101,17 +101,22 @@ export default function Friends({ setSelectedUser, handleNavigationClick }) {
               <p className="friend-tag">
                 <Users size={12} /> Friend
               </p>
+                <span className="friend-tag">
+                {friend.is_active && <CircleDot className="status-icon online" size={10} />}
+                {!friend.is_active && <Circle className="status-icon offline" size={10} />}
+                  {friend.is_active ? "Online" : "Offline"}
+                </span>
             </div>
 
             <div className="actions">
               <button className="message-btn">
-                <MessageCircle size={16} /> Message
+                <MessageCircle size={14} /> Message
               </button>
               <button
                 className="profile-btn"
                 onClick={() => handleProfileClick(friend)}
               >
-                <User size={16} />
+                <User size={14} /> Profile
               </button>
             </div>
           </div>
@@ -156,13 +161,13 @@ export default function Friends({ setSelectedUser, handleNavigationClick }) {
 
             <div className="actions">
               <button className="add-btn" onClick={() => handleAddFriend(friend)}>
-                <UserPlus size={16} /> Add Friend
+                <UserPlus size={14} /> Add Friend
               </button>
               <button
                 className="profile-btn"
                 onClick={() => handleProfileClick(friend)}
               >
-                <User size={16} />
+                <User size={14} /> Profile
               </button>
             </div>
           </div>

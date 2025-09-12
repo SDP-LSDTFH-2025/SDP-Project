@@ -137,6 +137,22 @@
   border: none;
 }
 
+/* Status icon styling (online/offline) */
+.status-icon {
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
+/* Online status (inherits green from active state) */
+.status-icon.online {
+  color: green; /* Matches button's white text */
+}
+
+/* Offline status (inherits red from deactivated state) */
+.status-icon.offline {
+  color: red; /* Matches button's white text */
+}
+
 .message-btn {
   flex: 1;
   padding: 8px;
@@ -155,4 +171,7 @@
   padding: 8px 12px;
   background: #f9fafb;
   border: 1px solid #e5e7eb;
+}
+.profile-btn:hover {
+    background: #94c4da;
 }

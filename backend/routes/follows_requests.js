@@ -497,7 +497,7 @@ router.post('/request/pending/users', async (req, res) => {
         
         for (let element of requests){
             const {follower_id} = element
-            followers.push(await User.findOne({where:{id:follower_id}}))
+            followers.push({user:await User.findOne({where:{id:follower_id}}),request:element})
         }
         
         res.status(200).json({ message: "successful", followers,success:true });

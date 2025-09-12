@@ -108,15 +108,15 @@ router.post('/', async (req, res) => {
  * @swagger
  * /api/v1/resource_threads/:
  *   get:
- *     summary: Get resource threads
+ *     summary: Get resource threads by message
  *     tags: [ResourceThreads]
  *     parameters:
- *       - name: resource_id
+ *       - name: message
  *         in: query
  *         required: false
- *         description: Filter threads by resource_id
+ *         description: Partial message to filter threads (case-insensitive)
  *         schema:
- *           type: integer
+ *           type: string
  *     responses:
  *       200:
  *         description: List of resource threads
@@ -150,24 +150,15 @@ router.post('/', async (req, res) => {
  *         description: Internal server error
  */
 router.get('/', async (req, res) => {
-  try {
-    const { resource_id } = req.query;
-
-    const where = {};
-    if (resource_id) {
-      where.resource_id = resource_id; // ✅ filter by resource_id
+    try {
+        const { message } = req.query;
+        const where = message ? { message: { [Op.iLike]: `%${message}%` } } : {};
+        const resource_threads = await Resource_threads.findAll({ where });
+        res.json({ success: true, data: resource_threads });
+    } catch (error) {
+        console.error("Failed to fetch resource threads:", error);
+        res.status(500).json({ success: false, error: 'Internal server error' });
     }
-
-    const resource_threads = await Resource_threads.findAll({
-      where,
-      order: [['created_at', 'ASC']] // optional: chronological order
-    });
-
-    res.json({ success: true, data: resource_threads });
-  } catch (error) {
-    console.error("Failed to fetch resource threads:", error);
-    res.status(500).json({ success: false, error: 'Internal server error' });
-  }
 });
 
 /**

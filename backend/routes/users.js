@@ -97,7 +97,7 @@ router.get('/friends', [
  *         name: id
  *         required: true
  *         schema:
- *           type: string
+ *           type: uuid
  *         description: User ID
  *     responses:
  *       200:

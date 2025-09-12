@@ -5,6 +5,8 @@ import "./FriendList.css";
 const FriendList = ({ handleNavigationClick, setSelectedUser }) => {
   const [friendRequests, setFriendRequests] = useState([]);
   const [suggestedFriends, setSuggestedFriends] = useState([]);
+  const [sentRequests, setSentRequests] = useState([]);
+  const [loadingRequests, setLoadingRequests] = useState([]);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -45,9 +47,37 @@ const FriendList = ({ handleNavigationClick, setSelectedUser }) => {
     console.log("❌ Declined:", user.username);
   };
 
-  const handleAddFriend = (user, e) => {
+  const handleAddFriend = async (receiver, e) => {
     e.stopPropagation();
-    console.log("➕ Sent friend request to:", user.username);
+    try {
+      setLoadingRequests((prev) => [...prev, receiver.id]);
+      const SERVER = import.meta.env.VITE_PROD_SERVER || import.meta.env.VITE_DEV_SERVER || "http://localhost:3000";
+
+      const sender = JSON.parse(localStorage.getItem("user"));
+      const tokenS = JSON.parse(localStorage.getItem("user"));
+
+      const res = await fetch(`${SERVER}/api/v1/friends/request`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          token : tokenS,
+          id: sender.id,
+          username: receiver.username,
+        }),
+      });
+
+      const json = await res.json();
+
+      if (json.success) {
+        setSentRequests((prev) => [...prev, receiver.id]);
+      } else {
+        console.error("Failed to send request:", json.message);
+      }
+    } catch (err) {
+      console.error("Error sending friend request", err);
+    } finally {
+      setLoadingRequests((prev) => prev.filter((id) => id !== receiver.id)); // stop loading
+    }
   };
 
   // --- Click on card should also navigate ---
@@ -147,12 +177,22 @@ const FriendList = ({ handleNavigationClick, setSelectedUser }) => {
                     </p>
                   </div>
                 </div>
-                <button
-                  className="add-friend-btn"
-                  onClick={(e) => handleAddFriend(friend, e)}
-                >
-                  Add Friend
-                </button>
+                {sentRequests.includes(friend.id) ? (
+                  <button className="sent-btn" disabled>
+                    Sent
+                  </button>
+                ) : loadingRequests.includes(friend.id) ? (
+                  <button className="sent-btn" disabled>
+                    Sending...
+                  </button>
+                ) : (
+                  <button
+                    className="add-friend-btn"
+                    onClick={(e) => handleAddFriend(friend, e)}
+                  >
+                    Add Friend
+                  </button>
+                )}
               </div>
             ))
           )}

@@ -8,7 +8,6 @@ const FriendList = ({ handleNavigationClick, setSelectedUser }) => {
   const [sentRequests, setSentRequests] = useState([]);
   const [loadingRequests, setLoadingRequests] = useState([]);
 
-
   useEffect(() => {
     const receivee = JSON.parse(localStorage.getItem("user"));
     const SERVER = import.meta.env.VITE_PROD_SERVER || import.meta.env.VITE_DEV_SERVER || "http://localhost:3000";
@@ -47,11 +46,12 @@ const FriendList = ({ handleNavigationClick, setSelectedUser }) => {
 
         const json = await res.json();
 
-        if (json.success && Array.isArray(json.followers)) {
-          setFriendRequests(json.followers);
-        } else {
-          console.error("Invalid pending requests format", json);
-        }
+      if (json.success && Array.isArray(json.followers)) {
+        //const users = json.followers.map(f => f.user); 
+        setFriendRequests(json.followers);
+      } else {
+        console.error("Invalid pending requests format", json);
+      }
       } catch (err) {
         console.error("Error fetching friend requests", err);
       }
@@ -61,44 +61,45 @@ const FriendList = ({ handleNavigationClick, setSelectedUser }) => {
     fetchFriendRequests();
   }, []);
 
-// --- Action handlers ---
-const handleAccept = async (request, e) => {
-  e.stopPropagation();
+  // --- Action handlers ---
+  const handleAccept = async (fr, e) => {
+    e.stopPropagation();
 
-  try {
-    const receivee = JSON.parse(localStorage.getItem("user"));
-    const SERVER = import.meta.env.VITE_PROD_SERVER || import.meta.env.VITE_DEV_SERVER || "http://localhost:3000";
-    const token = localStorage.getItem("user");
-    const res = await fetch(`${SERVER}/api/v1/friends/request/response`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        token,
-        senderId: receivee.id,            // the target user (follower)
-        receiverId: request.id, // depends on how your backend gives it
-        response: "accept",
-      }),
-    });
+    try {
+      const receivee = JSON.parse(localStorage.getItem("user"));
+      const SERVER = import.meta.env.VITE_PROD_SERVER || import.meta.env.VITE_DEV_SERVER || "http://localhost:3000";
+      const token = localStorage.getItem("user");
+      const res = await fetch(`${SERVER}/api/v1/friends/request/response`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          token,
+          id: receivee.id,            
+          requestID: fr.request.id, 
+          response: "accept",
+        }),
+      });
 
-    const data = await res.json();
+      const data = await res.json();
 
-    if (data.success) {
-      console.log("✅ Friend request accepted:", receivee.username);
-      // Optional: update UI (remove from pending list, move to friends list, etc.)
-    } else {
-      console.error("❌ Failed to accept:", data.error || data.message);
+      if (data.success) {
+        setFriendRequests((prev) =>
+          prev.filter((req) => req.request.id !== fr.request.id)
+        );
+        alert(`You are now friends with ${fr.user.username}`);
+      } else {
+        alert(`Could not accept request: ${data.message}`);
+      }
+    } catch (err) {
+      console.error("Error accepting request:", err);
     }
-  } catch (err) {
-    console.error("⚠️ Error accepting request:", err);
-  }
-};
-
+  };
 
   const handleDecline = (user, e) => {
     e.stopPropagation();
-    console.log("❌ Declined:", user.username);
+    console.log("Declined:", user.username);
   };
 
   const handleAddFriend = async (receiver, e) => {
@@ -154,15 +155,15 @@ const handleAccept = async (request, e) => {
           {friendRequests.length === 0 ? (
             <p>No friend requests right now.</p>
           ) : (
-            friendRequests.map((request) => (
+            friendRequests.map((fr) => (
               <div
-                key={request.id}
+                key={fr.request.id}
                 className="request-item clickable"
-                onClick={() => handleCardClick(request)}
+                onClick={() => handleCardClick(fr)}
               >
                 <div className="request-info">
                   <div className="avatar">
-                    {request.username
+                    {fr.user.username
                       ?.split("_")
                       .map((n) => n[0])
                       .join("")
@@ -170,10 +171,10 @@ const handleAccept = async (request, e) => {
                   </div>
                   <div className="request-details">
                     <h3 className="request-name">
-                      {request.username?.replaceAll("_", " ")}
+                      {fr.user.username?.replaceAll("_", " ")}
                     </h3>
                     <p className="request-meta">
-                      {request.institution || "Unknown"} • {request.course || "N/A"}
+                      {fr.user.institution || "Unknown"} • {fr.user.course || "N/A"}
                     </p>
                   </div>
                 </div>
@@ -181,13 +182,13 @@ const handleAccept = async (request, e) => {
                 <div className="request-actions">
                   <button
                     className="accept-btn"
-                    onClick={(e) => handleAccept(request, e)}
+                    onClick={(e) => handleAccept(fr, e)}
                   >
                     <Check size={16} />
                   </button>
                   <button
                     className="decline-btn"
-                    onClick={(e) => handleDecline(request, e)}
+                    onClick={(e) => handleDecline(fr, e)}
                   >
                     <X size={16} />
                   </button>

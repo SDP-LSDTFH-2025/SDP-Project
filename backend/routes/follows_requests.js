@@ -402,4 +402,109 @@ router.post('/request/pending', async (req, res) => {
         console.log(error);
     }
 });
+
+/**
+ * @swagger
+ * /request/pending/users:
+ *   post:
+ *     summary: Get pending follow request users
+ *     description: Returns a list of users who have sent follow requests to a given followee.
+ *     tags:
+ *       - Friends
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - token
+ *               - id
+ *             properties:
+ *               token:
+ *                 type: string
+ *                 description: authentication token
+ *                 example: "eyJhbGciOiJIUzI1NiIsInR..."
+ *               id:
+ *                 type: uuid
+ *                 description: ID of the followee
+ *                 example: 12d-w99h...
+ *     responses:
+ *       200:
+ *         description: List of users who sent follow requests
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "successful"
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 followers:
+ *                   type: array
+ *                   description: List of user objects who sent follow requests
+ *                   items:
+ *                     $ref: '#/components/schemas/User'
+ *       400:
+ *         description: Missing or invalid request body
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Insufficient information"
+ *       401:
+ *         description: Invalid token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Invalid Token"
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Internal server error"
+ */
+
+router.post('/request/pending/users', async (req, res) => {
+    try {
+        const { token, id} = req.body;
+
+        if (!token||!id){
+            return errorClass.insufficientInfo(res);
+        }
+        // if (!verifyToken.fireBaseToken(token, id)) {
+        //     return errorClass.errorRes('Invalid Token', res,401);
+        // }
+        
+        const requests =await Follows_requests.findAll({where:{followee_id:id}})
+        let followers=[];
+        console.log('loading...\n\n')
+        
+        for (let element of requests){
+            const {follower_id} = element
+            followers.push(await User.findOne({where:{id:follower_id}}))
+        }
+        
+        res.status(200).json({ message: "successful", followers,success:true });
+    } catch (error) {
+        errorClass.serverError(res);
+        console.log(error);
+    }
+});
+
 module.exports = router;

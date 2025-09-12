@@ -26,6 +26,7 @@ import {
 import {DragAndDropArea} from "./DragAndDrop.jsx";
 import FriendList from "./FriendList.jsx";
 import Profiles from "../pages/Profiles.jsx";
+import Friends from "../pages/Friends.jsx";
 import "./Home.css";
 
 import ProfilePage from "../pages/ProfilePage.jsx";
@@ -281,8 +282,8 @@ function Home({ user }) {
                   Resource Feed
                 </Button>
                 <Button 
-                  className={`buttons ${activeView === "usersprof" ? "active" : ""}`}
-                  onClick={() => handleNavigationClick("usersprof")}
+                  className={`buttons ${activeView === "friends" ? "active" : ""}`}
+                  onClick={() => handleNavigationClick("friends")}
                   >
                   <User className="pics" />
                   Study Buddies
@@ -418,6 +419,9 @@ function Home({ user }) {
             )}
             {activeView === "profile" && <ProfilePage />}
             {activeView === "usersprof" && <Profiles user={selectedUser}/> }
+
+            {activeView === "friends" && <Friends  handleNavigationClick={handleNavigationClick} setSelectedUser={setSelectedUser} /> }
+
             {activeView === "groups" && (
               <div className="share-card">
                 <h2>Groups Section to be implemented...</h2>

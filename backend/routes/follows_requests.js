@@ -321,8 +321,14 @@ router.post('/', async (req, res) => {
         // }
         
         const followers =await Follows.findAll({where:{followee_id:id}})
+        let followers_users=[];
         
-        res.status(200).json({ message: "successful", followers:followers,success:true });
+        for (let element of followers){
+            const {follower_id} = element
+            followers_users.push(await User.findOne({where:{id:follower_id}}))
+        }
+        
+        res.status(200).json({ message: "successful", followers:followers_users,success:true });
     } catch (error) {
         errorClass.serverError(res);
         console.log(error);

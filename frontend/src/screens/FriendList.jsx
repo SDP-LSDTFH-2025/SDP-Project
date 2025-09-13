@@ -68,7 +68,7 @@ const FriendList = ({ handleNavigationClick, setSelectedUser }) => {
     try {
       const receivee = JSON.parse(localStorage.getItem("user"));
       const SERVER = import.meta.env.VITE_PROD_SERVER || import.meta.env.VITE_DEV_SERVER || "http://localhost:3000";
-      const token = localStorage.getItem("user");
+      const token = JSON.parse(localStorage.getItem("user"));
       const res = await fetch(`${SERVER}/api/v1/friends/request/response`, {
         method: "POST",
         headers: {

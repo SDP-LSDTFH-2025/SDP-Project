@@ -249,7 +249,7 @@ router.post('/request/response', async (req, res) => {
 
 /**
  * @swagger
- * /api/v1/followers:
+ * /api/v1/friends:
  *   post:
  *     summary: Retrieve all followers of a given user
  *     tags:
@@ -290,16 +290,7 @@ router.post('/request/response', async (req, res) => {
  *                   description: List of followers
  *                   items:
  *                     type: object
- *                     properties:
- *                       id:
- *                         type: integer
- *                         description: Record ID in the Follows table
- *                       follower_id:
- *                         type: integer
- *                         description: ID of the follower
- *                       followee_id:
- *                         type: integer
- *                         description: ID of the followee
+ *                     description: user object
  *       400:
  *         description: Token or user ID not provided
  *       401:

@@ -15,7 +15,7 @@ export default function Friends({ setSelectedUser, handleNavigationClick }) {
         const user = JSON.parse(localStorage.getItem("user"));
         const SERVER = import.meta.env.VITE_PROD_SERVER || import.meta.env.VITE_DEV_SERVER || "http://localhost:3000";
 
-        const res = await fetch(`${SERVER}/api/v1/followers`, {
+        const res = await fetch(`${SERVER}/api/v1/friends`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -28,8 +28,8 @@ export default function Friends({ setSelectedUser, handleNavigationClick }) {
 
         const json = await res.json();
 
-        if (json.success && Array.isArray(json.data)) {
-          setFriends(json.data);
+        if (json.success && Array.isArray(json.followers)) {
+          setFriends(json.followers);
         } else {
           console.error("Invalid response:", json);
         }

@@ -40,6 +40,8 @@ const { sequelize } = require('../config/database');
  *             schema:
  *               type: object
  *               properties:
+ *                 success:
+ *                   type: boolean
  *                 message:
  *                   type: string
  *                   example: friend request sent successfully
@@ -114,7 +116,7 @@ router.post('/request',async(req,res)=>{
             followee_id:friend.id,
             created_at:new Date()
         })
-        res.status(200).json({message:"friend request sent successfully"});
+        res.status(200).json({message:"friend request sent successfully",success:true});
     }
     catch(error){
         errorClass.serverError(res);
@@ -163,6 +165,8 @@ router.post('/request',async(req,res)=>{
  *             schema:
  *               type: object
  *               properties:
+ *                 success:
+ *                   type: boolean
  *                 message:
  *                   type: string
  *                   example: You are now friends
@@ -236,7 +240,7 @@ router.post('/request/response', async (req, res) => {
         });
 
         await Follows_requests.destroy({where:{ id: requestID }})
-        res.status(200).json({ message: "You are now friends" });
+        res.status(200).json({ message: "You are now friends",success:true });
     } catch (error) {
         errorClass.serverError(res);
         console.log(error);
@@ -276,6 +280,8 @@ router.post('/request/response', async (req, res) => {
  *             schema:
  *               type: object
  *               properties:
+ *                 success:
+ *                   type: boolean
  *                 message:
  *                   type: string
  *                   example: successful
@@ -316,7 +322,7 @@ router.post('/', async (req, res) => {
         
         const followers =await Follows.findAll({where:{followee_id:id}})
         
-        res.status(200).json({ message: "successful", followers:followers });
+        res.status(200).json({ message: "successful", followers:followers,success:true });
     } catch (error) {
         errorClass.serverError(res);
         console.log(error);

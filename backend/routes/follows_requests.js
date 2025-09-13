@@ -249,7 +249,7 @@ router.post('/request/response', async (req, res) => {
 
 /**
  * @swagger
- * /api/v1/followers:
+ * /api/v1/friends:
  *   post:
  *     summary: Retrieve all followers of a given user
  *     tags:

@@ -4,7 +4,7 @@ const multer = require('multer');
 const crypto = require('crypto');
 const { validate: isUUID } = require('uuid');
 const CloudinaryService = require('../services/cloudinaryService');
-const { Resources, User } = require('../models');
+const { Resources, User,Likes } = require('../models');
 const { Op } = require('sequelize');
 
 // Configure multer for file uploads
@@ -663,7 +663,7 @@ router.get('/user/:id', async (req, res) => {
  *                 example: true
  *             description: >
  *               - Use `title` and/or `description` to update content.  
- *               - Use `incrementLikes: true` to increase the resource's likes by 1.
+ *               - Use `incrementLikes: true` to increase the resource's likes by 1 and create a Likes record.
  *     responses:
  *       200:
  *         description: Resource updated successfully
@@ -692,40 +692,57 @@ router.get('/user/:id', async (req, res) => {
  *                       example: 6
  *       400:
  *         description: Invalid resource ID
+ *       401:
+ *         description: User not authenticated
  *       404:
  *         description: Resource not found
  *       500:
  *         description: Internal server error
  */
-
 router.put('/:id', async (req, res) => {
-    const { title, description,incrementLikes } = req.body;
-
     try {
-        const resourceId = parseInt(req.params.id);
+        const resourceId = parseInt(req.params.id, 10);
+        const { title, description, incrementLikes } = req.body;
+        const userId = req.user?.id;
+
         if (isNaN(resourceId)) {
-            return res.status(400).json({ success: false, error: 'Invalid resource ID' });
+            return res.status(400).json({ success: false, message: 'Invalid resource ID' });
         }
+
         const resource = await Resources.findByPk(resourceId);
         if (!resource) {
-            return res.status(404).json({ success: false, error: 'Resource not found' });
+            return res.status(404).json({ success: false, message: 'Resource not found' });
         }
 
+        // Update title/description
         if (title) resource.title = title;
         if (description) resource.description = description;
-        
-        // Increment likes if requested
+
+        // Handle incrementLikes
         if (incrementLikes) {
+            if (!userId) {
+                return res.status(401).json({ success: false, message: 'User not authenticated' });
+            }
+
+            // Increment resource likes
             await resource.increment('likes', { by: 1 });
-            await resource.reload(); // refresh to get new value
+            await resource.reload();
+
+            // Create a Likes record if it doesn't already exist
+            const existingLike = await Likes.findOne({
+                where: { user_id: userId, resource_id: resource.id }
+            });
+            if (!existingLike) {
+                await Likes.create({ user_id: userId, resource_id: resource.id });
+            }
         } else {
             await resource.save();
         }
 
         res.json({ success: true, data: resource });
     } catch (error) {
-        console.error('Update resource error:', error);
-        res.status(500).json({ success: false, error: 'Internal server error' });
+        console.error('Update resource error:', error.stack);
+        res.status(500).json({ success: false, message: 'Internal server error' });
     }
 });
 

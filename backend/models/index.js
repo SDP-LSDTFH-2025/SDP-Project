@@ -5,6 +5,9 @@ const Courses = require('./Courses');
 const UserCourses = require('./UserCourses');
 const PrivateChats = require('./PrivateChats');
 
+const Likes = require('./likes');
+
+
 //resources table 
 const Resources = require('./Resources');
 const Resource_tags = require('./Resource_tags');
@@ -19,6 +22,7 @@ const Progress = require('./Progress');
 const Study_groups = require('./Study_groups');
 const Study_sessions = require('./Study_sessions');
 const Follows_requests = require('./follows_requests');
+
 
 // Define associations
 // User associations
@@ -55,6 +59,13 @@ Resources.hasMany(Resource_reports, { foreignKey: 'resource_id', sourceKey: 'id'
 // Study Group associations
 Study_groups.hasMany(Group_members, { foreignKey: 'group_id', sourceKey: 'id' });
 Study_groups.hasMany(Group_chats, { foreignKey: 'group_id', sourceKey: 'id' });
+
+//likes associations
+Likes.belongsTo(User, { foreignKey: "user_id" ,targetKey:'id'});
+User.hasMany(Likes, { foreignKey: "user_id",sourceKey:'id' });
+//likes association reationship
+Likes.belongsTo(Resources, { foreignKey: "resource_id",targetKey: 'id' });
+Resources.hasMany(Likes, { foreignKey: "resource_id",sourceKey:'id' });
 
 // Reverse associations
 Notifications.belongsTo(User, { foreignKey: 'user_id', targetKey: 'id' });
@@ -100,5 +111,6 @@ module.exports = {
   Group_members,
   Progress,
   Study_groups,
-  Study_sessions
+  Study_sessions,
+  Likes
 };

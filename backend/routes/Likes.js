@@ -7,7 +7,7 @@ const { Op } = require('sequelize');
  * @swagger
  * /api/v1/likes/{id}:
  *   get:
- *     summary: Get users who liked a particular resource
+ *     summary: Get users who liked a resource
  *     tags: [Likes]
  *     parameters:
  *       - in: path
@@ -18,7 +18,7 @@ const { Op } = require('sequelize');
  *         description: Resource ID
  *     responses:
  *       200:
- *         description: List of users who liked the resource
+ *         description: List of users who liked the resource (empty array if none)
  *         content:
  *           application/json:
  *             schema:
@@ -37,49 +37,48 @@ const { Op } = require('sequelize');
  *                         format: uuid
  *                       username:
  *                         type: string
- *                         example: johndoe
  *                       google_id:
  *                         type: string
- *                         example: 1234567890
  *       400:
  *         description: Invalid resource ID
  *       404:
- *         description: No likes found for this resource
+ *         description: Resource not found
  *       500:
  *         description: Internal server error
  */
-router.get("/:id", async (req, res) => {
+router.get('/:id', async (req, res) => {
   try {
-    console.log("Full req.params:", req.params);
-    console.log("Received resource ID:", req.params.id);
+    const resourceId = parseInt(req.params.id, 10);
+    if (isNaN(resourceId)) {
+      return res.status(400).json({ success: false, message: 'Invalid resource ID' });
+    }
 
-    const id = parseInt(req.params.id, 10);
-    if (isNaN(id) || id <= 0) {
-      return res.status(400).json({ success: false, message: "Invalid resource ID" });
+    const resource = await Resources.findByPk(resourceId);
+    if (!resource) {
+      return res.status(404).json({ success: false, message: 'Resource not found' });
     }
 
     const likes = await Likes.findAll({
-      where: { resource_id: id },
+      where: { resource_id: resourceId },
       include: [
         {
           model: User,
-          attributes: ["id", "username", "google_id"], // fixed
-        },
-      ],
+          as: 'user', 
+          attributes: ['id', 'username', 'google_id']
+        }
+      ]
     });
 
-    if (!likes || likes.length === 0) {
-      return res.status(404).json({ success: false, message: "No users have liked this resource" });
-    }
+    const users = likes.map(like => like.user).filter(Boolean); 
 
-    const users = likes.map((like) => like.User);
-
-    res.json({ success: true, users });
+    res.json({ success: true, users }); 
   } catch (error) {
-    console.error("Get users who liked resource error:", error.stack);
-    res.status(500).json({ success: false, error: "Internal server error" });
+    console.error('Get likes error:', error.stack);
+    res.status(500).json({ success: false, message: 'Internal server error' });
   }
 });
+
+
 
 /**
  * @swagger

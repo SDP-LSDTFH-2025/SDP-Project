@@ -61,9 +61,8 @@ Study_groups.hasMany(Group_members, { foreignKey: 'group_id', sourceKey: 'id' })
 Study_groups.hasMany(Group_chats, { foreignKey: 'group_id', sourceKey: 'id' });
 
 //likes associations
-Likes.belongsTo(User, { foreignKey: "user_id" ,targetKey:'id'});
+Likes.belongsTo(User, { foreignKey: "user_id", targetKey: 'id', as: 'user' });
 User.hasMany(Likes, { foreignKey: "user_id",sourceKey:'id' });
-//likes association reationship
 Likes.belongsTo(Resources, { foreignKey: "resource_id",targetKey: 'id' });
 Resources.hasMany(Likes, { foreignKey: "resource_id",sourceKey:'id' });
 

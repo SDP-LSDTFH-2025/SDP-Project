@@ -4,7 +4,7 @@ const multer = require('multer');
 const crypto = require('crypto');
 const { validate: isUUID } = require('uuid');
 const CloudinaryService = require('../services/cloudinaryService');
-const { Resources, User } = require('../models');
+const { Resources, User,Likes } = require('../models');
 const { Op } = require('sequelize');
 
 // Configure multer for file uploads
@@ -633,18 +633,17 @@ router.get('/user/:id', async (req, res) => {
  * @swagger
  * /api/v1/resources/{id}:
  *   put:
- *     summary: Update a resource
- *     description: Update the title, description, or increment the likes of a specific resource.
- *     tags:
- *       - Resources
+ *     summary: Update a resource or increment likes
+ *     tags: [Resources]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
- *         description: ID of the resource to update
  *         schema:
  *           type: integer
- *           example: 1
+ *         description: Resource ID
  *     requestBody:
  *       required: true
  *       content:
@@ -654,16 +653,11 @@ router.get('/user/:id', async (req, res) => {
  *             properties:
  *               title:
  *                 type: string
- *                 example: "Updated Resource Title"
  *               description:
  *                 type: string
- *                 example: "Updated description of the resource."
  *               incrementLikes:
  *                 type: boolean
- *                 example: true
- *             description: >
- *               - Use `title` and/or `description` to update content.  
- *               - Use `incrementLikes: true` to increase the resource's likes by 1.
+ *             description: Use incrementLikes:true to add a like
  *     responses:
  *       200:
  *         description: Resource updated successfully
@@ -674,59 +668,57 @@ router.get('/user/:id', async (req, res) => {
  *               properties:
  *                 success:
  *                   type: boolean
- *                   example: true
  *                 data:
- *                   type: object
- *                   properties:
- *                     id:
- *                       type: integer
- *                       example: 1
- *                     title:
- *                       type: string
- *                       example: "Updated Resource Title"
- *                     description:
- *                       type: string
- *                       example: "Updated description of the resource."
- *                     likes:
- *                       type: integer
- *                       example: 6
+ *                   $ref: '#/components/schemas/Resource'
  *       400:
  *         description: Invalid resource ID
+ *       401:
+ *         description: User not authenticated
  *       404:
  *         description: Resource not found
  *       500:
  *         description: Internal server error
  */
-
 router.put('/:id', async (req, res) => {
-    const { title, description,incrementLikes } = req.body;
+  try {
+    const resourceId = parseInt(req.params.id, 10);
+    const { title, description, incrementLikes } = req.body;
+    const userId = req.user?.id; // req.user must be set by auth middleware
 
-    try {
-        const resourceId = parseInt(req.params.id);
-        if (isNaN(resourceId)) {
-            return res.status(400).json({ success: false, error: 'Invalid resource ID' });
-        }
-        const resource = await Resources.findByPk(resourceId);
-        if (!resource) {
-            return res.status(404).json({ success: false, error: 'Resource not found' });
-        }
-
-        if (title) resource.title = title;
-        if (description) resource.description = description;
-        
-        // Increment likes if requested
-        if (incrementLikes) {
-            await resource.increment('likes', { by: 1 });
-            await resource.reload(); // refresh to get new value
-        } else {
-            await resource.save();
-        }
-
-        res.json({ success: true, data: resource });
-    } catch (error) {
-        console.error('Update resource error:', error);
-        res.status(500).json({ success: false, error: 'Internal server error' });
+    if (isNaN(resourceId)) {
+      return res.status(400).json({ success: false, message: 'Invalid resource ID' });
     }
+
+    const resource = await Resources.findByPk(resourceId);
+    if (!resource) {
+      return res.status(404).json({ success: false, message: 'Resource not found' });
+    }
+
+    // Update title/description
+    if (title) resource.title = title;
+    if (description) resource.description = description;
+
+    if (incrementLikes) {
+      if (!userId) {
+        return res.status(401).json({ success: false, message: 'User not authenticated' });
+      }
+
+      const existingLike = await Likes.findOne({ where: { user_id: userId, resource_id: resourceId } });
+
+      if (!existingLike) {
+        await Likes.create({ user_id: userId, resource_id: resourceId });
+        await resource.increment('likes', { by: 1 });
+        await resource.reload();
+      }
+    } else {
+      await resource.save();
+    }
+
+    res.json({ success: true, data: resource });
+  } catch (error) {
+    console.error('Update resource error:', error.stack);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
 });
 
 /**

@@ -12,6 +12,7 @@ import {
 	MessageSquare, 
 	UserPlus, 
 	Upload,
+  Calendar,
 	Heart,
 	Share2,
 	MessageCircle,
@@ -27,6 +28,8 @@ import {DragAndDropArea} from "./DragAndDrop.jsx";
 import FriendList from "./FriendList.jsx";
 import Profiles from "../pages/Profiles.jsx";
 import Friends from "../pages/Friends.jsx";
+import PlanSessions from "../pages/Sessions.jsx";
+
 import "./Home.css";
 
 import ProfilePage from "../pages/ProfilePage.jsx";
@@ -302,7 +305,13 @@ function Home({ user }) {
                   <Users className="pics" />
                   Study Groups
                 </Button>
-
+                <Button 
+                  className={`buttons ${activeView === "sessions" ? "active" : ""}`}
+                  onClick={() => handleNavigationClick("sessions")}
+                >
+                  <Calendar className="pics" />
+                  Plan Sessions
+                </Button>
 
                 <Button
                   className={`buttons ${activeView === "upload" ? "active" : ""}`}
@@ -421,6 +430,8 @@ function Home({ user }) {
             {activeView === "usersprof" && <Profiles user={selectedUser}/> }
 
             {activeView === "friends" && <Friends  handleNavigationClick={handleNavigationClick} setSelectedUser={setSelectedUser} /> }
+
+            {activeView === "sessions" && <PlanSessions /> }
 
             {activeView === "groups" && (
               <div className="share-card">

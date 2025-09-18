@@ -4,7 +4,7 @@ CREATE TABLE courses (
   name VARCHAR,
   school VARCHAR,
   approved BOOLEAN,
-  created_by VARCHAR,
+  created_by UUID,
   created_at TIMESTAMP,
-  FOREIGN KEY (created_by) REFERENCES users (google_id)
+  FOREIGN KEY (created_by) REFERENCES users (id)
 ); 

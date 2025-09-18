@@ -11,6 +11,78 @@ const { User, Likes, Resources } = require('../models');
 
 /**
  * @swagger
+ * /api/v1/likes/check/{id}:
+ *   get:
+ *     summary: Check if a user liked a resource
+ *     tags: [Likes]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Resource ID
+ *       - in: query
+ *         name: user_id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: User ID
+ *     responses:
+ *       200:
+ *         description: Whether the user liked the resource
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 liked:
+ *                   type: boolean
+ *       400:
+ *         description: Invalid input
+ */
+router.get('/check/:id', async (req, res) => {
+  try {
+    const resourceId = parseInt(req.params.id, 10); // From URL
+    const userId = (req.query.user_id || '').trim(); // From query
+
+    if (isNaN(resourceId) || resourceId <= 0) {
+      return res.status(400).json({ success: false, message: 'Invalid resource ID' });
+    }
+    if (!userId) {
+      return res.status(400).json({ success: false, message: 'user_id is required' });
+    }
+
+    // Optional: check if resource exists
+    const resource = await Resources.findByPk(resourceId);
+    if (!resource) {
+      return res.status(404).json({ success: false, message: 'Resource not found' });
+    }
+
+    // Check if like exists
+    const like = await Likes.findOne({
+      where: {
+        resource_id: resourceId,
+        user_id: userId,
+      },
+    });
+
+    res.json({
+      success: true,
+      liked: !!like, // true if exists, false otherwise
+    });
+  } catch (err) {
+    console.error('Check like error:', err);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+
+
+/**
+ * @swagger
  * /api/v1/likes/{id}:
  *   get:
  *     summary: Get users who liked a particular resource
@@ -39,7 +111,7 @@ const { User, Likes, Resources } = require('../models');
  *                     properties:
  *                       id:
  *                         type: string
- *                       name:
+ *                       username:
  *                         type: string
  *       400:
  *         description: Invalid resource ID
@@ -53,7 +125,6 @@ router.get('/:id', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Invalid resource ID' });
     }
 
-    // ensure resource exists
     const resource = await Resources.findByPk(resourceId);
     if (!resource) {
       return res.status(404).json({ success: false, message: 'Resource not found' });
@@ -64,7 +135,7 @@ router.get('/:id', async (req, res) => {
       include: [
         {
           model: User,
-          as: 'user', // must match your association alias
+          as: 'user',
           attributes: ['id', 'username'],
         },
       ],
@@ -77,16 +148,15 @@ router.get('/:id', async (req, res) => {
       });
     }
 
-    const users = likes
-      .map((like) => like.user)
-      .filter(Boolean);
-
+    const users = likes.map((like) => like.user).filter(Boolean);
     res.json({ success: true, users });
   } catch (err) {
     console.error('Get likes error:', err);
     res.status(500).json({ success: false, message: 'Internal server error' });
   }
 });
+
+
 
 /**
  * @swagger
@@ -138,9 +208,7 @@ router.post('/:id', async (req, res) => {
       return res.status(404).json({ success: false, message: 'Resource not found' });
     }
 
-    const existing = await Likes.findOne({
-      where: { resource_id: resourceId, user_id },
-    });
+    const existing = await Likes.findOne({ where: { resource_id: resourceId, user_id } });
     if (existing) {
       return res.status(409).json({ success: false, message: 'User already liked this resource' });
     }
@@ -150,6 +218,9 @@ router.post('/:id', async (req, res) => {
       resource_id: resourceId,
       created_at: new Date(),
     });
+
+    // **Increment resource likes**
+    await resource.increment('likes', { by: 1 });
 
     res.status(201).json({ success: true, message: 'Resource liked successfully' });
   } catch (err) {
@@ -215,6 +286,9 @@ router.delete('/:id', async (req, res) => {
     if (deleted === 0) {
       return res.status(403).json({ success: false, message: 'User has not liked this resource' });
     }
+
+    // **Decrement resource likes**
+    await resource.decrement('likes', { by: 1 });
 
     res.json({ success: true, message: 'Resource unliked successfully' });
   } catch (err) {

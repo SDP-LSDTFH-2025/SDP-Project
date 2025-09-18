@@ -38,6 +38,7 @@ function Login({ setUser }) {
 
       if (data.success) {
         console.log("logged in!");
+                console.log(data.data);
         localStorage.setItem("user", JSON.stringify(data.data));
         localStorage.setItem("token", data.token);
         setUser(data.data);
@@ -67,7 +68,7 @@ function Login({ setUser }) {
 
       if (data.success) {
         console.log("Signed In!");
-        localStorage.setItem("user", JSON.stringify(data.data)); // not safe
+        localStorage.setItem("user", JSON.stringify(data.data)); 
         localStorage.setItem("token", data.token);
 
         setUser(data.data);

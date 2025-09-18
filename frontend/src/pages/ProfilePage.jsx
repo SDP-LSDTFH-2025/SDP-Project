@@ -1,191 +1,207 @@
-import { useState } from "react";
+import React, { useEffect, useState } from "react";
 import "./ProfilePage.css";
+import { Edit, MapPin, Calendar, CircleDot, Circle } from "lucide-react";
 
-function ProfilePage() {
-  const [isEditingProfile, setIsEditingProfile] = useState(false);
-  const [profileData, setProfileData] = useState({
-    username: "Sarah Chen",
-    email: "sarah.chen@university.edu",
-    major: "Computer Science",
-    year: "2nd Year",
-    bio: "Love coding and problem-solving. Always excited to collaborate on challenging projects and learn new technologies together.",
-    courses: ["Data Structures", "Web Development", "Linear Algebra", "Algorithms"],
-  });
+const ProfilePage = () => {
+  const [user, setUser] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editForm, setEditForm] = useState(null);
 
-  const handleProfileUpdate = () => {
-    setIsEditingProfile(false);
-    console.log("Profile updated:", profileData);
-  };
-
-  const handleCourseAdd = () => {
-    const newCourse = prompt("Enter course name:");
-    if (newCourse && newCourse.trim()) {
-      setProfileData((prev) => ({
-        ...prev,
-        courses: [...prev.courses, newCourse.trim()],
-      }));
+  useEffect(() => {
+    const stored = localStorage.getItem("user");
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        setUser(parsed);
+        setEditForm({
+          username: parsed.username || "No Username",
+          course: parsed.course || "No Course",
+          institution: parsed.institution || "Unknown",
+          role: parsed.role || "student",
+          year_of_study: parsed.year_of_study || "N/A",
+          location: parsed.school || "N/A",
+          academic_interests: parsed.academic_interests || "",
+          study_preferences: parsed.study_preferences || "",
+        });
+      } catch (error) {
+        console.error("Invalid JSON in localStorage", error);
+      }
     }
+  }, []);
+
+  const formatTimeAgo = (dateString) => {
+    const createdAt = new Date(dateString);
+    const now = new Date();
+    const diffMs = now - createdAt;
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+
+    if (diffHours < 1) {
+      const diffMinutes = Math.floor(diffMs / (1000 * 60));
+      return diffMinutes <= 1 ? "Just now" : `${diffMinutes} minutes ago`;
+    }
+
+    if (diffHours < 24) {
+      return `${diffHours} hours ago`;
+    }
+
+    return createdAt.toLocaleString(); // fallback to full date after 24h
   };
 
-  const handleCourseRemove = (courseToRemove) => {
-    setProfileData((prev) => ({
-      ...prev,
-      courses: prev.courses.filter((course) => course !== courseToRemove),
-    }));
+  const handleEdit = () => setIsEditing(true);
+  const handleCancel = () => setIsEditing(false);
+  const handleSave = () => {
+    if (editForm) {
+      localStorage.setItem("user", JSON.stringify(editForm));
+      setUser(editForm);
+    }
+    setIsEditing(false);
   };
+
+
+  if (!user || !editForm) return <p>No profile data found.</p>;
 
   return (
-    <div className="profile-page">
-      <div className="profile-container">
-        <div className="profile-header">
-          <div>
-            <h2>Profile</h2>
-            <p>Manage your account information and preferences</p>
-          </div>
-          <button
-            className="edit-btn"
-            onClick={() =>
-              isEditingProfile ? handleProfileUpdate() : setIsEditingProfile(true)
-            }
-          >
-            {isEditingProfile ? "Save Changes" : "Edit Profile"}
-          </button>
+    <div className="profile-container">
+      {/* Header */}
+      <div className="profile-header">
+        <div className="profile-avatar">
+          {user.username
+            .split("_")
+            .map((p) => p[0])
+            .join("")
+            .toUpperCase()}
         </div>
-
-        <div className="profile-grid">
-          {/* Profile Picture */}
-          <div className="card">
-            <h3 className="card-title">Profile Picture</h3>
-            <div className="card-content center-content">
-              <div className="avatar">
-                <span className="avatar-fallback">
-                  {profileData.username
-                    .split(" ")
-                    .map((n) => n[0])
-                    .join("")}
+        <div className="profile-info">
+          {isEditing ? (
+            <>
+              <div className="field-group">
+                <label>Username</label>
+                <input
+                  value={editForm.username}
+                  onChange={(e) =>
+                    setEditForm({ ...editForm, username: e.target.value })
+                  }
+                />
+              </div>
+              <div className="field-group">
+                <label>Course</label>
+                <input
+                  value={editForm.course}
+                  onChange={(e) =>
+                    setEditForm({ ...editForm, course: e.target.value })
+                  }
+                />
+              </div>
+              <div className="field-group">
+                <label>Institution</label>
+                <input
+                  value={editForm.institution}
+                  onChange={(e) =>
+                    setEditForm({ ...editForm, institution: e.target.value })
+                  }
+                />
+              </div>
+              <div className="field-group">
+                <label>Faculty</label>
+                <input
+                  value={editForm.location}
+                  onChange={(e) =>
+                    setEditForm({ ...editForm, location: e.target.value })
+                  }
+                />
+              </div>
+            </>
+          ) : (
+            <>
+              <h1>{editForm.username.replaceAll('_', ' ')}</h1>
+              <p className="username">@{editForm.username}</p>
+              <p className="title">
+                {editForm.role} • {editForm.location}
+              </p>
+              <div className="profile-details">
+                <span className="detail-item">
+                  <MapPin size={16} className="icon" />
+                  {editForm.institution}
+                </span>
+                <span className="detail-item">
+                  <Calendar size={16} className="icon" />
+                  Joined {new Date(user.created_at).toLocaleDateString()}
+                </span>
+                <span className="detail-item">
+                {user.is_active && <CircleDot className="status-icon online" size={12} />}
+                {!user.is_active && <Circle className="status-icon offline" size={12} />}
+                  {user.is_active ? "Online" : "Offline"}
                 </span>
               </div>
-              {isEditingProfile && <button className="small-btn">Change Picture</button>}
-              <div className="text-center">
-                <h3>{profileData.username}</h3>
-                <p className="muted">{profileData.major}</p>
-                <p className="muted">{profileData.year}</p>
-              </div>
-            </div>
-          </div>
+            </>
+          )}
+        </div>
 
-          {/* Personal Info & Courses */}
-          <div className="profile-info">
-            <div className="card">
-              <h3 className="card-title">Personal Information</h3>
-              <p className="card-desc">Update your basic account details</p>
-              <div className="card-content">
-                <div className="grid-2">
-                  <div>
-                    <label>Full Name</label>
-                    {isEditingProfile ? (
-                      <input
-                        type="text"
-                        value={profileData.username}
-                        onChange={(e) =>
-                          setProfileData((prev) => ({
-                            ...prev,
-                            username: e.target.value,
-                          }))
-                        }
-                      />
-                    ) : (
-                      <p className="display-text">{profileData.username}</p>
-                    )}
-                  </div>
-                  <div>
-                    <label>Email</label>
-                    {isEditingProfile ? (
-                      <input
-                        type="email"
-                        value={profileData.email}
-                        onChange={(e) =>
-                          setProfileData((prev) => ({ ...prev, email: e.target.value }))
-                        }
-                      />
-                    ) : (
-                      <p className="display-text">{profileData.email}</p>
-                    )}
-                  </div>
-                  <div>
-                    <label>Major</label>
-                    {isEditingProfile ? (
-                      <input
-                        value={profileData.major}
-                        onChange={(e) =>
-                          setProfileData((prev) => ({ ...prev, major: e.target.value }))
-                        }
-                      />
-                    ) : (
-                      <p className="display-text">{profileData.major}</p>
-                    )}
-                  </div>
-                  <div>
-                    <label>Year</label>
-                    {isEditingProfile ? (
-                      <input
-                        value={profileData.year}
-                        onChange={(e) =>
-                          setProfileData((prev) => ({ ...prev, year: e.target.value }))
-                        }
-                      />
-                    ) : (
-                      <p className="display-text">{profileData.year}</p>
-                    )}
-                  </div>
-                </div>
-                <div>
-                  <label>Bio</label>
-                  {isEditingProfile ? (
-                    <textarea
-                      rows="3"
-                      value={profileData.bio}
-                      onChange={(e) =>
-                        setProfileData((prev) => ({ ...prev, bio: e.target.value }))
-                      }
-                    ></textarea>
-                  ) : (
-                    <p className="display-text">{profileData.bio}</p>
-                  )}
-                </div>
-              </div>
-            </div>
+        <div className="button-group">
+          {isEditing ? (
+            <>
+              <button className="edit-button" onClick={handleSave}>
+                Save
+              </button>
+              <button className="cancel-button" onClick={handleCancel}>
+                Cancel
+              </button>
+            </>
+          ) : (
+            <button className="edit-button" onClick={handleEdit}>
+              <Edit size={16} className="icon" />
+              Edit
+            </button>
+          )}
+        </div>
+      </div>
 
-            <div className="card">
-              <h3 className="card-title">Courses</h3>
-              <p className="card-desc">Manage the courses you are currently studying</p>
-              <div className="card-content flex-wrap">
-                {profileData.courses.map((course, index) => (
-                  <div key={index} className="badge">
-                    {course}
-                    {isEditingProfile && (
-                      <button
-                        className="small-btn"
-                        onClick={() => handleCourseRemove(course)}
-                      >
-                        X
-                      </button>
-                    )}
-                  </div>
-                ))}
-                {isEditingProfile && (
-                  <button className="small-btn outline" onClick={handleCourseAdd}>
-                    + Add Course
-                  </button>
-                )}
-                {profileData.courses.length === 0 && <p className="muted">No courses added yet.</p>}
-              </div>
-            </div>
+      {/* Courses = academic_interests */}
+      <div className="profile-body">
+        <div className="card">
+          <h2>Courses</h2>
+          <div className="tags blue">
+            {editForm.academic_interests
+              .split(",")
+              .map((item, idx) => (
+                <span key={idx}>{item.trim()}</span>
+              ))}
           </div>
+        </div>
+
+        {/* Activity */}
+        <div className="card activity">
+          <h2>About</h2>
+          <div className="kv">
+            <span className="label">Role</span>
+            <span className="value">{editForm.role}</span>
+          </div>
+          <div className="kv">
+            <span className="label">Year of Study</span>
+            <span className="value">{editForm.year_of_study}</span>
+          </div>
+          <div className="kv">
+            <span className="label">Last Login</span>
+            <span className="value">
+              {formatTimeAgo(user.last_login)}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Interests = study_preferences */}
+      <div className="card">
+        <h2>Interests</h2>
+        <div className="tags green">
+          {editForm.study_preferences
+            .split(",")
+            .map((item, idx) => (
+              <span key={idx}>{item.trim()}</span>
+            ))}
         </div>
       </div>
     </div>
   );
-}
+};
 
 export default ProfilePage;

@@ -1,26 +1,36 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect,useState,useRef } from "react";
+import { Link } from "react-router-dom";
 import { getAllUsers } from "../functions/users";
-import { getAllGroups } from "../functions/groups";
-import { Card, CardHeader, CardTitle, CardContent } from "../components/ui/card";
-import { Button } from "../components/ui/button";
-import { Input } from "../components/ui/input";
-import { Badge } from "../components/ui/badge";
-import {
-  Search,
-  Users,
-  BookOpen,
-  MessageSquare,
-  UserPlus,
-  Upload,
-  Filter,
-  Bell,
-  Settings,
-} from "lucide-react";
-import { DragAndDropArea } from "./DragAndDrop.jsx";
+import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
+import {Button} from "../components/ui/button";
+import {Input} from "../components/ui/input";
+import {Badge} from "../components/ui/badge";
+import { 
+	Search, 
+	Users, 
+	BookOpen, 
+	MessageSquare, 
+	UserPlus, 
+	Upload,
+	Heart,
+	Share2,
+	MessageCircle,
+	Filter,
+	Bell,
+  Menu,
+	Settings,
+  User,
+  X,
+  LogOut 
+  } from "lucide-react";
+import {DragAndDropArea} from "./DragAndDrop.jsx";
+import FriendList from "./FriendList.jsx";
+import Profiles from "../pages/Profiles.jsx";
+import Friends from "../pages/Friends.jsx";
 import "./Home.css";
 
-import StudyPartnersPage from "../pages/StudyPartnersPage.jsx";
 import ProfilePage from "../pages/ProfilePage.jsx";
+import Feed from "../pages/Feed.jsx";
 
 function Home({ user }) {
   
@@ -32,9 +42,22 @@ function Home({ user }) {
   const [pdfFile, setPdfFile] = useState(null);
   const [pictureFile, setPictureFile] = useState(null);
   const [error, setError] = useState("");
+  const [isFormValid, setIsFormValid] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
+
 
  const [friendsList, setFriends] = useState([]);
  const [groupList, setGroups] = useState([]);
+ const [isMenuOpen, setIsMenuOpen] = useState(false);
+ const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
+  // Validate form whenever inputs change
+  useEffect(() => {
+    const isValid = title.trim() !== '' && 
+                    courseId.trim() !== '' && 
+                    description.trim() !== '' && 
+                    (pdfFile || pictureFile);
+    setIsFormValid(isValid);
+  }, [title, courseId, description, pdfFile, pictureFile]);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -78,15 +101,10 @@ function Home({ user }) {
 
   const friends = friendsList || user?.friends || [];
   const groups = groupList || user?.groups || [];
-  const resources = user?.resources || [];
 
   function handleNavigationClick(view) {
     setActiveView(view);
   }
-
-  const handleUploadClick = () => {
-    fileInputRef.current?.click();
-  };
 
   const handleFileSelect = (event) => {
     const files = event.target.files;
@@ -175,24 +193,77 @@ function Home({ user }) {
       {/* Top Navigation Bar */}
       <nav className="navigation">
         <h1 className="logo">StudyBuddy</h1>
-        <Input
-          className="search"
-          placeholder="Search resources, friends, courses..."
-        />
+          <Input
+            className="search"
+            placeholder="Search resources, friends, courses..."
+            
+          />
         <div className="nav-actions">
+          <Link to="/messages">
+            <Button className="nav-button">
+              <MessageCircle className="pics" />
+            </Button>
+          </Link>
           <Button className="nav-button">
             <Bell className="pics" />
           </Button>
-          <Button 
-          className={`buttons ${activeView === "profile" ? "active" : ""}`}
-          onClick={() => handleNavigationClick("profile")}>
-            <Settings className="pics" />
+          <Button className={`nav-button ${activeView === "profile" ? "active" : ""}`} onClick={() => handleNavigationClick("profile")}>
+            <User className="pics" />
           </Button>
           <button className="nav-btn logout" onClick={logout}>
             Logout
           </button>
+          <button className="nav-btn menu-btn mobile-only" onClick={toggleMenu}>
+              {isMenuOpen ? <X className="pics" size={24} /> : <Menu size={24} />}
+            </button>
         </div>
       </nav>
+      {isMenuOpen && (
+      <div className={`mobile-menu ${isMenuOpen ? "open" : ""}`}>
+        <ul>
+          <li>
+            <Button 
+              className={`buttons ${activeView === "feed" ? "active" : ""}`}
+              onClick={() => { handleNavigationClick("feed"); toggleMenu(); }}
+            >
+              <BookOpen className="pics" /> Resource Feed
+            </Button>
+          </li>
+          <li>
+            <Button 
+              className={`buttons ${activeView === "groups" ? "active" : ""}`}
+              onClick={() => { handleNavigationClick("groups"); toggleMenu(); }}
+            >
+              <Users className="pics" /> Study Groups
+            </Button>
+          </li>
+          <li>
+            <Button 
+              className={`buttons ${activeView === "requests" ? "active" : ""}`}
+              onClick={() => { handleNavigationClick("requests"); toggleMenu(); }}
+            >
+              <UserPlus className="pics" /> Friend Requests
+            </Button>
+          </li>
+          <li>
+            <Button 
+              className={`buttons ${activeView === "upload" ? "active" : ""}`}
+              onClick={() => { handleNavigationClick("upload"); toggleMenu(); }}
+            >
+              <Upload className="pics" /> Upload Resource
+            </Button>
+          </li>
+          <li>
+          <Button 
+            className="buttons" 
+            onClick={() => { logout(); setIsMenuOpen(false); }}
+          >
+             <LogOut className="pics"/>Logout
+          </Button>
+            </li>
+        </ul>
+      </div>
+    )}
 
       <main className="dashboard">
         {/* Sidebar */}
@@ -211,19 +282,28 @@ function Home({ user }) {
                   Resource Feed
                 </Button>
                 <Button 
+                  className={`buttons ${activeView === "friends" ? "active" : ""}`}
+                  onClick={() => handleNavigationClick("friends")}
+                  >
+                  <User className="pics" />
+                  Study Buddies
+                </Button>
+                <Button 
+                  className={`buttons ${activeView === "requests" ? "active" : ""}`}
+                  onClick={() => handleNavigationClick("requests")}
+                  >
+                  <UserPlus className="pics" />
+                  Friend Requests
+                </Button>
+                <Button 
                   className={`buttons ${activeView === "groups" ? "active" : ""}`}
                   onClick={() => handleNavigationClick("groups")}
                 >
                   <Users className="pics" />
                   Study Groups
                 </Button>
-                <Button 
-                  className={`buttons ${activeView === "partners" ? "active" : ""}`}
-                  onClick={() => handleNavigationClick("partners")}
-                  >
-                  <UserPlus className="pics" />
-                  Friend Requests
-                </Button>
+
+
                 <Button
                   className={`buttons ${activeView === "upload" ? "active" : ""}`}
                   onClick={() => handleNavigationClick("upload")}
@@ -271,9 +351,10 @@ function Home({ user }) {
         {/* Resource feed / Upload section */}
         <section className="resources">
           <div className="col-span-6">
+
             {activeView === "feed" && (
               <div className="share-card">
-                <h2>Share a thought...</h2>
+                <h2>Share a Thought...</h2>
                 <Input
                   className="search"
                   placeholder="What would you like to share with your buddies?"
@@ -286,16 +367,19 @@ function Home({ user }) {
                   multiple
                   accept=".jpg,.jpeg,.png,.gif,.bmp,.webp,.pdf"
                 />
-                <Button className="upload-btn" onClick={handleUploadClick}>
-                  <Upload className="pics" /> Upload
+                <Button className="upload-btn" onClick={() => setActiveView("upload")}>
+                  <Share2 className="pics" /> Share
                 </Button>
+
+                <Feed />
+
               </div>
             )}
-
+            {activeView === "requests" && <FriendList handleNavigationClick={handleNavigationClick} setSelectedUser={setSelectedUser} />}
             {activeView === "upload" && (
               <div id="Uploads" className="share-card">
                 <h2>Upload Study Resource</h2>
-                {error && <p style={{ color: "red" }}>{error}</p>}
+                {error && <p style={{ color: "red" }}>{error}</p>} 
                 <form onSubmit={handleUploadSubmit}>
                   <Input
                     className="search"
@@ -307,7 +391,6 @@ function Home({ user }) {
                   <Input
                     className="search"
                     placeholder="Course Code"
-                    type="number"
                     value={courseId}
                     onChange={(e) => setCourseId(e.target.value)}
                     required
@@ -327,22 +410,21 @@ function Home({ user }) {
                       if (pdf) setPdfFile(pdf);
                       if (image) setPictureFile(image);
                     }}
-                  />
-                  <Button type="submit" className="upload-btn">
+                  />              
+                  <Button type="submit" className={`w-full p-2 rounded upload-btn ${isFormValid ? 'bg-blue-500 text-white hover:bg-blue-600' : 'bg-gray-300 text-gray-500 cursor-not-allowed'}`} disabled={!isFormValid}>
                     Submit Upload
                   </Button>
                 </form>
               </div>
             )}
-
-            {activeView === "partners" && <StudyPartnersPage />}
-
             {activeView === "profile" && <ProfilePage />}
+            {activeView === "usersprof" && <Profiles user={selectedUser}/> }
+
+            {activeView === "friends" && <Friends  handleNavigationClick={handleNavigationClick} setSelectedUser={setSelectedUser} /> }
 
             {activeView === "groups" && (
               <div className="share-card">
                 <h2>Groups Section to be implemented...</h2>
-
               </div>
             )}
 
@@ -367,22 +449,24 @@ function Home({ user }) {
             )}
           </div>
 
-          <div className="study-groups">
-            <h3>Active Study Groups</h3>
-            {groups.length > 0 ? (
-              groups.map((g, i) => (
-                <p key={i}>
-                  {g.name} ({g.online} online)
-                </p>
-              ))
-            ) : (
-              <p className="empty-text">No groups yet.</p>
-            )}
-          </div>
-        </aside>
-      </main>
+
+				{/* Active study groups */}
+				<div className="study-groups">
+					<h3>Active Study Groups</h3>
+					{groups.length > 0 ? (
+						groups.map((g, i) => (
+							<p key={i}>
+								{g.name} ({g.online} online)
+							</p>
+						))
+					) : (
+						<p className="empty-text">No groups yet.</p>
+					)}
+				</div>
+			</aside>
+		</main>
     </div>
-  );
+	);
 }
 
 export default Home;

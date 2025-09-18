@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Private Chats - Sequence Diagram</title>
+    <style>
+      :root {
+        --bg: #ffffff;
+        --bg-elev: #ffffff;
+        --text: #000000;
+        --muted: #333333;
+        --primary: #000000;
+        --accent: #000000;
+        --border: #000000;
+        --code-bg: #ffffff;
+        --shadow: none;
+      }
+      * { box-sizing: border-box; }
+      body { 
+        font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+        margin: 0; 
+        background: var(--bg);
+        color: var(--text);
+      }
+      .wrap { max-width: 1000px; margin: 0 auto; padding: 24px; }
+      .hero { border-bottom: 1px solid var(--border); padding: 28px 0; }
+      .title { font-size: 28px; margin: 0 0 6px; letter-spacing: 0.3px; }
+      .subtitle { margin: 4px 0 0; color: var(--muted); }
+      .card { background: var(--bg-elev); border: 1px solid var(--border); border-radius: 0; box-shadow: var(--shadow); padding: 18px 18px; }
+      .grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
+      @media (min-width: 900px) { .grid { grid-template-columns: 1fr 1fr; } }
+      h2 { font-size: 18px; margin: 0 0 10px; color: var(--text); }
+      p { margin: 6px 0 10px; color: var(--muted); line-height: 1.6; }
+      code { background: var(--code-bg); padding: 2px 6px; border-radius: 6px; border: 1px solid var(--border); }
+      pre { background: var(--code-bg); padding: 12px; border-radius: 10px; border: 1px solid var(--border); overflow: auto; }
+      .badge { display: inline-block; font-size: 12px; color: var(--primary); background: transparent; border: 1px solid var(--border); padding: 4px 8px; border-radius: 0; }
+      .mermaid { margin-top: 16px; }
+      footer { padding: 18px 0 28px; color: var(--muted); text-align: center; }
+      .muted { color: var(--muted); }
+    </style>
+    <script type="module">
+      import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs";
+      mermaid.initialize({ startOnLoad: true, theme: "default" });
+    </script>
+  </head>
+  <body>
+    <div class="hero">
+      <div class="wrap">
+        <div class="badge">Realtime Private Chats</div>
+        <h1 class="title">Frontend ⇄ Backend Sequence</h1>
+        <p class="subtitle">Socket.IO over WebSocket • Namespace <code>${API_PREFIX}/sockets</code> • JWT Handshake</p>
+      </div>
+    </div>
+
+    <div class="wrap grid">
+      <section class="card" style="grid-column: 1 / -1;">
+        <h2>Overview</h2>
+        <p>
+          Connect to <code>${API_PREFIX}/sockets</code> (default <code>/api/v1/sockets</code>) with a JWT using
+          <code>auth.token = 'Bearer &lt;JWT&gt;'</code> or an <code>Authorization</code> header in the handshake. Upon a valid
+          token, the server attaches <code>socket.user.id</code> and subscribes your connection to <code>user-{id}</code>.
+        </p>
+      </section>
+
+      <section class="card" style="grid-column: 1 / -1;">
+        <h2>Sequence Diagram</h2>
+        <p class="muted">Connect, join, send with <code>tempId</code>, typing and read receipts.</p>
+        <div class="mermaid">
+sequenceDiagram
+  autonumber
+  participant FE as Frontend (Socket.IO client)
+  participant NS as Backend Namespace (${API_PREFIX}/sockets)
+  participant PC as PrivateChats Handler
+  participant DB as DB (private_chats)
+
+  Note over FE,NS: Connect & authenticate
+  FE->>NS: io.connect({ auth: { token: 'Bearer JWT' } })
+  NS-->>FE: connection accepted (socket.user.id set)
+  NS->>FE: join user-{userId}
+
+  Note over FE,PC: Join a chat room (optional)
+  FE->>PC: emit("private:join", { chatId })
+  PC-->>FE: joined chat-{chatId}
+
+  rect rgba(200, 240, 255, 0.3)
+  Note over FE,PC: Send message with optimistic UI and tempId
+  FE->>PC: emit("private:message", { receiverId, message, tempId }, ack)
+  PC->>DB: INSERT private_chats(sender_id, receiver_id, message)
+  DB-->>PC: persisted { id, created_at }
+  PC->>FE: emit("private:message:new", { id, sender_id, receiver_id, message, created_at, tempId })
+  PC->>NS: to user-{receiverId} emit("private:message:new", ...)
+  PC-->>FE: ack({ ok: true, data })
+  end
+
+  Note over FE,PC: Typing indicator
+  FE->>PC: emit("private:typing", { receiverId, isTyping })
+  PC->>NS: to user-{receiverId} emit("private:typing", { from, isTyping })
+
+  Note over FE,PC: Read receipts
+  FE->>PC: emit("private:read", { fromUserId })
+  PC->>DB: UPDATE private_chats SET read_at = now() WHERE receiver_id = me AND sender_id = fromUserId AND read_at IS NULL
+  DB-->>PC: updated rows
+  PC->>NS: to user-{fromUserId} emit("private:read", { by: me })
+
+  Note over FE,NS: Disconnect/reconnect handled by Socket.IO
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Key Concepts</h2>
+        <p><strong>Rooms</strong>: <code>user-{id}</code> for multi-device delivery; optional <code>chat-{chatId}</code> for scoping.</p>
+        <p><strong>tempId</strong>: supports optimistic UI, idempotent retries, and client→server id mapping.</p>
+        <p><strong>Acks</strong>: message sends confirm status and return the persisted payload.</p>
+      </section>
+
+      <section class="card">
+        <h2>Client Snippet</h2>
+        <pre><code>import { io } from 'socket.io-client'
+
+const url = (window.BACKEND_URL || 'http://localhost:3000') + '/api/v1/sockets'
+const socket = io(url, { auth: { token: 'Bearer YOUR_JWT' } })
+
+socket.emit('private:message', { receiverId: '&lt;uuid&gt;', message: 'Hello', tempId: 'tmp-1' }, (ack) =&gt; {
+  if (!ack?.ok) console.error(ack?.error)
+  else console.log('sent', ack.data)
+})</code></pre>
+      </section>
+    </div>
+
+    <footer>
+      <div class="wrap">Rendered with Mermaid. Theme adapts to your system preference.</div>
+    </footer>
+  </body>
+</html>
+
+

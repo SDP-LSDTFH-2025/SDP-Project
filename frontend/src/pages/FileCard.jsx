@@ -47,7 +47,6 @@ const FileCard = ({ file }) => {
                 console.error("User fetch error:", err);
               }
 
-              // fallback if user fetch fails
               return {
                 id: c.id,
                 text: c.message,
@@ -65,7 +64,27 @@ const FileCard = ({ file }) => {
       }
     };
 
+    const fetchLike = async () => {
+      try {
+        const stored = JSON.parse(localStorage.getItem("user"));
+        const Like = await fetch(`${SERVER}/api/v1/likes/check/${file.id}?user_id=${stored.id}`, {
+          method: "GET",
+          headers: { "Content-Type": "application/json" }
+        });
+
+      const Liked = await Like.json();
+
+      if(Liked.success){
+        setLiked(Liked.liked);
+      }
+
+      }catch (error) {
+        console.error("Failed to check Like:", error);
+      }
+    }
+
     fetchComments();
+    fetchLike();
   }, [file.id, SERVER]);
 
   const formatTimeAgo = (dateString) => {
@@ -88,31 +107,46 @@ const FileCard = ({ file }) => {
 
   // LIKE handler (not working the endpoint is not good)
   const handleLike = async () => {
-    if (liked) return; // prevent multiple likes from same user for now
+  const stored = JSON.parse(localStorage.getItem("user"));
 
-    setLiked(true);
-    setLikes(likes + 1);
-
+  if (liked) {
+    // UNLIKE
     try {
-      const res = await fetch(`${SERVER}/api/v1/resources/${file.id}`, {
-        method: "PUT",
+      const res = await fetch(`${SERVER}/api/v1/likes/${file.id}`, {
+        method: "DELETE",
         headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_id: stored.id }),
       });
 
       const data = await res.json();
-
       if (data.success) {
-        setLikes(data.data.likes);
-      } else {
+        setLikes((prev) => prev - 1);
         setLiked(false);
-        setLikes(file.likes);
       }
     } catch (err) {
-      console.error("Like error:", err);
-      setLiked(false);
-      setLikes(likes);
+      console.error("Unlike error:", err);
     }
-  };
+    return;
+  }
+
+  // LIKE
+  try {
+    const res = await fetch(`${SERVER}/api/v1/likes/${file.id}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ user_id: stored.id }),
+    });
+
+    const data = await res.json();
+    if (data.success) {
+      setLikes((prev) => prev + 1);
+      setLiked(true);
+    }
+  } catch (err) {
+    console.error("Like error:", err);
+  }
+};
+
 
   // Add Comment
   const handleAddComment = async () => {
@@ -226,7 +260,7 @@ const FileCard = ({ file }) => {
             className={`like-btn ${liked ? "liked" : ""}`}
             onClick={handleLike}
           >
-            <Heart size={18} fill={liked ? "red" : "none"} />
+            <Heart size={18}    fill={liked ? "red" : "none"}/>
             {likes}
           </span>
           <span>

@@ -1,3 +1,11 @@
+# Ignore all .env files everywhere
+**/*.env
+*.env
+.env.*
+
+# Ignore backend environment files
+backend/.env
+backend/.env.*
 # Logs
 logs
 *.log

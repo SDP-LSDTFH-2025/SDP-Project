@@ -12,6 +12,7 @@ import {
 	MessageSquare, 
 	UserPlus, 
 	Upload,
+  Calendar,
 	Heart,
 	Share2,
 	MessageCircle,
@@ -27,6 +28,7 @@ import {DragAndDropArea} from "./DragAndDrop.jsx";
 import FriendList from "./FriendList.jsx";
 import Profiles from "../pages/Profiles.jsx";
 import Friends from "../pages/Friends.jsx";
+
 import "./Home.css";
 
 import ProfilePage from "../pages/ProfilePage.jsx";
@@ -281,6 +283,7 @@ function Home({ user }) {
                   <BookOpen className="pics" />
                   Resource Feed
                 </Button>
+
                 <Button 
                   className={`buttons ${activeView === "friends" ? "active" : ""}`}
                   onClick={() => handleNavigationClick("friends")}
@@ -288,6 +291,7 @@ function Home({ user }) {
                   <User className="pics" />
                   Study Buddies
                 </Button>
+
                 <Button 
                   className={`buttons ${activeView === "requests" ? "active" : ""}`}
                   onClick={() => handleNavigationClick("requests")}
@@ -295,6 +299,7 @@ function Home({ user }) {
                   <UserPlus className="pics" />
                   Friend Requests
                 </Button>
+
                 <Button 
                   className={`buttons ${activeView === "groups" ? "active" : ""}`}
                   onClick={() => handleNavigationClick("groups")}
@@ -302,7 +307,6 @@ function Home({ user }) {
                   <Users className="pics" />
                   Study Groups
                 </Button>
-
 
                 <Button
                   className={`buttons ${activeView === "upload" ? "active" : ""}`}
@@ -354,19 +358,7 @@ function Home({ user }) {
 
             {activeView === "feed" && (
               <div className="share-card">
-                <h2>Share a Thought...</h2>
-                <Input
-                  className="search"
-                  placeholder="What would you like to share with your buddies?"
-                />
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  onChange={handleFileSelect}
-                  className="hidden-file-input"
-                  multiple
-                  accept=".jpg,.jpeg,.png,.gif,.bmp,.webp,.pdf"
-                />
+                <h2>Resources</h2>
                 <Button className="upload-btn" onClick={() => setActiveView("upload")}>
                   <Share2 className="pics" /> Share
                 </Button>
@@ -420,7 +412,11 @@ function Home({ user }) {
             {activeView === "profile" && <ProfilePage />}
             {activeView === "usersprof" && <Profiles user={selectedUser}/> }
 
-            {activeView === "friends" && <Friends  handleNavigationClick={handleNavigationClick} setSelectedUser={setSelectedUser} /> }
+            {activeView === "friends" && 
+            (<div className="share-card">
+                <Friends  handleNavigationClick={handleNavigationClick} setSelectedUser={setSelectedUser} />
+              </div>
+            )}
 
             {activeView === "groups" && (
               <div className="share-card">

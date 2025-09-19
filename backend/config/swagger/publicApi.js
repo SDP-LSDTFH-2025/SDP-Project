@@ -52,7 +52,7 @@ This API provides endpoints for managing public resources associated with events
           description: 'Development server'
         },
         {
-          url: 'https://https://sdp-project-zilb.onrender.com.com',
+          url: 'https://https://sdp-project-zilb.onrender.com',
           description: 'Production server'
         }
       ],

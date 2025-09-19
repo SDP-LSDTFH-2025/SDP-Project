@@ -13,6 +13,9 @@ const Follows_requests = require('./follows_requests');
 const resourcesRoutes = require('./Resources')
 const publicRoutes = require('./PublicApi');
 const resourcethreadsRoutes = require('./resource_threads');
+const liked_Routes = require('./likes');
+
+
 // API Documentation
 /**
  * @swagger
@@ -50,7 +53,9 @@ router.get('/', (req, res) => {
       userCourses: '/user-courses',
       docs: '/api-docs',
       resources: '/resources',
-      resource_threads: '/resource_threads'
+      resource_threads: '/resource_threads',
+      likes: '/likes/:id'
+
     }
   });
 });
@@ -67,4 +72,5 @@ router.use('/friends',Follows_requests);
 router.use('/resources', resourcesRoutes);
 router.use('/public', publicRoutes);
 router.use('/resource_threads', resourcethreadsRoutes);
+router.use('/likes', liked_Routes);
 module.exports = router; 

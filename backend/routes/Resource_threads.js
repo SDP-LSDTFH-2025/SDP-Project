@@ -111,10 +111,16 @@ router.post('/', async (req, res) => {
  *     summary: Get resource threads
  *     tags: [ResourceThreads]
  *     parameters:
+ *       - name: message
+ *         in: query
+ *         required: false
+ *         description: Partial message to filter threads (case-insensitive)
+ *         schema:
+ *           type: string
  *       - name: resource_id
  *         in: query
  *         required: false
- *         description: Filter threads by resource_id
+ *         description: Filter threads by resource ID
  *         schema:
  *           type: integer
  *     responses:
@@ -151,16 +157,20 @@ router.post('/', async (req, res) => {
  */
 router.get('/', async (req, res) => {
   try {
-    const { resource_id } = req.query;
-
+    const { message, resource_id } = req.query;
     const where = {};
+
+    if (message) {
+      where.message = { [Op.iLike]: `%${message}%` };
+    }
+
     if (resource_id) {
-      where.resource_id = resource_id; // ✅ filter by resource_id
+      where.resource_id = resource_id;
     }
 
     const resource_threads = await Resource_threads.findAll({
       where,
-      order: [['created_at', 'ASC']] // optional: chronological order
+      order: [['created_at', 'DESC']],
     });
 
     res.json({ success: true, data: resource_threads });

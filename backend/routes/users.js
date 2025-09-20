@@ -97,7 +97,7 @@ router.get('/friends', [
  *         name: id
  *         required: true
  *         schema:
- *           type: string
+ *           type: uuid
  *         description: User ID
  *     responses:
  *       200:
@@ -191,7 +191,7 @@ router.get('/', async (req, res) => {
  *           schema:
  *             type: object
  *             properties:
- *               google_id:
+ *               user_id:
  *                 type: string
  *               course:
  *                 type: string
@@ -225,8 +225,8 @@ router.get('/', async (req, res) => {
 router.post('/register', async (req, res) => {
   try{
   console.log("Payload received on backend:", req.body)
-  const {google_id,course,year_of_study,academic_interests,study_preferences,institution,school} = req.body;
-  const user = await User.findOne({where:{google_id}});
+  const {user_id,course,year_of_study,academic_interests,study_preferences,institution,school} = req.body;
+  const user = await User.findOne({where:{user_id}});
   if (!user) {
     return res.status(404).json({
       success: false,
@@ -236,10 +236,10 @@ router.post('/register', async (req, res) => {
 
   await User.update(
   { course, year_of_study, academic_interests, study_preferences, institution, school },
-  { where: { google_id } }
+  { where: { user_id } }
 );
 
-const updated_user = await User.findOne({ where: { google_id } });
+const updated_user = await User.findOne({ where: { user_id } });
 
   res.json({
     success: true,

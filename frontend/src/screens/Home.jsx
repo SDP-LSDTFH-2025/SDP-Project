@@ -25,6 +25,8 @@ import {
   } from "lucide-react";
 import {DragAndDropArea} from "./DragAndDrop.jsx";
 import FriendList from "./FriendList.jsx";
+import Profiles from "../pages/Profiles.jsx";
+import Friends from "../pages/Friends.jsx";
 import "./Home.css";
 
 import StudyPartnersPage from "../pages/StudyPartnersPage.jsx";
@@ -292,6 +294,15 @@ function Home({ user }) {
                   <UserPlus className="pics" />
                   Friend Requests
                 </Button>
+                <Button 
+                  className={`buttons ${activeView === "groups" ? "active" : ""}`}
+                  onClick={() => handleNavigationClick("groups")}
+                >
+                  <Users className="pics" />
+                  Study Groups
+                </Button>
+
+
                 <Button
                   className={`buttons ${activeView === "upload" ? "active" : ""}`}
                   onClick={() => handleNavigationClick("upload")}
@@ -412,6 +423,9 @@ function Home({ user }) {
 
 
             {activeView === "profile" && <ProfilePage />}
+            {activeView === "usersprof" && <Profiles user={selectedUser}/> }
+
+            {activeView === "friends" && <Friends  handleNavigationClick={handleNavigationClick} setSelectedUser={setSelectedUser} /> }
 
             {activeView === "groups" && (
               <div className="share-card">

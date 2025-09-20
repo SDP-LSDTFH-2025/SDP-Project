@@ -120,7 +120,6 @@ router.get('/', async (req, res) => {
  *         description: Bad request
  *       500:
  *         description: Internal server error
- *      
  */
 router.post('/add', async (req, res) => {
   try {
@@ -153,10 +152,17 @@ router.post('/add', async (req, res) => {
 });
 /**
  * @swagger
- * /api/v1/courses/update:
+ * /api/v1/courses/update/{id}:
  *   put:
  *     summary: Update a course
  *     tags: [Courses]
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         description: Course ID
+ *         schema:
+ *           type: integer
  *     requestBody:
  *       required: true
  *       content:
@@ -185,14 +191,14 @@ router.post('/add', async (req, res) => {
  *                 success:
  *                   type: boolean
  *                 data:
- *                   $ref: '#/components/schemas/Course'
+ *                   type: number
  *                   description: Number of affected rows
  *       404:
  *         description: Course not found
  *       500:
  *         description: Internal server error
  */
-router.put('/update', async (req, res) => {
+router.put('/update/:id', async (req, res) => {
   try {
     const { code, name, school, approved, created_by } = req.body;
 
@@ -209,13 +215,12 @@ router.put('/update', async (req, res) => {
         error: 'You are not the owner of this course'
       });
     }
-   await Courses.update(
-    { code, name, school, approved, created_by },
-    { where: { code: req.body.code } }
-   );
-   const updatedCourse = await Courses.findOne({ where: { code: req.body.code } });
+    const [affectedRows] = await Courses.update(
+      { code, name, school, approved, created_by },
+      { where: { id: req.params.id } }
+    );
     
-    res.json({ success: true, data: updatedCourse });
+    res.json({ success: true, data: affectedRows });
   } catch (error) {
     console.error('Update course error:', error);
     res.status(500).json({
@@ -226,26 +231,23 @@ router.put('/update', async (req, res) => {
 });
 /**
  * @swagger
- * /api/v1/courses:
+ * /api/v1/courses/{id}:
  *   delete:
  *     summary: Delete a course
  *     tags: [Courses]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - created_by
- *               - code
- *             properties:
- *               created_by:
- *                 type: string
- *                 description: Creator code of the course
- *               code:
- *                 type: string
- *                 description: Course code
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         description: Course ID
+ *         schema:
+ *           type: integer
+*    requestbody:
+*     - created_by: id
+*      required: true
+*      description: creator id
+*      schema:
+*      type: integer
  *     responses:
  *       200:
  *         description: Course deleted successfully
@@ -257,18 +259,18 @@ router.put('/update', async (req, res) => {
  *                 success:
  *                   type: boolean
  *                 data:
- *                   type: string
- *                   description: Course deleted successfully
+ *                   type: number
+ *                   description: Number of deleted rows
  *       404:
  *         description: Course not found
  *       500:
  *         description: Internal server error
  */
-router.delete('/', async (req, res) => {
+router.delete('/:id', async (req, res) => {
   try {
-    const {created_by, code} = req.body;
+    const {created_by} = req.body;
 
-    const course = await Courses.findOne({ where: { code: req.body.code } });
+    const course = Courses.findByPk(req.params.id);
     if(!course){
       return res.status(404).json({
         success: false,
@@ -281,10 +283,10 @@ router.delete('/', async (req, res) => {
         error: 'You are not the owner of this course'
       });
     }
-   await Courses.destroy({ where: { code: req.body.code } });
+    const deletedRows = await Courses.destroy({ where: { id: req.params.id } });
 
     
-    res.json({ success: true, message: 'Course deleted successfully'});
+    res.json({ success: true, data: deletedRows });
   } catch (error) {
     console.error('Delete course error:', error);
     res.status(500).json({
@@ -644,10 +646,17 @@ router.get('/pending', async (req, res) => {
  
 /**
  * @swagger
- * /api/v1/courses/approve:
+ * /api/v1/courses/approve/{id}:
  *   put:
  *     summary: Approve a course
  *     tags: [Courses]
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         description: Course ID
+ *         schema:
+ *           type: integer
  *     requestBody:
  *       required: true
  *       content:
@@ -658,9 +667,6 @@ router.get('/pending', async (req, res) => {
  *               approved:
  *                 type: boolean
  *                 default: true
- *               code:
- *                 type: string
- *                 description: Course code
  *     responses:
  *       200:
  *         description: Course approval status updated
@@ -679,19 +685,19 @@ router.get('/pending', async (req, res) => {
  *       500:
  *         description: Internal server error
  */
-router.put('/approve', async (req, res) => {
+router.put('/approve/:id', async (req, res) => {
   try {
-    const { approved = true, code } = req.body;
-    const updatedCourse = await Courses.update({ approved }, { where: { code: req.body.code } });
+    const { approved = true } = req.body;
+    const [affectedRows] = await Courses.update({ approved }, { where: { id: req.params.id } });
     
-    if (!updatedCourse) {
+    if (affectedRows === 0) {
       return res.status(404).json({
         success: false,
         error: 'Course not found'
       });
     }
     
-    res.json({ success: true, message: 'Course approved successfully' });
+    res.json({ success: true, data: affectedRows });
   } catch (error) {
     console.error('Approve course error:', error);
     res.status(500).json({
@@ -702,20 +708,17 @@ router.put('/approve', async (req, res) => {
 });
 /**
  * @swagger
- * /api/v1/courses/reject:
+ * /api/v1/courses/reject/{id}:
  *   put:
  *     summary: Reject a course
  *     tags: [Courses]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               code:
- *                 type: string
- *                 description: Course code
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         description: Course ID
+ *         schema:
+ *           type: integer
  *     responses:
  *       200:
  *         description: Course rejected successfully
@@ -727,17 +730,16 @@ router.put('/approve', async (req, res) => {
  *                 success:
  *                   type: boolean
  *                 data:
- *                   type: string
+ *                   type: number
  *                   description: Number of affected rows
  *       404:
  *         description: Course not found
  *       500:
  *         description: Internal server error
  */
-router.put('/reject', async (req, res) => {
+router.put('/reject/:id', async (req, res) => {
   try {
-    const { code } = req.body;
-    await Courses.update({ approved: false }, { where: { code: req.body.code } });
+    const [affectedRows] = await Courses.update({ approved: false }, { where: { id: req.params.id } });
     
     if (affectedRows === 0) {
       return res.status(404).json({
@@ -746,7 +748,7 @@ router.put('/reject', async (req, res) => {
       });
     }
     
-    res.json({ success: true, message: 'Course rejected successfully' });
+    res.json({ success: true, data: affectedRows });
   } catch (error) {
     console.error('Reject course error:', error);
     res.status(500).json({
@@ -766,7 +768,7 @@ router.put('/reject', async (req, res) => {
  *       - name: limit
  *         in: query
  *         required: false
- *         description: Number of courses to return (default 10)
+ *         description: Number of courses to return (default: 10)
  *         schema:
  *           type: integer
  *           default: 10
@@ -804,5 +806,55 @@ router.get('/recent', async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/v1/courses/{id}:
+ *   get:
+ *     summary: Get a course by ID
+ *     tags: [Courses]
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         description: Course ID
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Course details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   $ref: '#/components/schemas/Course'
+ *       404:
+ *         description: Course not found
+ *       500:
+ *         description: Internal server error
+ */
+router.get('/:id', async (req, res) => {
+  try {
+    const course = await Courses.findByPk(req.params.id);
+    
+    if (!course) {
+      return res.status(404).json({
+        success: false,
+        error: 'Course not found'
+      });
+    }
+    
+    res.json({ success: true, data: course });
+  } catch (error) {
+    console.error('Get course by ID error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error'
+    });
+  }
+});
 
 module.exports = router;

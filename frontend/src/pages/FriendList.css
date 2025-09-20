@@ -1,0 +1,127 @@
+body {
+  font-family: Arial, sans-serif;
+  background: #f9fafb;
+  margin: 0;
+  padding: 20px;
+}
+
+.friends-container {
+  max-width: 1000px;
+  margin: auto;
+}
+
+.friends-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.friends-header h2 {
+  font-size: 1.3rem;
+  font-weight: bold;
+  margin: 0;
+}
+
+.friends-header span {
+  font-size: 0.9rem;
+  color: #6b7280;
+}
+
+.search-bar {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  margin-bottom: 25px;
+  font-size: 0.9rem;
+}
+
+.friends-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.friend-card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.friend-avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-bottom: 12px;
+}
+
+.friend-name {
+  font-weight: 600;
+  color: #111827;
+  margin: 0;
+}
+
+.friend-username {
+  color: #2563eb;
+  font-size: 0.9rem;
+  margin: 4px 0;
+}
+
+.friend-role {
+  color: #374151;
+  font-size: 0.85rem;
+  margin-bottom: 8px;
+}
+
+.status {
+  font-size: 0.85rem;
+  margin-bottom: 15px;
+}
+
+.online {
+  color: #10b981;
+  font-weight: 500;
+}
+
+.offline {
+  color: #6b7280;
+}
+
+.actions {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+.btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 12px;
+  font-size: 0.85rem;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn:hover {
+  background: #f3f4f6;
+}
+
+.btn-primary {
+  background: #2563eb;
+  color: #fff;
+  border: none;
+}
+
+.btn-primary:hover {
+  background: #1d4ed8;
+}

@@ -40,8 +40,6 @@ const { sequelize } = require('../config/database');
  *             schema:
  *               type: object
  *               properties:
- *                 success:
- *                   type: boolean
  *                 message:
  *                   type: string
  *                   example: friend request sent successfully
@@ -116,7 +114,7 @@ router.post('/request',async(req,res)=>{
             followee_id:friend.id,
             created_at:new Date()
         })
-        res.status(200).json({message:"friend request sent successfully",success:true});
+        res.status(200).json({message:"friend request sent successfully"});
     }
     catch(error){
         errorClass.serverError(res);
@@ -165,8 +163,6 @@ router.post('/request',async(req,res)=>{
  *             schema:
  *               type: object
  *               properties:
- *                 success:
- *                   type: boolean
  *                 message:
  *                   type: string
  *                   example: You are now friends
@@ -240,7 +236,7 @@ router.post('/request/response', async (req, res) => {
         });
 
         await Follows_requests.destroy({where:{ id: requestID }})
-        res.status(200).json({ message: "You are now friends",success:true });
+        res.status(200).json({ message: "You are now friends" });
     } catch (error) {
         errorClass.serverError(res);
         console.log(error);
@@ -249,7 +245,7 @@ router.post('/request/response', async (req, res) => {
 
 /**
  * @swagger
- * /api/v1/friends:
+ * /api/v1/followers:
  *   post:
  *     summary: Retrieve all followers of a given user
  *     tags:
@@ -280,8 +276,6 @@ router.post('/request/response', async (req, res) => {
  *             schema:
  *               type: object
  *               properties:
- *                 success:
- *                   type: boolean
  *                 message:
  *                   type: string
  *                   example: successful
@@ -290,7 +284,16 @@ router.post('/request/response', async (req, res) => {
  *                   description: List of followers
  *                   items:
  *                     type: object
- *                     description: user object
+ *                     properties:
+ *                       id:
+ *                         type: integer
+ *                         description: Record ID in the Follows table
+ *                       follower_id:
+ *                         type: integer
+ *                         description: ID of the follower
+ *                       followee_id:
+ *                         type: integer
+ *                         description: ID of the followee
  *       400:
  *         description: Token or user ID not provided
  *       401:
@@ -312,196 +315,11 @@ router.post('/', async (req, res) => {
         // }
         
         const followers =await Follows.findAll({where:{followee_id:id}})
-        let followers_users=[];
         
-        for (let element of followers){
-            const {follower_id} = element
-            followers_users.push(await User.findOne({where:{id:follower_id}}))
-        }
-        
-        res.status(200).json({ message: "successful", followers:followers_users,success:true });
+        res.status(200).json({ message: "successful", followers:followers });
     } catch (error) {
         errorClass.serverError(res);
         console.log(error);
     }
 });
-
-/**
- * @swagger
- * /api/v1/friends/request/pending:
- *   post:
- *     summary: Get pending follow requests
- *     description: Retrieves all pending follow requests for a given user.
- *     tags:
- *       - Friends
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - token
- *               - id
- *             properties:
- *               token:
- *                 type: string
- *                 description: Authentication token for the user.
- *                 example: "eyJhbGciOiJIUzI1NiIsInR5cCI6..."
- *               id:
- *                 type: string
- *                 description: The ID of the user whose follow requests are being fetched.
- *                 example: "12345"
- *     responses:
- *       200:
- *         description: Successfully retrieved pending follow requests.
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: successful
- *                 success:
- *                   type: boolean
- *                   example: true
- *                 followers:
- *                   type: array
- *                   description: List of pending follow requests
- *                   items:
- *                     type: object
- *                     description: Follow request object from the database
- *       400:
- *         description: Missing required fields (token or id).
- *       401:
- *         description: Invalid token provided.
- *       500:
- *         description: Internal server error.
- */
-
-router.post('/request/pending', async (req, res) => {
-    try {
-        const { token, id} = req.body;
-
-        if (!token||!id){
-            return errorClass.insufficientInfo(res);
-        }
-        // if (!verifyToken.fireBaseToken(token, id)) {
-        //     return errorClass.errorRes('Invalid Token', res,401);
-        // }
-        
-        const followers =await Follows_requests.findAll({where:{followee_id:id}})
-        
-        res.status(200).json({ message: "successful", followers:followers,success:true });
-    } catch (error) {
-        errorClass.serverError(res);
-        console.log(error);
-    }
-});
-
-/**
- * @swagger
- * /api/v1/friends/request/pending/users:
- *   post:
- *     summary: Get pending follow request users
- *     description: Returns a list of users who have sent follow requests to a given followee.
- *     tags:
- *       - Friends
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - token
- *               - id
- *             properties:
- *               token:
- *                 type: string
- *                 description: authentication token
- *                 example: "eyJhbGciOiJIUzI1NiIsInR..."
- *               id:
- *                 type: uuid
- *                 description: ID of the followee
- *                 example: 12d-w99h...
- *     responses:
- *       200:
- *         description: List of users who sent follow requests
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "successful"
- *                 success:
- *                   type: boolean
- *                   example: true
- *                 followers:
- *                   type: object
- *                   description: List of user objects who sent follow requests + the request info
- *                   items:
- *                     $ref: '#/components/schemas/User'
- *       400:
- *         description: Missing or invalid request body
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: string
- *                   example: "Insufficient information"
- *       401:
- *         description: Invalid token
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: string
- *                   example: "Invalid Token"
- *       500:
- *         description: Server error
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: string
- *                   example: "Internal server error"
- */
-
-router.post('/request/pending/users', async (req, res) => {
-    try {
-        const { token, id} = req.body;
-
-        if (!token||!id){
-            return errorClass.insufficientInfo(res);
-        }
-        // if (!verifyToken.fireBaseToken(token, id)) {
-        //     return errorClass.errorRes('Invalid Token', res,401);
-        // }
-        
-        const requests =await Follows_requests.findAll({where:{followee_id:id}})
-        let followers=[];
-        console.log('loading...\n\n')
-        
-        for (let element of requests){
-            const {follower_id} = element
-            followers.push({user:await User.findOne({where:{id:follower_id}}),request:element})
-        }
-        
-        res.status(200).json({ message: "successful", followers,success:true });
-    } catch (error) {
-        errorClass.serverError(res);
-        console.log(error);
-    }
-});
-
 module.exports = router;

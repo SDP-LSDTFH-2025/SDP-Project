@@ -27,11 +27,7 @@ const Courses = sequelize.define('Courses', {
   },
     created_by: {
     type: DataTypes.UUID,
-    allowNull: false,
-    references: {
-      model: 'users',
-      key: 'id'
-    }
+    allowNull: false
   },
   created_at: {
     type: DataTypes.DATE,

@@ -10,7 +10,7 @@ const { Op } = require('sequelize');
  */
 /**
  * @swagger
- * /api/v1/notifications/create:
+ * /api/v1/notifications:
  *   post:
  *     summary: Create a new notification
  *     tags: [Notifications]
@@ -43,7 +43,7 @@ const { Op } = require('sequelize');
  *         description: Internal server error
  */
 
-router.post('/create', async (req, res) => {
+router.post('/', async (req, res) => {
   const {user_id,title,message } = req.body;
   try{
 
@@ -66,13 +66,13 @@ router.post('/create', async (req, res) => {
 });
 /**
  * @swagger
- * /api/v1/notifications/user:
+ * /api/v1/notifications/{id}:
  *   get:
  *     summary: Get notifications for a user
  *     tags: [Notifications]
- *     parameters:
- *       - name: user_id
- *         in: query
+ *     parameters:  
+ *       - name: id
+ *         in: path
  *         required: true
  *         description: The ID of the user
  *         schema:
@@ -94,12 +94,11 @@ router.post('/create', async (req, res) => {
  *       500:
  *         description: Internal server error
  */
-router.get('/user', async (req, res) => {
+router.get('/:id', async (req, res) => {
     try{
-      const { user_id } = req.query;
   const notifications = await Notifications.findAll({
     where:{
-        user_id:user_id,
+        user_id:req.params.id,
         read:false
     }
     });
@@ -114,13 +113,13 @@ router.get('/user', async (req, res) => {
 });
 /**
  * @swagger
- * /api/v1/notifications/update:
+ * /api/v1/notifications/{id}:
  *   put:
  *     summary: Update a notification
  *     tags: [Notifications]
  *     parameters:
- *       - name: notification_id
- *         in: query
+ *       - name: id
+ *         in: path
  *         required: true
  *         description: The ID of the notification
  *         schema:
@@ -147,11 +146,10 @@ router.get('/user', async (req, res) => {
  *       500:
  *         description: Internal server error
  */
-router.put('/update', async (req, res) => {
+router.put('/:id', async (req, res) => {
   try {
-    const { read} = req.body;
-    const { notification_id } = req.query;
-    const notification = await Notifications.update({ read }, { where: { id: notification_id } });
+    const { read } = req.body;
+    const notification = await Notifications.update({ read }, { where: { id: req.params.id } });
     res.json({ success: true, data: notification });
   } catch (error) {
     console.error('Update notification error:', error);
@@ -164,13 +162,13 @@ router.put('/update', async (req, res) => {
 
 /**
  * @swagger
- * /api/v1/notifications/delete:
+ * /api/v1/notifications/{id}:
  *   delete:
  *     summary: Delete a notification
  *     tags: [Notifications]
  *     parameters:
- *       - name: notification_id
- *         in: query
+ *       - name: id
+ *         in: path
  *         required: true
  *         description: The ID of the notification
  *         schema:
@@ -188,10 +186,9 @@ router.put('/update', async (req, res) => {
  *       500:
  *         description: Internal server error
  */
-router.delete('/delete', async (req, res) => {
+router.delete('/:id', async (req, res) => {
   try {
-    const { notification_id } = req.query;
-    const notification = await Notifications.destroy({ where: { id: notification_id } });
+    const notification = await Notifications.destroy({ where: { id: req.params.id } });
     res.json({ success: true, data: notification });
   } catch (error) {
     console.error('Delete notification error:', error);
@@ -206,7 +203,7 @@ router.delete('/delete', async (req, res) => {
 
 /**
  * @swagger
- * /api/v1/notifications/all:
+ * /api/v1/notifications:
  *   get:
  *     summary: Get all notifications
  *     tags: [Notifications]
@@ -227,7 +224,7 @@ router.delete('/delete', async (req, res) => {
  *       500:
  *         description: Internal server error
  */
-router.get('/all', async (req, res) => {
+router.get('/', async (req, res) => {
   try {
     const notifications = await Notifications.findAll();
     res.json({ success: true, data: notifications });
@@ -244,13 +241,13 @@ router.get('/all', async (req, res) => {
 
 /**
  * @swagger
-  * /api/v1/notifications/mark-all-as-read:
+ * /api/v1/notifications/mark-all-as-read/{id}:
  *   put:
  *     summary: Mark all notifications as read for a user
  *     tags: [Notifications]
  *     parameters:
- *       - name: user_id
- *         in: query
+ *       - name: id
+ *         in: path
  *         required: true
  *         description: The ID of the user
  *         schema:
@@ -271,10 +268,9 @@ router.get('/all', async (req, res) => {
  *       500:
  *         description: Internal server error
  */
-  router.put('/mark-all-as-read', async (req, res) => {
+router.put('/mark-all-as-read/:id', async (req, res) => {
   try {
-    const { user_id } = req.query;
-    const notifications = await Notifications.update({ read: true }, { where: { user_id:user_id, read: false } });
+    const notifications = await Notifications.update({ read: true }, { where: { user_id:req.params.id, read: false } });
     res.json({ success: true, data: notifications });
   } catch (error) {
     console.error('Mark all as read error:', error);
@@ -288,13 +284,13 @@ router.get('/all', async (req, res) => {
 
 /**
  * @swagger
- * /api/v1/notifications/unread-count:
+ * /api/v1/notifications/unread-count/{id}:
  *   get:
  *     summary: Get unread notifications count for a user
  *     tags: [Notifications]
  *     parameters:
- *       - name: user_id
- *         in: query
+ *       - name: id
+ *         in: path
  *         required: true
  *         description: The ID of the user
  *         schema:
@@ -315,10 +311,9 @@ router.get('/all', async (req, res) => {
  *       500:
  *         description: Internal server error
  */
-router.get('/unread-count', async (req, res) => {
+router.get('/unread-count/:id', async (req, res) => {
   try {
-    const { user_id } = req.query;
-    const count = await Notifications.count({ where: { user_id:user_id, read: false } });
+    const count = await Notifications.count({ where: { user_id:req.params.id, read: false } });
     res.json({ success: true, data: count });
   } catch (error) {
     console.error('Get unread count error:', error);
@@ -332,13 +327,13 @@ router.get('/unread-count', async (req, res) => {
 //clear all as read notifications
 /**
  * @swagger
- * /api/v1/notifications/clear-all-as-read:
+ * /api/v1/notifications/clear-all-as-read/{id}:
  *   put:
  *     summary: Clear all as read notifications
  *     tags: [Notifications]
  *     parameters:
- *       - name: user_id
- *         in: query
+ *       - name: id
+ *         in: path
  *         required: true
  *         description: The ID of the user
  *         schema:
@@ -360,10 +355,9 @@ router.get('/unread-count', async (req, res) => {
  *       500:
  *         description: Internal server error
  */
-router.put('/clear-all-as-read', async (req, res) => {
+router.put('/clear-all-as-read/:id', async (req, res) => {
   try{
-    const { user_id } = req.query;
-    const notifications = await Notifications.update({ read: true }, { where: {user_id:user_id, read: false } });
+    const notifications = await Notifications.update({ read: true }, { where: {user_id:req.params.id, read: false } });
     res.json({ success: true, data: notifications });
   } catch (error) {
     console.error('Clear all as read notifications error:', error);
@@ -377,13 +371,13 @@ router.put('/clear-all-as-read', async (req, res) => {
 //get notifications by date range
 /**
  * @swagger
- * /api/v1/notifications/date-range:
+ * /api/v1/notifications/date-range/{id}:
  *   get:
  *     summary: Get notifications by date range
  *     tags: [Notifications]
  *     parameters:  
- *       - name: user_id
- *         in: query
+ *       - name: id
+ *         in: path
  *         required: true
  *         description: The ID of the user
  *         schema:
@@ -417,10 +411,9 @@ router.put('/clear-all-as-read', async (req, res) => {
  *       500:
  *         description: Internal server error
  */
-  router.get('/date-range', async (req, res) => {
+router.get('/date-range/:id', async (req, res) => {
     try{
-  const { user_id } = req.query;
-  const notifications = await Notifications.findAll({ where: { user_id:user_id, created_at: { [Op.between]: [req.query.start_date, req.query.end_date] } } });
+  const notifications = await Notifications.findAll({ where: { user_id:req.params.id, created_at: { [Op.between]: [req.query.start_date, req.query.end_date] } } });
   res.json({ success: true, data: notifications });
     } catch (error) {
         console.error('Get notifications by date range error:', error);

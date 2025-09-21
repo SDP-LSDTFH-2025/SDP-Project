@@ -14,7 +14,7 @@
 		"playwright:firefox": "npx playwright test --project firefox --workers=1",
 		"playwright:webkit": "npx playwright test --project webkit --workers=1",
 		"playwright:report": "npx playwright show-report",
-		"playwright:codegen": "npx playwright codegen",
+		"playwright:codegen": "npx playwright codegen --load-storage=tests/state/storageState.json http://localhost:5173/home",
 		"test:coverage": "npx nyc --reporter=html --reporter=text playwright test --workers=1",
 		"lint": "eslint .",
 		"preview": "vite preview"

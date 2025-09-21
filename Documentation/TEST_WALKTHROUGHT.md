@@ -37,17 +37,23 @@
 
   **reason**: Have public endpoint for external use.
 
+* [x] **Test-Private-Course-Get-Endpoint**
+
+  **desc**: Get the all courses from private endpoint.
+
+  **reason**: Have private endpoint for getting courses.
+
 * [x] **Test-User-Get-Endpoint**
 
   **desc**: Check if we can get users by Id or All.
 
   **reason**: To get all users or specific users.
 
-* [ ] **Test-Name**
+* ~~[ ] **Authentication**~~
 
-  **desc**: Description of the test
+  **desc**: Testing the authentication endpoint directly.
 
-  **reason**: Reason for the test
+  **reason**: The test is not done because it is indirectly tested via login functionality
 
 ## Frontend
 

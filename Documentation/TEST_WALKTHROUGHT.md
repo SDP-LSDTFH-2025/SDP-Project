@@ -70,3 +70,13 @@
     npm audit fix
 
     Run `npm audit` for details.
+
+## Env files being tracked fix
+
+    git rm --cached frontend/.env
+    git rm --cached frontend/.env.*
+    git rm --cached backend/.env
+    git rm --cached backend/.env.*
+
+    git commit -m "Stop tracking .env files in frontend and backend"
+

@@ -43,6 +43,12 @@
 
   **reason**: Have private endpoint for getting courses.
 
+* [x] **Test-Private-Resources-Get-Endpoint**
+
+  **desc**: Get the all resources from private endpoint.
+
+  **reason**: Have private endpoint for getting resources or specific resource.
+
 * [x] **Test-User-Get-Endpoint**
 
   **desc**: Check if we can get users by Id or All.

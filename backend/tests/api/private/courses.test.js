@@ -5,7 +5,7 @@ import server from "../../../server";
 describe("GET /api/v1/courses", () => {
 	let response;
 	it("should return all courses", async () => {
-		const response = await request(server).get(`/api/v1/courses`).expect(200);
+		response = await request(server).get(`/api/v1/courses`).expect(200);
 		expect(response.body).toHaveProperty("success",true);
 	});
 	

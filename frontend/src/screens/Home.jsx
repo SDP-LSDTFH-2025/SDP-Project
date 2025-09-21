@@ -363,11 +363,7 @@ function Home({ user }) {
 
               </div>
             )}
-            {activeView === "requests" && ( 
-              <div id="Request"> 
-                <FriendList/>
-              </div> 
-            )}
+            {activeView === "requests" && <FriendList/>}
             {activeView === "upload" && (
               <div id="Uploads" className="share-card">
                 <h2>Upload Study Resource</h2>

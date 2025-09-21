@@ -3,7 +3,7 @@
 /* Container styles */
 .friend-list-container {
   width: 100%;
-  max-width: 520px;
+  max-width: 600px;
   margin: 0 auto;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   color: #333;
@@ -11,13 +11,13 @@
 
 /* Card styles */
 .friend-card {
+  width:100%;
   background: white;
   border-radius: 12px;
   border: 1px solid #e5e7eb;
   margin-bottom: 20px;
   overflow: hidden;
   align-items: center;
-  justify-items:center;
 }
 
 .card-header {
@@ -58,7 +58,6 @@
   align-items: flex-start;
   justify-content: space-between;
   background-color: #fff; 
-  max-width: 100%; 
   height: 70px; 
   margin-bottom: 0.8rem;
   
@@ -196,6 +195,7 @@
   justify-content: space-between;
   background: #fff;
   height: 70px; 
+  width: 35pc;
   margin-bottom: 0.8rem;
 }
 
@@ -236,7 +236,7 @@
   }
   
   .request-item, .suggested-item {
-    flex-direction: column;
+    flex-direction: row;
   }
   
   .request-actions {

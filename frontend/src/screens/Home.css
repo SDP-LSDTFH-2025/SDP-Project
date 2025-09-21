@@ -207,9 +207,9 @@
   
   /* ------- Center: Resource feed ------- */
   .resources{
+    flex-direction:row;
     align-items: center;
     text-align: center;
-    flex-direction:row;
     
   }
   .resources h2{

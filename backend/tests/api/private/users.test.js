@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import request from "supertest";
-import server from "../../server"; // Adjust path to your app
+import server from "../../../server"; // Adjust path to your app
 
 describe("User Get API Endpoints", () => {
 	it("should return all users", async () => {

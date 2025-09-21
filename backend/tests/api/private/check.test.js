@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import request from "supertest";
-import server from "../../server";
+import server from "../../../server";
 
 describe("GET /api/v1", () => {
 	it("should return API INFO", async () => {

@@ -21,12 +21,14 @@ import {
 	Settings,
   User,
   X,
-  LogOut 
+  LogOut,
+  ChartSpline 
   } from "lucide-react";
 import {DragAndDropArea} from "./DragAndDrop.jsx";
 import FriendList from "./FriendList.jsx";
 import Profiles from "../pages/Profiles.jsx";
 import Friends from "../pages/Friends.jsx";
+import Progress from "../pages/Progress.jsx";
 import "./Home.css";
 
 import ProfilePage from "../pages/ProfilePage.jsx";
@@ -289,6 +291,13 @@ function Home({ user }) {
                   Study Buddies
                 </Button>
                 <Button 
+                  className={`buttons ${activeView === "usersProg" ? "active" : ""}`}
+                  onClick={() => handleNavigationClick("usersProg")}
+                  >
+                  <ChartSpline  className="pics"/>
+                  Progress
+                </Button>
+                <Button 
                   className={`buttons ${activeView === "requests" ? "active" : ""}`}
                   onClick={() => handleNavigationClick("requests")}
                   >
@@ -427,6 +436,13 @@ function Home({ user }) {
                 <h2>Groups Section to be implemented...</h2>
               </div>
             )}
+
+            {/* {activeView === "usersProg" && (
+              <div className="share-card">
+                <h2>User Progress...</h2>
+              </div>
+            )} */}
+            {activeView === "usersProg" && <Progress /> }
 
           </div>
         </section>

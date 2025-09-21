@@ -17,7 +17,6 @@
   margin-bottom: 20px;
   overflow: hidden;
   align-items: center;
-  /* justify-items:center; */
 }
 
 .card-header {
@@ -219,6 +218,17 @@
 
 .add-friend-btn:hover {
   background: #f0f0ff;
+}
+
+.sent-btn {
+  background: #9ca3af; /* gray */
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 14px;
+  cursor: not-allowed;
+  opacity: 0.8;
 }
 
 /* Divider */

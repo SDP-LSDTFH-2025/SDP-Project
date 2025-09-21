@@ -28,6 +28,18 @@ const PrivateChats = sequelize.define('PrivateChats', {
         type: DataTypes.DATE,
         allowNull: false,
         defaultValue: DataTypes.NOW
+    },
+    delivered_at: {
+        type: DataTypes.DATE,
+        allowNull: true
+    },
+    read_at: {
+        type: DataTypes.DATE,
+        allowNull: true
+    },
+    tempId: {
+        type: DataTypes.STRING,
+        allowNull: true
     }
 }, {
     tableName: 'private_chats',

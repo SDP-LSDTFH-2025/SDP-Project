@@ -22,6 +22,8 @@ const {
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const http = require('http');
+const { createSocketServer } = require('./sockets/server');
 
 
 // Swagger configuration
@@ -42,6 +44,11 @@ const swaggerOptions = {
         url: `http://localhost:${PORT}`,
         description: 'Development server'
       }
+      ,
+      {
+        url: `ws://localhost:${PORT}${(process.env.API_PREFIX||'/api/v1').replace(/\/$/, '')}/sockets`,
+        description: 'WebSocket (Socket.IO namespace with API prefix)'
+      }
     ],
     components: {
       securitySchemes: {
@@ -53,7 +60,7 @@ const swaggerOptions = {
       }
     }
   },
-  apis: ['./routes/*.js', './models/*.js']
+  apis: ['./routes/*.js', './models/*.js', './sockets/*.js']
 };
 
 const swaggerSpec = swaggerJsdoc(swaggerOptions);
@@ -148,16 +155,25 @@ async function startServer() {
     // Test database connection
     await sequelize.authenticate();
     console.log('✅ Database connection established successfully.');
-   // await sequelize.sync({ alter:true  });
+    //await sequelize.sync({ alter:true  });
 
 
     console.log('✅ Database synchronized successfully.');
-    // Start server
-    app.listen(PORT, () => {
-      console.log(`🚀 Server is running on port ${PORT}`);
-      console.log(`📚 API Documentation available at: http://localhost:${PORT}/api-docs`);
+    // Start HTTP + Socket server
+    const server = http.createServer(app);
+    const allowedOrigins = [
+      process.env.PROD_LIVE_HOST,
+      process.env.PROD_PREVIEW_HOST,
+      process.env.CORS_ORIGIN,
+      'http://localhost:5173',
+      'http://localhost:5174',
+      'http://localhost:3000'
+    ].filter(Boolean);
+    createSocketServer(server, allowedOrigins);
 
-    
+    server.listen(PORT, () => {
+      console.log(`🚀 Server is running on port ${PORT}`);
+      console.log(`📚 API Documentation available at: ${process.env.BACKEND_URL}/api-docs`);
     });
 
   } catch (error) {

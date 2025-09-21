@@ -199,16 +199,6 @@ router.post('/google/verify', async (req, res) => {
  *     tags: [Authentication]
  *     security:
  *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               google_id:
- *                 type: string
- *                 description: Google OAuth ID
  *     responses:
  *       200:
  *         description: Current user profile
@@ -226,19 +216,10 @@ router.post('/google/verify', async (req, res) => {
  */
 router.get('/me', enhancedAuth, async (req, res) => {
   try {
-    const { google_id } = req.body;
-    const user = await User.findOne({
-      where: { google_id: google_id }
-    });
-    if(!user){
-      return res.status(401).json({
-        success: false,
-        error: 'User not found'
-      });
-    }
+    // User is already authenticated and available in req.user from enhancedAuth middleware
     return res.json({
       success: true,
-      data: user
+      data: req.user
     });
   } catch (error) {
     console.error('Get profile error:', error);
@@ -257,6 +238,16 @@ router.get('/me', enhancedAuth, async (req, res) => {
  *     tags: [Authentication]
  *     security:
  *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               google_id:
+ *                 type: string
+ *                 description: Google OAuth ID
  *     responses:
  *       200:
  *         description: Logout successful

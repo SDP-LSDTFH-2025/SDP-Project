@@ -25,9 +25,10 @@ import {
   } from "lucide-react";
 import {DragAndDropArea} from "./DragAndDrop.jsx";
 import FriendList from "./FriendList.jsx";
+import Profiles from "../pages/Profiles.jsx";
+import Friends from "../pages/Friends.jsx";
 import "./Home.css";
 
-import StudyPartnersPage from "../pages/StudyPartnersPage.jsx";
 import ProfilePage from "../pages/ProfilePage.jsx";
 import Feed from "../pages/Feed.jsx";
 
@@ -42,6 +43,8 @@ function Home({ user }) {
   const [pictureFile, setPictureFile] = useState(null);
   const [error, setError] = useState("");
   const [isFormValid, setIsFormValid] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
+
 
  const [friendsList, setFriends] = useState([]);
  const [groupList, setGroups] = useState([]);
@@ -279,11 +282,11 @@ function Home({ user }) {
                   Resource Feed
                 </Button>
                 <Button 
-                  className={`buttons ${activeView === "groups" ? "active" : ""}`}
-                  onClick={() => handleNavigationClick("groups")}
-                >
-                  <Users className="pics" />
-                  Study Groups
+                  className={`buttons ${activeView === "friends" ? "active" : ""}`}
+                  onClick={() => handleNavigationClick("friends")}
+                  >
+                  <User className="pics" />
+                  Study Buddies
                 </Button>
                 <Button 
                   className={`buttons ${activeView === "requests" ? "active" : ""}`}
@@ -292,6 +295,15 @@ function Home({ user }) {
                   <UserPlus className="pics" />
                   Friend Requests
                 </Button>
+                <Button 
+                  className={`buttons ${activeView === "groups" ? "active" : ""}`}
+                  onClick={() => handleNavigationClick("groups")}
+                >
+                  <Users className="pics" />
+                  Study Groups
+                </Button>
+
+
                 <Button
                   className={`buttons ${activeView === "upload" ? "active" : ""}`}
                   onClick={() => handleNavigationClick("upload")}
@@ -363,11 +375,7 @@ function Home({ user }) {
 
               </div>
             )}
-            {activeView === "requests" && ( 
-              <div id="Request"> 
-                <FriendList/>
-              </div> 
-            )}
+            {activeView === "requests" && <FriendList handleNavigationClick={handleNavigationClick} setSelectedUser={setSelectedUser} />}
             {activeView === "upload" && (
               <div id="Uploads" className="share-card">
                 <h2>Upload Study Resource</h2>
@@ -409,9 +417,10 @@ function Home({ user }) {
                 </form>
               </div>
             )}
-
-
             {activeView === "profile" && <ProfilePage />}
+            {activeView === "usersprof" && <Profiles user={selectedUser}/> }
+
+            {activeView === "friends" && <Friends  handleNavigationClick={handleNavigationClick} setSelectedUser={setSelectedUser} /> }
 
             {activeView === "groups" && (
               <div className="share-card">

@@ -10,12 +10,8 @@ const FileCard = ({ file }) => {
   const [liked, setLiked] = useState(false);
 
   let initial_user = JSON.parse(localStorage.getItem("user")).username.split("_").map((n) => n[0]).join("").toUpperCase();
-  const SERVER =
-    import.meta.env.VITE_PROD_SERVER ||
-    import.meta.env.VITE_DEV_SERVER ||
-    "http://localhost:3000";
+  const SERVER = import.meta.env.VITE_PROD_SERVER || import.meta.env.VITE_DEV_SERVER || "http://localhost:3000";
 
-  // ⬇️ Load comments when component mounts
   useEffect(() => {
     const fetchComments = async () => {
       try {
@@ -90,7 +86,7 @@ const FileCard = ({ file }) => {
     return createdAt.toLocaleString(); // fallback to full date after 24h
   };
 
-  // LIKE handler
+  // LIKE handler (not working the endpoint is not good)
   const handleLike = async () => {
     if (liked) return; // prevent multiple likes from same user for now
 

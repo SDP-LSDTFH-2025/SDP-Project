@@ -21,7 +21,7 @@ const Feed = () => {
                   `${SERVER}/api/v1/users/${resource.user_id}`
                 );
                 const userData = await userRes.json();
-
+                console.log(userData);
                 if (userData.success) {
                   const username = userData.data.username;
                   const initials = username
@@ -40,7 +40,6 @@ const Feed = () => {
                 console.error("User fetch error:", err);
               }
 
-              // fallback if user fetch fails
               return {
                 ...resource,
                 user_name: `User ${resource.user_id.slice(0, 4)}`,

@@ -31,14 +31,15 @@ build/
 .env.test.local
 .env.production.local
 
-# Keep env.example files for reference
-!**/env.example
 
 # Exclude .env files in frontend and backend folders
 frontend/.env
 frontend/.env.*
 backend/.env
 backend/.env.*
+
+# Keep env.example files for reference
+!**/.env.example
 
 # Editor directories and files
 .vscode/

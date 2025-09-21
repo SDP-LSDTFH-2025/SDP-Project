@@ -6,6 +6,7 @@
     sans-serif;
   max-width: 900px;
   margin: 0 auto;
+  background-color: #f8f9fa;
 }
 
 .progress-header {
@@ -16,6 +17,7 @@
   margin: 0;
   color: #333;
   font-weight: 600;
+  font-size: 24px;
 }
 
 .progress-grid {
@@ -28,8 +30,14 @@
   background: white;
   border-radius: 12px;
   padding: 20px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
   border: 1px solid #eaeaea;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.progress-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
 }
 
 .progress-card.full-width {
@@ -46,7 +54,7 @@
 .progress-value {
   font-size: 32px;
   font-weight: 700;
-  color: #333;
+  color: #4285f4;
   margin-bottom: 5px;
 }
 
@@ -75,6 +83,7 @@
   font-size: 14px;
   padding: 5px 10px;
   border-radius: 4px;
+  transition: background-color 0.2s;
 }
 
 .view-all-btn:hover, .schedule-btn:hover {
@@ -88,6 +97,108 @@
   font-style: italic;
 }
 
+/* Course progress styles */
+.courses-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.course-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.course-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.course-name {
+  font-weight: 500;
+  color: #333;
+}
+
+.course-progress {
+  font-weight: 600;
+  color: #4285f4;
+}
+
+.progress-bar {
+  height: 8px;
+  background-color: #f0f0f0;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background-color: #4285f4;
+  border-radius: 4px;
+  transition: width 0.5s ease;
+}
+
+/* Upcoming sessions styles */
+.sessions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.session-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 8px;
+  background-color: #f9f9f9;
+  transition: background-color 0.2s;
+}
+
+.session-item:hover {
+  background-color: #f0f0f0;
+}
+
+.session-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: #4285f4;
+}
+
+.session-info {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
+.session-title {
+  font-weight: 500;
+  color: #333;
+}
+
+.session-date {
+  font-size: 14px;
+  color: #888;
+}
+
+.join-btn {
+  background-color: #4285f4;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.join-btn:hover {
+  background-color: #3367d6;
+}
+
 /* Responsive design */
 @media (max-width: 768px) {
   .progress-grid {
@@ -96,5 +207,9 @@
   
   .progress-card.full-width {
     grid-column: span 1;
+  }
+  
+  .progress-value {
+    font-size: 28px;
   }
 }

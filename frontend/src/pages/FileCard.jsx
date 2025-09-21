@@ -8,18 +8,9 @@ const FileCard = ({ file }) => {
   const [showModal, setShowModal] = useState(false);
   const [likes, setLikes] = useState(file.likes || 0);
   const [liked, setLiked] = useState(false);
-  const [showComments, setShowComments] = useState(false); // NEW toggle state
 
-  let initial_user = JSON.parse(localStorage.getItem("user"))
-    .username.split("_")
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase();
-
-  const SERVER =
-    import.meta.env.VITE_PROD_SERVER ||
-    import.meta.env.VITE_DEV_SERVER ||
-    "http://localhost:3000";
+  let initial_user = JSON.parse(localStorage.getItem("user")).username.split("_").map((n) => n[0]).join("").toUpperCase();
+  const SERVER = import.meta.env.VITE_PROD_SERVER || import.meta.env.VITE_DEV_SERVER || "http://localhost:3000";
 
   useEffect(() => {
     const fetchComments = async () => {
@@ -43,7 +34,7 @@ const FileCard = ({ file }) => {
                     .map((n) => n[0])
                     .join("")
                     .toUpperCase();
-
+                  
                   return {
                     id: c.id,
                     text: c.message,
@@ -56,6 +47,7 @@ const FileCard = ({ file }) => {
                 console.error("User fetch error:", err);
               }
 
+              // fallback if user fetch fails
               return {
                 id: c.id,
                 text: c.message,
@@ -73,29 +65,7 @@ const FileCard = ({ file }) => {
       }
     };
 
-    const fetchLike = async () => {
-      try {
-        const stored = JSON.parse(localStorage.getItem("user"));
-        const Like = await fetch(
-          `${SERVER}/api/v1/likes/check/${file.id}?user_id=${stored.id}`,
-          {
-            method: "GET",
-            headers: { "Content-Type": "application/json" },
-          }
-        );
-
-        const Liked = await Like.json();
-
-        if (Liked.success) {
-          setLiked(Liked.liked);
-        }
-      } catch (error) {
-        console.error("Failed to check Like:", error);
-      }
-    };
-
     fetchComments();
-    fetchLike();
   }, [file.id, SERVER]);
 
   const formatTimeAgo = (dateString) => {
@@ -116,45 +86,31 @@ const FileCard = ({ file }) => {
     return createdAt.toLocaleString(); // fallback to full date after 24h
   };
 
-  // LIKE handler
+  // LIKE handler (not working the endpoint is not good)
   const handleLike = async () => {
-    const stored = JSON.parse(localStorage.getItem("user"));
+    if (liked) return; // prevent multiple likes from same user for now
 
-    if (liked) {
-      // UNLIKE
-      try {
-        const res = await fetch(`${SERVER}/api/v1/likes/${file.id}`, {
-          method: "DELETE",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ user_id: stored.id }),
-        });
+    setLiked(true);
+    setLikes(likes + 1);
 
-        const data = await res.json();
-        if (data.success) {
-          setLikes((prev) => prev - 1);
-          setLiked(false);
-        }
-      } catch (err) {
-        console.error("Unlike error:", err);
-      }
-      return;
-    }
-
-    // LIKE
     try {
-      const res = await fetch(`${SERVER}/api/v1/likes/${file.id}`, {
-        method: "POST",
+      const res = await fetch(`${SERVER}/api/v1/resources/${file.id}`, {
+        method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ user_id: stored.id }),
       });
 
       const data = await res.json();
+
       if (data.success) {
-        setLikes((prev) => prev + 1);
-        setLiked(true);
+        setLikes(data.data.likes);
+      } else {
+        setLiked(false);
+        setLikes(file.likes);
       }
     } catch (err) {
       console.error("Like error:", err);
+      setLiked(false);
+      setLikes(likes);
     }
   };
 
@@ -178,7 +134,7 @@ const FileCard = ({ file }) => {
       });
 
       const data = await res.json();
-
+      
       if (data.success && data.data) {
         const savedComment = {
           id: data.data.id,
@@ -230,9 +186,7 @@ const FileCard = ({ file }) => {
         <div className="file-user">
           <div className="file-avatar">{file.initials}</div>
           <div>
-            <div className="file-author">
-              {file.user_name.replaceAll("_", " ")}
-            </div>
+            <div className="file-author">{file.user_name.replaceAll("_", " ")}</div>
             <div className="file-meta">
               {formatTimeAgo(file.created_at)} • {file.course_code}
             </div>
@@ -275,7 +229,7 @@ const FileCard = ({ file }) => {
             <Heart size={18} fill={liked ? "red" : "none"} />
             {likes}
           </span>
-          <span onClick={() => setShowComments((prev) => !prev)}>
+          <span>
             <MessageCircle size={18} /> {comments.length}
           </span>
           <span>
@@ -292,33 +246,31 @@ const FileCard = ({ file }) => {
         </button>
       </div>
 
-      {/* Comments Section (toggle) */}
-      {showComments && (
-        <div className="comments-section">
-          {comments.map((c) => (
-            <div key={c.id} className="comment">
-              <div className="comment-avatar">{c.initials}</div>
-              <div className="comment-body">
-                <strong>{c.author}</strong>
-                <p>{c.text}</p>
-                <span className="comment-time">{c.time}</span>
-              </div>
+      {/* Comments Section */}
+      <div className="comments-section">
+        {comments.map((c) => (
+          <div key={c.id} className="comment">
+            <div className="comment-avatar">{c.initials}</div>
+            <div className="comment-body">
+              <strong>{c.author}</strong>
+              <p>{c.text}</p>
+              <span className="comment-time">{c.time}</span>
             </div>
-          ))}
-
-          {/* Add Comment */}
-          <div className="comment-input">
-            <div className="comment-avatar"> {initial_user} </div>
-            <input
-              type="text"
-              placeholder="Add a comment..."
-              value={commentText}
-              onChange={(e) => setCommentText(e.target.value)}
-            />
-            <button onClick={handleAddComment}>Post</button>
           </div>
+        ))}
+
+        {/* Add Comment */}
+        <div className="comment-input">
+          <div className="comment-avatar"> {initial_user} </div>
+          <input
+            type="text"
+            placeholder="Add a comment..."
+            value={commentText}
+            onChange={(e) => setCommentText(e.target.value)}
+          />
+          <button onClick={handleAddComment}>Post</button>
         </div>
-      )}
+      </div>
 
       {/* Fullscreen Modal */}
       {showModal && (

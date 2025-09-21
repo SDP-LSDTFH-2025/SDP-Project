@@ -1,11 +1,9 @@
 import React, { useEffect, useState } from "react";
 import FileCard from "./FileCard";
-import { Search } from "lucide-react";
-import "./Feed.css";
+
 const Feed = () => {
   const [files, setFiles] = useState([]);
   const [loading, setLoading] = useState(true);
-    const [search, setSearch] = useState("");
 
   useEffect(() => {
     const fetchFiles = async () => {
@@ -15,6 +13,7 @@ const Feed = () => {
         const json = await res.json();
 
         if (json.success) {
+          // Enrich resources with user info
           const enrichedResources = await Promise.all(
             json.data.map(async (resource) => {
               try {
@@ -61,34 +60,14 @@ const Feed = () => {
     fetchFiles();
   }, []);
 
-  const filterList = (list) =>
-    list.filter(
-      (f) =>
-        f.title?.toLowerCase().includes(search.toLowerCase()) ||
-        f.username?.toLowerCase().includes(search.toLowerCase()) ||
-        f.course_code?.toLowerCase().includes(search.toLowerCase())
-  );
-
   if (loading) return <p>Loading resources...</p>;
 
   return (
-    <>
-      <div className="search-input">
-        <Search size={16} className="search-icon" />
-        <input
-          placeholder="Search resource by Title, Course Code, or Username..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-      </div>
-
-      <div className="feed">
-        {filterList(files).map((file) => (
-          <FileCard key={file.id} file={file} />
-        ))}
-      </div>
-    </>
-
+    <div className="feed">
+      {files.map((file) => (
+        <FileCard key={file.id} file={file} />
+      ))}
+    </div>
   );
 };
 

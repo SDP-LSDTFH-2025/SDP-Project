@@ -50,6 +50,7 @@
 .sender {
   font-weight: 600;
   font-size: 0.65rem;
+  text-align: left;
   display: block;
 }
 .time {

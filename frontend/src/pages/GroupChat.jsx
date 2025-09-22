@@ -60,8 +60,10 @@ export default function GroupChat({ group, onBack }) {
             className={`message ${msg.sender === "Me" ? "me" : "other"}`}
           >
             <div>
-              <h5 className="sender"> {msg.sender}  </h5>
-              <p className="text">{msg.text}</p>
+              {msg.sender !== "Me" && (
+                <h5 className="sender">{msg.sender}</h5>
+              )}
+              <p className="text" >{msg.text}</p>
               <span className="time">{msg.time}</span>
             </div>
           </div>

@@ -57,13 +57,13 @@ export function Interests({ user }) {
   };
 
   async function handleInterests(e) {
-    if (e) e.preventDefault(); // stop page reload
+    if (e) e.preventDefault();
 
     const registrationData = JSON.parse(localStorage.getItem("registrationData")) || {};
     const userty = JSON.parse(localStorage.getItem("user"));
 
     const payload = {
-      google_id: userty.google_id,
+      id: userty.id,
       course: registrationData.course || "",
       year_of_study: registrationData.year || "",
       academic_interests: selectedInterests.join(", "),
@@ -76,7 +76,6 @@ export function Interests({ user }) {
     try {
       const SERVER = import.meta.env.VITE_PROD_SERVER || import.meta.env.VITE_DEV_SERVER ;
 
-      // Send token to backend for verification  /* this shall be changend to env*/
       const res = await fetch(`${SERVER}/api/v1/users/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },

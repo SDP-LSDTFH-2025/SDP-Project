@@ -1,12 +1,11 @@
 import React, { useState } from "react";
 import {
   Calendar,
-  Clock,
   Users,
   User,
-  Plus,
-  Search,
+  Plus
 } from "lucide-react";
+import GroupChat from "./GroupChat";
 import "./Sessions.css";
 
 const dummySessions = [
@@ -15,92 +14,83 @@ const dummySessions = [
     title: "Math Study Group",
     description: "Reviewing calculus and linear algebra for the upcoming test.",
     subject: "Mathematics",
-    status: "upcoming",
     date: "2025-09-20",
-    time: "14:00",
-    duration: "2h",
     participants: 3,
-    maxParticipants: 6,
     organizer: "Alice",
+    joined: true,
   },
   {
     id: 2,
     title: "AI & ML Crash Course",
     description: "Quick walkthrough of neural networks and deep learning.",
     subject: "AI",
-    status: "upcoming",
     date: "2025-09-22",
-    time: "16:00",
-    duration: "1.5h",
-    participants: 5,
-    maxParticipants: 5,
+    participants: 1,
     organizer: "Bob",
+    joined: false,
   },
   {
     id: 3,
     title: "Physics Problem Solving",
     description: "Group work on quantum mechanics exercises.",
     subject: "Physics",
-    status: "completed",
     date: "2025-09-10",
-    time: "10:00",
-    duration: "3h",
     participants: 4,
-    maxParticipants: 8,
     organizer: "Eve",
+    joined: false,
   },
 ];
 
 export default function PlanSessions() {
-  const [sessionSearch, setSessionSearch] = useState("");
-  const [selectedSubject, setSelectedSubject] = useState("All");
+  const [sessionSearch] = useState("");
+  const [selectedSubject, setSelectedSubject] = useState("Discover groups");
   const [showCreateSession, setShowCreateSession] = useState(false);
+  const [activeGroup, setActiveGroup] = useState(null);
+  const [sessions, setSessions] = useState(dummySessions);
 
-  const subjects = ["All", "Mathematics", "AI", "Physics"];
-  
+  const subjects = ["My groups", "Discover groups"];
 
-  const filteredSessions = dummySessions.filter(
-    (session) =>
-      (selectedSubject === "All" || session.subject === selectedSubject) &&
-      (session.title.toLowerCase().includes(sessionSearch.toLowerCase()) ||
-        session.subject.toLowerCase().includes(sessionSearch.toLowerCase()) ||
-        session.organizer.toLowerCase().includes(sessionSearch.toLowerCase()))
-  );
+  const filteredSessions = sessions.filter((session) => {
+    if (selectedSubject === "My groups" && !session.joined) return false;
+    if (selectedSubject === "Discover groups" && session.joined) return false;
+    
+    return (
+      session.title.toLowerCase().includes(sessionSearch.toLowerCase()) ||
+      session.subject.toLowerCase().includes(sessionSearch.toLowerCase()) ||
+      session.organizer.toLowerCase().includes(sessionSearch.toLowerCase())
+    );
+  });
 
   const handleJoinSession = (id) => {
-    alert(`Joined session ${id}`);
+    setSessions((prev) =>
+      prev.map((s) =>
+        s.id === id ? { ...s, joined: true, participants: s.participants + 1 } : s
+      )
+    );
   };
 
   const handleViewSessionDetails = (session) => {
-    alert(`Viewing details for: ${session.title}`);
+    setActiveGroup(session);
   };
+
+  if (activeGroup) {
+    return <GroupChat group={activeGroup} onBack={() => setActiveGroup(null)} />;
+  }
 
   return (
     <div className="plan-sessions">
       {/* Header */}
       <div className="header">
         <div>
-          <h2>Plan Sessions</h2>
-          <p>Schedule and manage your study sessions</p>
+          <h2>Study Groups</h2>
+          <p>Join collaborative study groups and learn together</p>
         </div>
         <button
           className="create-btn"
           onClick={() => setShowCreateSession(true)}
         >
-          <Plus size={16} /> Create Session
+          <Plus size={16} /> Create Group
         </button>
-      </div>
-
-      {/* Search Bar */}
-      <div className="search-card">
-        <div className="search-input">
-          <Search size={16} className="search-icon" />
-          <input
-            placeholder="Search sessions by title, subject, or organizer..."
-            value={sessionSearch}
-            onChange={(e) => setSessionSearch(e.target.value)}
-          />
-        </div>
       </div>
 
       {/* Filter */}
@@ -123,13 +113,6 @@ export default function PlanSessions() {
         {filteredSessions.map((session) => (
           <div key={session.id} className="session-card">
             <div className="session-badges">
-              <span
-                className={`badge ${
-                  session.status === "upcoming" ? "badge-blue" : "badge-gray"
-                }`}
-              >
-                {session.status}
-              </span>
               <span className="badge badge-outline">{session.subject}</span>
             </div>
 
@@ -142,35 +125,27 @@ export default function PlanSessions() {
                 {new Date(session.date).toLocaleDateString()}
               </div>
               <div>
-                <Clock size={14} /> {session.time} ({session.duration})
-              </div>
-              <div>
                 <Users size={14} />{" "}
-                {session.participants}/{session.maxParticipants} participants
+                {session.participants} participants
               </div>
               <div>
-                <User size={14} /> Organized by {session.organizer}
+                <User size={14} /> Created by {session.organizer}
               </div>
             </div>
 
             <div className="card-actions">
-              <button
-                className="outline-btn"
-                onClick={() => handleViewSessionDetails(session)}
-              >
-                View
-              </button>
-              {session.status === "upcoming" && (
+              {session.joined ? (
+                <button
+                  className="outline-btn"
+                  onClick={() => handleViewSessionDetails(session)}
+                >
+                  View
+                </button>
+              ) : (
                 <button
                   className="blue-btn"
                   onClick={() => handleJoinSession(session.id)}
-                  disabled={
-                    session.participants >= session.maxParticipants
-                  }
-                >
-                  {session.participants >= session.maxParticipants
-                    ? "Full"
-                    : "Join"}
+                > Join
                 </button>
               )}
             </div>
@@ -181,18 +156,8 @@ export default function PlanSessions() {
       {filteredSessions.length === 0 && (
         <div className="empty-card">
           <Calendar size={48} className="empty-icon" />
-          <h3>No sessions found</h3>
-          <p>
-            {sessionSearch
-              ? "Try adjusting your search terms"
-              : "No study sessions available"}
-          </p>
-          <button
-            className="blue-btn"
-            onClick={() => setShowCreateSession(true)}
-          >
-            <Plus size={16} /> Create Session
-          </button>
+          <h3> No groups found </h3>
+          <p> No study groups available </p>
         </div>
       )}
 
@@ -200,14 +165,14 @@ export default function PlanSessions() {
       {showCreateSession && (
         <div className="modal-overlay">
           <div className="modal-content">
-            <h3>Create New Session</h3>
+            <h3>Create New Group</h3>
             <label>
               Title
               <input type="text" placeholder="Enter session title" />
             </label>
             <label>
               Subject
-              <input type="text" placeholder="Enter subject" />
+              <input placeholder="Enter subject" />
             </label>
             <label>
               Description
@@ -216,14 +181,6 @@ export default function PlanSessions() {
             <label>
               Date
               <input type="date" />
-            </label>
-            <label>
-              Time
-              <input type="time" />
-            </label>
-            <label>
-              Max Participants
-              <input type="number" placeholder="e.g. 10" />
             </label>
 
             <div className="modal-actions">

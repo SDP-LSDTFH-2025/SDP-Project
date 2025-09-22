@@ -2,6 +2,8 @@
   padding: 24px;
   font-family: system-ui, sans-serif;
   color: #111;
+  max-height: 80vh; /* or 80vh depending on how much space you want */
+  overflow-y: auto;
 }
 
 /* Header */
@@ -21,32 +23,6 @@
   font-size: 0.9rem;
 }
 
-/* Search */
-.search-card {
-  background: #fff;
-  border: 1px solid #eee;
-  border-radius: 8px;
-  padding: 12px;
-  margin-bottom: 16px;
-}
-.search-input {
-  position: relative;
-}
-.search-input input {
-  width: 95%;
-  padding: 8px 8px 8px 28px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  font-size: 0.9rem;
-}
-.search-icon {
-  position: absolute;
-  top: 50%;
-  left: 8px;
-  transform: translateY(-50%);
-  color: #666;
-}
-
 /* Filter */
 .filter-bar {
   display: flex;
@@ -60,7 +36,6 @@
   background: #f9f9f9;
   font-size: 0.85rem;
   cursor: pointer;
-  
 }
 .filter-btn.active {
   background: #2563eb;
@@ -136,7 +111,6 @@
   gap: 8px;
   margin-top: 12px;
 }
-
 .create-btn {
   padding: 12px 10px;
   font-size: 0.85rem;
@@ -150,7 +124,6 @@
   color: white;
   border: none;  
 }
-
 .blue-btn,
 .outline-btn {
   flex: 1;
@@ -257,4 +230,11 @@
   flex: unset;
   padding: 6px 14px;
   font-size: 0.85rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .sessions-grid {
+    grid-template-columns: 1fr;
+  }
 }

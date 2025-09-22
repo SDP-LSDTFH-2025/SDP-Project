@@ -23,3 +23,12 @@
   transform: translateY(-50%);
   color: #666;
 }
+
+.feed {
+  max-height: 80vh; /* or 80vh depending on how much space you want */
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-right: 6px; /* prevent content being hidden under scrollbar */
+}

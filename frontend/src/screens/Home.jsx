@@ -33,6 +33,7 @@ import "./Home.css";
 
 import ProfilePage from "../pages/ProfilePage.jsx";
 import Feed from "../pages/Feed.jsx";
+import PlanSessions from "../pages/Sessions.jsx";
 
 function Home({ user }) {
   
@@ -420,7 +421,7 @@ function Home({ user }) {
 
             {activeView === "groups" && (
               <div className="share-card">
-                <h2>Groups Section to be implemented...</h2>
+                <PlanSessions/>
               </div>
             )}
 

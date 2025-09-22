@@ -13,7 +13,6 @@ const Follows_requests = require('./follows_requests');
 const resourcesRoutes = require('./Resources')
 const resourcethreadsRoutes = require('./resource_threads');
 const liked_Routes = require('./likes');
-const publicApiRoutes = require('./PublicApi');
 
 
 // API Documentation

@@ -6,8 +6,8 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 const compression = require('compression');
 const rateLimit = require('express-rate-limit');
-const swaggerJsdoc = require('swagger-jsdoc');
-const swaggerUi = require('swagger-ui-express');
+const { generateAllSwaggerSpecs } = require('./config/swagger');
+const { createMainApiSwaggerUI, createPublicApiSwaggerUI } = require('./config/swagger/uiConfig');
 require('dotenv').config();
 const router = require('express').Router();
 const { sequelize } = require('./config/database');
@@ -26,44 +26,8 @@ const http = require('http');
 const { createSocketServer } = require('./sockets/server');
 
 
-// Swagger configuration
-const swaggerOptions = {
-  definition: {
-    openapi: '3.0.0',
-    info: {
-      title: 'SDP Project API',
-      version: '1.0.0',
-      description: 'Backend API for SDP Project',
-      contact: {
-        name: 'API Support',
-        email: 'support@example.com'
-      }
-    },
-    servers: [
-      {
-        url: `http://localhost:${PORT}`,
-        description: 'Development server'
-      }
-      ,
-      {
-        url: `ws://localhost:${PORT}${(process.env.API_PREFIX||'/api/v1').replace(/\/$/, '')}/sockets`,
-        description: 'WebSocket (Socket.IO namespace with API prefix)'
-      }
-    ],
-    components: {
-      securitySchemes: {
-        bearerAuth: {
-          type: 'http',
-          scheme: 'bearer',
-          bearerFormat: 'JWT'
-        }
-      }
-    }
-  },
-  apis: ['./routes/*.js', './models/*.js', './sockets/*.js']
-};
-
-const swaggerSpec = swaggerJsdoc(swaggerOptions);
+// Generate Swagger specifications
+const swaggerSpecs = generateAllSwaggerSpecs(PORT);
 
 // Rate limiting
 const limiter = rateLimit({
@@ -126,7 +90,12 @@ app.use(morgan('combined'));
 app.use(limiter);
 
 // Swagger documentation
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+// Main API docs
+app.use('/api-docs', ...createMainApiSwaggerUI(swaggerSpecs.mainApi));
+
+// Public Resources API docs
+app.use('/public-resources/api-docs', ...createPublicApiSwaggerUI(swaggerSpecs.publicApi));
+
 
 app.get('/health', (req, res) => {
   res.json({
@@ -155,7 +124,7 @@ async function startServer() {
     // Test database connection
     await sequelize.authenticate();
     console.log('✅ Database connection established successfully.');
-    //await sequelize.sync({ alter:true  });
+  
 
 
     console.log('✅ Database synchronized successfully.');
@@ -174,6 +143,7 @@ async function startServer() {
     server.listen(PORT, () => {
       console.log(`🚀 Server is running on port ${PORT}`);
       console.log(`📚 API Documentation available at: ${process.env.BACKEND_URL}/api-docs`);
+      console.log(`📚 Public Resources API Documentation available at: ${process.env.BACKEND_URL}/public-resources/api-docs`);
     });
 
   } catch (error) {

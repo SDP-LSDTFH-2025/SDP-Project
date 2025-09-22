@@ -11,9 +11,8 @@ const userCourseRoutes = require('./UserCourses');
 const Study_groupsRoutes = require('./Study_groups')
 const Follows_requests = require('./follows_requests');
 const resourcesRoutes = require('./Resources')
-const publicRoutes = require('./PublicApi');
 const resourcethreadsRoutes = require('./resource_threads');
-const liked_Routes = require('./Likes');
+const liked_Routes = require('./likes');
 
 
 // API Documentation
@@ -54,7 +53,8 @@ router.get('/', (req, res) => {
       docs: '/api-docs',
       resources: '/resources',
       resource_threads: '/resource_threads',
-      likes: '/likes/:id'
+      likes: '/likes/:id',
+      public: '/public'
 
     }
   });
@@ -70,7 +70,7 @@ router.use('/user-courses', userCourseRoutes);
 router.use('/study_groups',Study_groupsRoutes);
 router.use('/friends',Follows_requests);
 router.use('/resources', resourcesRoutes);
-router.use('/public', publicRoutes);
 router.use('/resource_threads', resourcethreadsRoutes);
 router.use('/likes', liked_Routes);
+router.use('/public', publicApiRoutes);
 module.exports = router; 

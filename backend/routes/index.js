@@ -12,7 +12,7 @@ const Study_groupsRoutes = require('./Study_groups')
 const Follows_requests = require('./follows_requests');
 const resourcesRoutes = require('./Resources')
 const resourcethreadsRoutes = require('./resource_threads');
-const liked_Routes = require('./likes');
+const liked_Routes = require('./Likes');
 
 
 // API Documentation

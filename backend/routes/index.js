@@ -11,8 +11,9 @@ const userCourseRoutes = require('./UserCourses');
 const Study_groupsRoutes = require('./Study_groups')
 const Follows_requests = require('./follows_requests');
 const resourcesRoutes = require('./Resources')
-const resourcethreadsRoutes = require('./resource_threads');
+const resourcethreadsRoutes = require('./Resource_threads');
 const liked_Routes = require('./Likes');
+const publicApiRoutes = require('./PublicApi');
 
 
 // API Documentation

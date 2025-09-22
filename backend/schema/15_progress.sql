@@ -1,5 +1,5 @@
 CREATE TABLE progress (
-  id SERIAL PRIMARY KEY,
+  id integer GENERATED ALWAYS AS IDENTITY,
   user_id VARCHAR,
   topic VARCHAR,
   section VARCHAR,

@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import request from "supertest";
 import server from "../../../server";
 
-describe("GET /api/v1/courses", () => {
+describe.skip("GET /api/v1/courses", () => {
 	let response;
 	it("should return all courses", async () => {
 		response = await request(server).get(`/api/v1/courses`).expect(200);

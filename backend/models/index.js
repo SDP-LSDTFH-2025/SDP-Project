@@ -4,8 +4,7 @@ const Notifications = require('./Notifications');
 const Courses = require('./Courses');
 const UserCourses = require('./UserCourses');
 const PrivateChats = require('./PrivateChats');
-
-const Likes = require('./likes');
+const Likes = require('./Likes');
 
 
 //resources table 
@@ -22,6 +21,7 @@ const Progress = require('./Progress');
 const Study_groups = require('./Study_groups');
 const Study_sessions = require('./Study_sessions');
 const Follows_requests = require('./follows_requests');
+const public_resources = require('./public_resources');
 
 
 // Define associations
@@ -111,5 +111,6 @@ module.exports = {
   Progress,
   Study_groups,
   Study_sessions,
-  Likes
+  Likes,
+  public_resources
 };

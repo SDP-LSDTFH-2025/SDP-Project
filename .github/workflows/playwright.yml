@@ -13,21 +13,20 @@ jobs:
     - uses: actions/setup-node@v4
       with:
         node-version: lts/*
+
     - name: Install dependencies for backend
       working-directory: ./backend
-      run: npm install && npm ci
+      run: npm ci
 
     - name: Install dependencies for frontend
       working-directory: ./frontend
-      run: npm install && npm ci
+      run: npm ci
 
-    - name: Install Playwright Browsers (frontend)
+    - name: Install Playwright and Chromium
       working-directory: ./frontend
-      run: npx playwright install chromium --with-deps
-
-    - name: Install xvfb
-      working-directory: ./frontend
-      run: sudo apt-get install -y xvfb
+      run: |
+        npx playwright install chromium
+        npx playwright install-deps chromium
 
     - name: Start backend dev server
       working-directory: ./backend
@@ -38,11 +37,13 @@ jobs:
       run: npm run dev &
 
     - name: Wait for servers to be ready
-      run: sleep 10  # Adjust sleep time as needed to ensure servers are up
-
-    - name: Run Playwright tests in headed mode
+      run: |
+        npx wait-on http://localhost:3000 http://localhost:5173 --timeout 60000
       working-directory: ./frontend
-      env:  # Environment variables for this specific step
+
+    - name: Run Playwright tests
+      working-directory: ./frontend
+      env:
         GOOGLE_TEST_EMAIL: ${{ secrets.GOOGLE_TEST_EMAIL}}
         GOOGLE_TEST_PASSWORD: ${{ secrets.GOOGLE_TEST_PASSWORD}}
-      run: xvfb-run npm run playwright:test # Use xvfb-run for a headed browser
+      run: npm run playwright:test

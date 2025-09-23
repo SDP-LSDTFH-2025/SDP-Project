@@ -36,4 +36,4 @@ jobs:
       env:  # Environment variables for this specific step
         GOOGLE_TEST_EMAIL: ${{ secrets.GOOGLE_TEST_EMAIL}}
         GOOGLE_TEST_PASSWORD: ${{ secrets.GOOGLE_TEST_PASSWORD}}
-      run: xvfb-run npx playwright test --workers=1 # Use xvfb-run for a headed browser
+      run: xvfb-run npm run playwright:test # Use xvfb-run for a headed browser

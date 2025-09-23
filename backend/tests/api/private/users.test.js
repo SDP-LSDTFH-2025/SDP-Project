@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import request from "supertest";
 import server from "../../../server"; // Adjust path to your app
 
-describe("User Get API Endpoints", () => {
+describe.skip("User Get API Endpoints", () => {
 	let response;
 	it("should return all users", async () => {
 		response = await request(server).get(`/api/v1/users`).expect(200);

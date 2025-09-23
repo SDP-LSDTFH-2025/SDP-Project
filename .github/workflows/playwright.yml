@@ -29,11 +29,11 @@ jobs:
 
       - name: Start backend dev server
         working-directory: ./backend
-        run: npm run dev 
+        run: npm run dev &
 
       - name: Start frontend dev server
         working-directory: ./frontend
-        run: npm run dev 
+        run: npm run dev &
 
       - name: Wait for servers to be ready
         run: sleep 10  # Adjust sleep time as needed to ensure servers are up

@@ -1,9 +1,9 @@
 name: Playwright Tests
 on:
   push:
-    branches: [ main, master ]
+    branches: [ main ]
   pull_request:
-    branches: [ main, master ]
+    branches: [ main ]
 jobs:
   test:
     timeout-minutes: 60
@@ -16,21 +16,30 @@ jobs:
     - name: Install dependencies for backend
       working-directory: ./backend
       run: npm install && npm ci
+
     - name: Install dependencies for frontend
       working-directory: ./frontend
       run: npm install && npm ci
-    - name: Install Playwright Browsers
+
+    - name: Install Playwright Browsers (frontend)
+      working-directory: ./frontend
       run: npx playwright install chromium --with-deps
+
     - name: Install xvfb
+      working-directory: ./frontend
       run: sudo apt-get install -y xvfb
+
     - name: Start backend dev server
       working-directory: ./backend
       run: npm run dev &
+
     - name: Start frontend dev server
       working-directory: ./frontend
       run: npm run dev &
+
     - name: Wait for servers to be ready
       run: sleep 10  # Adjust sleep time as needed to ensure servers are up
+
     - name: Run Playwright tests in headed mode
       working-directory: ./frontend
       env:  # Environment variables for this specific step

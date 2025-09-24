@@ -21,7 +21,7 @@ const { sequelize } = require('../config/database');
  *               - token
  *               - id
  *               - title
- *               - course_code
+ *               - course_id
  *             properties:
  *               token:
  *                 type: string
@@ -35,10 +35,10 @@ const { sequelize } = require('../config/database');
  *                 type: string
  *                 description: Title of the study group
  *                 example: "Algorithms Revision"
- *               course_code:
- *                 type: string
- *                 description: Associated course code
- *                 example: "CS101"
+ *               course_id:
+ *                 type: integer
+ *                 description: Associated course id
+ *                 example: "23"
  *               description:
  *                 type: string
  *                 description: Optional group description
@@ -76,22 +76,18 @@ const { sequelize } = require('../config/database');
 
 router.post('/create',async(req,res)=>{
     try{
-        const {token,id,title,course_code,description,date,participants} = req.body;
+        const {token,id,title,course_id,description,date,participants} = req.body;
 
-        if (!token||!id||!title||!course_code){
+        if (!token||!id||!title||!course_id){
             return errorClass.insufficientInfo(res);
         }
         // if (!verifyToken.fireBaseToken(token,id)){
         //     return errorClass.errorRes('Invalid Token',res,401);
         // }
-        const course = await Courses.findOne({where:{code:course_code}});
-        if (!course){
-            return errorClass.errorRes('Course not found',res,404)
-        }
         
         const group = await Study_groups.create({
             name:title,
-            course_id:course.id,
+            course_id:course_id,
             creator_id:id,
             disabled:false,
             created_at: date||new Date(),

@@ -125,7 +125,7 @@ app.get('/health', (req, res) => {
 });
 
 // API routes
-app.use(process.env.API_PREFIX, routes);
+app.use(process.env.API_PREFIX || '/api/v1', routes);
 
 // 404 handler
 app.use('*', (req, res) => {

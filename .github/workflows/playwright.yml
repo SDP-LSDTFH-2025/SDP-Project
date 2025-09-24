@@ -1,56 +1,54 @@
-name: Frontend Tests
-
+name: Frontend Playwright Tests
 on:
   push:
     branches: [ main ]
   pull_request:
     branches: [ main ]
-
 jobs:
-  frontend-test:
+  e2e-test:
+    timeout-minutes: 60
     runs-on: ubuntu-latest
-    
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
-    - name: Setup Node.js v22
-      uses: actions/setup-node@v4
-      with:
-        node-version: '22'
-        cache: 'npm'
-        
-    - name: Install backend dependencies and start server
-      run: |
-        cd backend
-        npm ci
-        npm start &
-        echo "Backend server started"
-        sleep 10
-        curl -f http://localhost:3000 || true
-        
-    - name: Install frontend dependencies
-      run: |
-        cd frontend
-        npm ci
-        
-    - name: Install Playwright browsers
-      run: |
-        cd frontend
-        npx playwright install chromium
-        
-    - name: Start frontend server in background
-      run: |
-        cd frontend
-        npm run dev &
-        echo "Frontend server started in background"
-        sleep 15
-        curl -f http://localhost:5173 || true
-        
-    - name: Run frontend tests with Playwright
-      env:
-        GOOGLE_TEST_EMAIL: ${{ secrets.GOOGLE_TEST_EMAIL }}
-        GOOGLE_TEST_PASSWORD: ${{ secrets.GOOGLE_TEST_PASSWORD }}
-      run: |
-        cd frontend
-        npx playwright test --workers=1 --headed
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install dependencies for backend
+        run: |
+          cd backend
+          npm ci
+
+      - name: Install dependencies for frontend
+        run: |
+          cd frontend
+          npm ci
+
+      - name: Install Playwright Browsers
+        run: 
+          npx playwright install chromium --with-deps
+
+      - name: Install xvfb
+        run: sudo apt-get install -y xvfb
+
+      - name: Start backend dev server
+        env:
+          API_PREFIX: ${{ secrets.API_PREFIX }}
+        run: 
+          cd backend
+          npm run dev &
+
+      - name: Start frontend dev server
+        run: 
+          cd frontend
+          npm run dev &
+
+      - name: Wait for servers to be ready
+        run: sleep 15
+
+      - name: Run Playwright tests in headed mode
+        env: 
+          GOOGLE_TEST_EMAIL: ${{ secrets.GOOGLE_TEST_EMAIL}}
+          GOOGLE_TEST_PASSWORD: ${{ secrets.GOOGLE_TEST_PASSWORD}}
+        run: 
+          cd frontend
+          npx playwright test --workers=1

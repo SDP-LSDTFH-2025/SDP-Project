@@ -57,11 +57,25 @@ app.use(speedLimiter);
 
 // Standard middleware
 app.use(compression());
-app.use(cors({
+
+// CORS configuration
+// Define API prefix and public API path
+const apiPrefix = (process.env.API_PREFIX || '/api/v1').replace(/\/$/, '');
+const publicApiPath = `${apiPrefix}/public`;
+
+// 1) Permissive CORS for public API routes only
+app.use(publicApiPath, cors({
+  origin: true, // reflect request origin (allows any origin)
+  credentials: false,
+  methods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
+// 2) Restricted CORS for the rest of the app
+const restrictedCors = cors({
   origin: function(origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
-    
+    if (!origin) return callback(null, true); // Allow non-browser and curl
+
     const allowedOrigins = [
       process.env.PROD_LIVE_HOST,
       process.env.PROD_PREVIEW_HOST,
@@ -69,8 +83,8 @@ app.use(cors({
       'http://localhost:5173',
       'http://localhost:5174',
       'http://localhost:3000'
-    ].filter(Boolean); // Remove undefined values
-    
+    ].filter(Boolean);
+
     if (allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
@@ -81,9 +95,15 @@ app.use(cors({
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
-}));
-app.use(express.json({ limit: '100mb' }));
-app.use(express.urlencoded({ extended: true, limit: '100mb' }));
+});
+
+// Apply restricted CORS except for public API path (already handled above)
+app.use((req, res, next) => {
+  if (req.path.startsWith(publicApiPath)) return next();
+  return restrictedCors(req, res, next);
+});
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(morgan('combined'));
 
 // Apply rate limiting to all requests

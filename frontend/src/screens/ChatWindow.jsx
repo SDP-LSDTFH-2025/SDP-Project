@@ -1,65 +1,97 @@
 import React, { useState, useEffect } from "react";
 import { Input } from "../components/ui/input";
-import { Send } from "lucide-react";
 import { Button } from "../components/ui/button";
+import { Send } from "lucide-react";
 import { socket } from "../socket";
+
+function makeChatId(userA, userB) {
+  return [userA, userB].sort().join("");
+}
 
 export default function ChatWindow({ chat, onBack }) {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
 
-  const initials = chat.username.split("_").map((p) => p[0]).join("").toUpperCase();
+  const currentUser = JSON.parse(localStorage.getItem("user"));
+  const currentUserId = currentUser?.id;
+  const chatId = makeChatId(currentUserId, chat.id);
+
+  const initials = chat.username
+    .split("_")
+    .map((p) => p[0])
+    .join("")
+    .toUpperCase();
 
   useEffect(() => {
-    socket.connect();
 
-    socket.emit("private:join", { chatId: chat.id });
+    if (!socket.connected) {
+      socket.connect();
+    }
+
+    socket.emit("private:join", { chatId });
 
     socket.on("private:message:new", (msg) => {
-      if (msg.sender_id === chat.id) {
-        setMessages((prev) => [
-          ...prev,
-          {
-            from: "other",
-            text: msg.message,
-            time: new Date(msg.created_at).toLocaleTimeString([], {
-              hour: "2-digit",
-              minute: "2-digit",
-            }),
-          },
-        ]);
+      if (makeChatId(msg.sender_id, msg.receiver_id) === chatId) {
+        setMessages((prev) => {
+          if (msg.tempId) {
+            return prev.map((m) =>
+              m.tempId === msg.tempId ? { ...m, ...msg, pending: false } : m
+            );
+          }
+          return [
+            ...prev,
+            {
+              id: msg.id,
+              text: msg.message,
+              from: msg.sender_id === currentUserId ? "me" : "other",
+              time: new Date(msg.created_at).toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+              }),
+            },
+          ];
+        });
       }
     });
 
     return () => {
       socket.off("private:message:new");
-      socket.disconnect();
     };
-  }, [chat.id]);
+  }, [chatId, currentUserId]);
 
   const sendMessage = () => {
     if (!input.trim()) return;
 
-    const localMsg = {
-      from: "me",
+    const tempId = Date.now();
+
+    const optimisticMsg = {
+      tempId,
       text: input,
+      from: "me",
+      pending: true,
       time: new Date().toLocaleTimeString([], {
         hour: "2-digit",
         minute: "2-digit",
       }),
     };
-    setMessages((prev) => [...prev, localMsg]);
+    setMessages((prev) => [...prev, optimisticMsg]);
 
     socket.emit(
       "private:message",
       {
-        receiverId: chat.id, 
+        senderId: currentUserId,
+        receiverId: chat.id,
         message: input,
-        tempId: Date.now(),
+        tempId,
       },
       (ack) => {
         if (!ack.ok) {
           console.error("Message failed:", ack.error);
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.tempId === tempId ? { ...m, failed: true, pending: false } : m
+            )
+          );
         }
       }
     );
@@ -80,9 +112,14 @@ export default function ChatWindow({ chat, onBack }) {
 
       <div className="messages">
         {messages.map((msg, i) => (
-          <div key={i} className={`message ${msg.from}`}>
+          <div
+            key={msg.id || msg.tempId || i}
+            className={`message ${msg.from} ${msg.pending ? "pending" : ""} ${msg.failed ? "failed" : ""}`}
+          >
             <p>{msg.text}</p>
             <span className="time">{msg.time}</span>
+            {msg.pending && <span className="status">⏳</span>}
+            {msg.failed && <span className="status">❌</span>}
           </div>
         ))}
       </div>

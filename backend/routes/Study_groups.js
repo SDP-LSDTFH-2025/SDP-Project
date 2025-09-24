@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { Study_groups,Group_members} = require('../models');
+const { Study_groups,Group_members, Courses} = require('../models');
 const {verifyToken, errorClass} = require('../middleware/tools');
 const { sequelize } = require('../config/database');
 
@@ -84,10 +84,14 @@ router.post('/create',async(req,res)=>{
         // if (!verifyToken.fireBaseToken(token,id)){
         //     return errorClass.errorRes('Invalid Token',res,401);
         // }
+        const course = await Courses.findOne({where:{code:course_code}});
+        if (!course){
+            return errorClass.errorRes('Course not found',res,404)
+        }
         
         const group = await Study_groups.create({
             name:title,
-            course_id:course_code,
+            course_id:course.id,
             creator_id:id,
             disabled:false,
             created_at: date||new Date(),

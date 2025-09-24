@@ -31,8 +31,15 @@ build/
 .env.test.local
 .env.production.local
 
+
+# Exclude .env files in frontend and backend folders
+frontend/.env
+frontend/.env.*
+backend/.env
+backend/.env.*
+
 # Keep env.example files for reference
-!**/env.example
+!**/.env.example
 
 # Editor directories and files
 .vscode/

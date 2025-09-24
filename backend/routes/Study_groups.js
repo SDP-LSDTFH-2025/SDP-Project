@@ -6,10 +6,12 @@ const { sequelize } = require('../config/database');
 
 /**
  * @swagger
- * /api/v1/study_groups/create:
+ * /create:
  *   post:
- *     summary: Create a new study group and add the creator as a member
- *     tags: [Groups]
+ *     summary: Create a new study group
+ *     description: Creates a new study group with the given details and adds the creator and participants as members.
+ *     tags:
+ *       - [Groups]
  *     requestBody:
  *       required: true
  *       content:
@@ -19,22 +21,40 @@ const { sequelize } = require('../config/database');
  *             required:
  *               - token
  *               - id
- *               - name
- *               - course_id
+ *               - title
+ *               - course_code
  *             properties:
  *               token:
  *                 type: string
- *                 description: Firebase token of the user
+ *                 description: Authentication token
+ *                 example: "eyJhbGciOiJIUzI1NiIsInR..."
  *               id:
  *                 type: string
- *                 format: uuid
  *                 description: ID of the user creating the group
- *               name:
+ *                 example: "12345"
+ *               title:
  *                 type: string
- *                 description: Name of the group
- *               course_id:
- *                 type: integer
- *                 description: ID of the course this group belongs to
+ *                 description: Title of the study group
+ *                 example: "Algorithms Revision"
+ *               course_code:
+ *                 type: string
+ *                 description: Associated course code
+ *                 example: "CS101"
+ *               description:
+ *                 type: string
+ *                 description: Optional group description
+ *                 example: "Group to prepare for final exam"
+ *               date:
+ *                 type: string
+ *                 format: date-time
+ *                 description: Optional creation date (defaults to now)
+ *                 example: "2025-09-24T14:48:00.000Z"
+ *               participants:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 description: List of user IDs to add as participants
+ *                 example: ["67890", "24680"]
  *     responses:
  *       200:
  *         description: Group created successfully
@@ -47,35 +67,19 @@ const { sequelize } = require('../config/database');
  *                   type: string
  *                   example: Group created successfully
  *       400:
- *         description: Missing required information
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: Insufficient information provided
+ *         description: Insufficient information provided
  *       401:
  *         description: Invalid token
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: Invalid Token
  *       500:
- *         description: Server error
+ *         description: Internal server error
  */
 
-//friend requests
+
 router.post('/create',async(req,res)=>{
     try{
-        const {token,id,name,course_id} = req.body;
+        const {token,id,title,course_code,description,date,participants} = req.body;
 
-        if (!token||!id||!name||!course_id){
+        if (!token||!id||!title||!course_code){
             return errorClass.insufficientInfo(res);
         }
         // if (!verifyToken.fireBaseToken(token,id)){
@@ -83,17 +87,25 @@ router.post('/create',async(req,res)=>{
         // }
         
         const group = await Study_groups.create({
-            name:name,
-            course_id:course_id,
+            name:title,
+            course_id:course_code,
             creator_id:id,
             disabled:false,
-            created_at: new Date()
+            created_at: date||new Date(),
+            description:description||'no group description'
         })
         await Group_members.create({
             group_id:group.id,
             user_id:id,
-            joined_at: new Date()
+            joined_at: date||new Date()
         })
+        for (let member_id in participants){
+            await Group_members.create({
+                group_id:group.id,
+                user_id:member_id,
+                joined_at: date||new Date()
+            });
+        }
         res.status(200).json({message:"Group created successfully"});
     }
     catch(error){

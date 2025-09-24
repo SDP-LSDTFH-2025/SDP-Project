@@ -33,13 +33,13 @@ export default async () => {
     .first()
     .click();
 
-  const [popup] = await Promise.all([page.waitForEvent('popup',{ timeout: 45000 })]);
+  const [popup] = await Promise.all([page.waitForEvent('popup')]);
   await popup.waitForLoadState();
 
-  await popup.fill('input[type="email"]', email);
+  await popup.fill('input[type="email"]', email,{ timeout: 45000 });
   await popup.click('button:has-text("Next")');
 
-  await popup.fill('input[type="password"]', password);
+  await popup.fill('input[type="password"]', password,{ timeout: 45000 });
   await popup.click('button:has-text("Next")');
 
   const allowButton = popup.locator('button:has-text("Allow")');

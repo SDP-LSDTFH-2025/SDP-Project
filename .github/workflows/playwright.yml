@@ -8,48 +8,44 @@ jobs:
   e2e-test:
     timeout-minutes: 60
     runs-on: ubuntu-latest
+    container:
+      image: mcr.microsoft.com/playwright:v1.55.0-noble
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+
       - name: Install dependencies for backend
-        run: |
-          cd backend
-          npm ci
+        working-directory: ./backend
+        run: npm ci
 
       - name: Install dependencies for frontend
-        run: |
-          cd frontend
-          npm ci
+        working-directory: ./frontend
+        run: npm ci
 
       - name: Install Playwright Browsers
         run: |
-          npx playwright install
           npx playwright install chromium --with-deps
 
       - name: Install xvfb
         run: sudo apt-get install -y xvfb
 
       - name: Start backend dev server
+        working-directory: ./backend
         env:
           API_PREFIX: ${{ secrets.API_PREFIX }}
-        run: |
-          cd backend
-          npm run dev &
+        run: npm run dev &
 
       - name: Start frontend dev server
-        run: |
-          cd frontend
-          npm run dev &
+        run: npm run dev &
 
       - name: Wait for servers to be ready
         run: sleep 15
 
       - name: Run Playwright tests
+        working-directory: ./frontend
         env: 
           GOOGLE_TEST_EMAIL: ${{ secrets.GOOGLE_TEST_EMAIL}}
           GOOGLE_TEST_PASSWORD: ${{ secrets.GOOGLE_TEST_PASSWORD}}
-        run: |
-          cd frontend
-          npx playwright test --workers=1
+        run: xvfb-run npx playwright test --workers=1

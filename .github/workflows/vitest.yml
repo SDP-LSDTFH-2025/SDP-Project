@@ -1,4 +1,4 @@
-name: Run Tests
+name: Backend Tests
 
 on:
   push:
@@ -7,23 +7,37 @@ on:
     branches: [ main ]
 
 jobs:
-  test:
+  api-test:
     runs-on: ubuntu-latest
-    container:
-      image: node:22
+    
     steps:
-      # Checkout the code
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      # Install dependencies using npm ci
-      - name: Install dependencies
-        run: npm install && npm ci
-        working-directory: ./backend
-
-      # Run tests
-      - name: Run tests
-        working-directory: ./backend
-        env:
-          API_PREFIX: ${{ secrets.API_PREFIX }}
-        run: npm run test
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js v22
+      uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+        cache: 'npm'
+        cache-dependency-path: backend/package-lock.json
+        
+    - name: Navigate to backend and install dependencies
+      run: |
+        cd backend
+        npm ci
+        
+    - name: Start server in background
+      run: |
+        cd backend
+        npm start &
+        echo "Server started in background (Node.js v22)"
+        # Wait for server to be ready
+        sleep 10
+        # Optional: Check if server is responding
+        curl -f http://localhost:3000 || true
+      
+    - name: Run tests
+    
+      run: |
+        cd backend
+        npm run test

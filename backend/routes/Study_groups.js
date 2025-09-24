@@ -47,7 +47,7 @@ const { sequelize } = require('../config/database');
  *                 type: string
  *                 format: date-time
  *                 description: Optional creation date (defaults to now)
- *                 example: "2025-09-24T14:48:00.000Z"
+ *                 example: "2025-09-24"
  *               participants:
  *                 type: array
  *                 items:

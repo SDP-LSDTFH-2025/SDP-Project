@@ -14,6 +14,7 @@ const resourcesRoutes = require('./Resources')
 const resourcethreadsRoutes = require('./Resource_threads');
 const liked_Routes = require('./Likes');
 const publicApiRoutes = require('./PublicApi');
+const recommend = require('./recommend');
 
 
 // API Documentation
@@ -74,4 +75,5 @@ router.use('/resources', resourcesRoutes);
 router.use('/resource_threads', resourcethreadsRoutes);
 router.use('/likes', liked_Routes);
 router.use('/public', publicApiRoutes);
+router.use('/recommend',recommend);
 module.exports = router; 

@@ -102,3 +102,4 @@ router.get('/:token/:id/:index/:threshold',async (req,res)=>{
         errorClass.serverError(res);
     }
 })
+module.exports = router;

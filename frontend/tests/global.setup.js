@@ -12,6 +12,7 @@ export default async () => {
   chromium.use(StealthPlugin());
   const browser = await chromium.launch({ headless: false });
   const context = await browser.newContext();
+  context.setDefaultTimeout(60000); // 60 seconds
   const page = await context.newPage();
 
   const email = process.env.GOOGLE_TEST_EMAIL;
@@ -32,7 +33,7 @@ export default async () => {
     .first()
     .click();
 
-  const [popup] = await Promise.all([page.waitForEvent('popup')]);
+  const [popup] = await Promise.all([page.waitForEvent('popup',{ timeout: 45000 })]);
   await popup.waitForLoadState();
 
   await popup.fill('input[type="email"]', email);

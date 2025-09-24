@@ -61,7 +61,8 @@
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.0",
     "websockets": "^0.2.0",
-    "xss": "^1.0.14"
+    "xss": "^1.0.14",
+    "yaml": "^2.8.1"
   },
   "devDependencies": {
     "@vitest/coverage-v8": "^3.2.4",

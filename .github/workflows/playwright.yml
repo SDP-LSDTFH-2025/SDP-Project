@@ -24,7 +24,7 @@ jobs:
           npm ci
 
       - name: Install Playwright Browsers
-        run: 
+        run: |
           npx playwright install chromium --with-deps
 
       - name: Install xvfb
@@ -33,22 +33,22 @@ jobs:
       - name: Start backend dev server
         env:
           API_PREFIX: ${{ secrets.API_PREFIX }}
-        run: 
+        run: |
           cd backend
           npm run dev &
 
       - name: Start frontend dev server
-        run: 
+        run: |
           cd frontend
           npm run dev &
 
       - name: Wait for servers to be ready
         run: sleep 15
 
-      - name: Run Playwright tests in headed mode
+      - name: Run Playwright tests
         env: 
           GOOGLE_TEST_EMAIL: ${{ secrets.GOOGLE_TEST_EMAIL}}
           GOOGLE_TEST_PASSWORD: ${{ secrets.GOOGLE_TEST_PASSWORD}}
-        run: 
+        run: |
           cd frontend
           npx playwright test --workers=1

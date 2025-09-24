@@ -15,7 +15,7 @@ jobs:
         node-version: lts/*
     - name: Install dependencies for backend
       working-directory: ./backend
-      run: npm install && npm ci
+      run: npm ci
 
     - name: Install dependencies for frontend
       working-directory: ./frontend
@@ -29,7 +29,7 @@ jobs:
 
     - name: Start backend dev server
       working-directory: ./backend
-      run: npm run dev &
+      run: npm run start &
 
     - name: Start frontend dev server
       working-directory: ./frontend
@@ -43,4 +43,4 @@ jobs:
       env:
         GOOGLE_TEST_EMAIL: ${{ secrets.GOOGLE_TEST_EMAIL}}
         GOOGLE_TEST_PASSWORD: ${{ secrets.GOOGLE_TEST_PASSWORD}}
-      run: xvfb-run npx playwright test --workers=1 # Use xvfb-run for a headed browser
+      run: xvfb-run npx playwright test --workers=1 

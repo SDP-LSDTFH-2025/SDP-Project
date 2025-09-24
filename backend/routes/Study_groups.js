@@ -6,7 +6,7 @@ const { sequelize } = require('../config/database');
 
 /**
  * @swagger
- * /create:
+ * /api/v1/study_groups/create:
  *   post:
  *     summary: Create a new study group
  *     description: Creates a new study group with the given details and adds the creator and participants as members.

@@ -10,8 +10,7 @@ const { sequelize } = require('../config/database');
  *   post:
  *     summary: Create a new study group
  *     description: Creates a new study group with the given details and adds the creator and participants as members.
- *     tags:
- *       - [Groups]
+ *     tags: [Groups]
  *     requestBody:
  *       required: true
  *       content:

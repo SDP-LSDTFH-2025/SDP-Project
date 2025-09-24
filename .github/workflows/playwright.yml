@@ -32,6 +32,7 @@ jobs:
       working-directory: ./backend
       env:
           API_PREFIX: ${{ secrets.API_PREFIX }}
+          BACKEND_URL: ${{ secrets.BACKEND_URL }}
       run: npm run start &
 
     - name: Start frontend dev server

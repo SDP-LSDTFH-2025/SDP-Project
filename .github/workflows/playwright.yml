@@ -30,6 +30,8 @@ jobs:
 
     - name: Start backend dev server
       working-directory: ./backend
+      env:
+          API_PREFIX: ${{ secrets.API_PREFIX }}
       run: npm run start &
 
     - name: Start frontend dev server

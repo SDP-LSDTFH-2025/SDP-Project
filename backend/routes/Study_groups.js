@@ -76,7 +76,7 @@ const { sequelize } = require('../config/database');
 
 router.post('/create',async(req,res)=>{
     try{
-        const {token,id,title,course_id,description,date,participants} = req.body;
+        const {token,id,title,course_id,description,participants} = req.body;
 
         if (!token||!id||!title||!course_id){
             return errorClass.insufficientInfo(res);
@@ -84,7 +84,7 @@ router.post('/create',async(req,res)=>{
         // if (!verifyToken.fireBaseToken(token,id)){
         //     return errorClass.errorRes('Invalid Token',res,401);
         // }
-        
+        const date = new Date();
         const group = await Study_groups.create({
             name:title,
             course_id:course_id,
@@ -378,6 +378,10 @@ router.post('/leave',async(req,res)=>{
 router.get('/',async(req,res)=>{
     try{
         const groups = await Study_groups.findAll();
+
+        for (let group in groups){
+            console.log(group);
+        }
 
         res.status(200).json({message:"Successfully fetched all the groups", groups:groups});
     }

@@ -15,6 +15,10 @@ const Study_groups = sequelize.define('study_groups',{
         allowNull: false,
     },
     course_id:{
+        type:DataTypes.INTEGER,
+        allowNull: false,
+    },
+    course_code:{
         type:DataTypes.STRING,
         allowNull: false,
     },

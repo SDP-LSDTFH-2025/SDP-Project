@@ -1,4 +1,12 @@
 import { test, expect } from "@playwright/test";
+import path from "path";
+import { dirname } from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const stateFile = path.join(__dirname, "./state/storageState.json");
+test.use({ storageState: stateFile });
 
 test.describe("Home Page Shows Correctly", () => {
 	test("Check if all Buttons show and Work", async ({ page }) => {

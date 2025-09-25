@@ -15,21 +15,18 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    max-width: 100%;
     height: 60px; 
     padding: 0 20px;
     background-color: #ffffff;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); 
     font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,system-ui,sans-serif;
   }
-  .navigation .search{
-    max-width: 400px;
-  }
+
   
   .search{
     display:flex;
     flex: 1;
-    width:100%;
+    max-width: 100%;
     margin: 0 20px;
     padding: 10px 15px;
     border: 1px solid #e2e0e0;
@@ -37,6 +34,7 @@
     background-color: #fff;
     font-size: 0.9rem;
     outline: none;
+    text-align: left;
   }
   .search:focus {
     outline: none;
@@ -120,7 +118,49 @@
     border-radius: 12px;
     text-align: center;
   }
+  .event-dot{
+    width:8px;
+    height:8px;
+    border-radius: 50%;
+    background-color: #0000ff;
+    margin: 0 auto;
+  }
+  .fc .fc-daygrid-day-number{
+    font-size: small;
+    font-weight: 200;
+  }
   
+  .header-content {
+    display: flex;
+    gap: 0.15rem;
+    
+  }
+  .header-content .pics{
+    margin:0.5px;
+  }
+  .event-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+.event-modal-content {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+  text-align: center;
+}
+
   /* ------- Sidebar (Navigation card) ------- */
   .sidebar{
     height: fit-content;
@@ -137,11 +177,7 @@
     padding: 16px;
     min-width: 88%;
   }
-  .filters{
-    color:#666;
-    font-size: 0.8rem;
-    margin-left: 1rem;
-  }
+ 
   .buttons{
     display: flex;
     color:#000;
@@ -154,30 +190,7 @@
     margin: 1rem;
     padding: 6px 15px;
   }
-  .filtersearch {
-    display: flex;
-    flex-direction: row;
-    gap:0.8rem;
-    justify-items: left;
-  }
-  .filter{
-    margin-top: 0.6rem;
-  }
-  .filter-badges{
-    padding-top: 0.8rem;
-  }
-  .hidden-file-input {
-    display: none;
-  }
-  .badges{
-    border: 1px solid #e5e7eb;
-    border-radius: 0.8rem;
-    font-size: small;
-    margin: 4px 2px;
-    font-weight: 500;
-    padding: 0.3rem;
-    text-align: center;
-  }
+ 
   .title{
     display: flex;
     align-items: center;
@@ -231,7 +244,6 @@
     box-shadow: 0 4px 10px rgba(109,40,217,.25);
   }
   .share-card {
-    display: flex;
     flex-direction: column; /* Stack elements vertically to match the screenshot layout */
     background-color: #ffffff;
     border-radius: 10px;
@@ -270,15 +282,14 @@
   .upload-btn:hover {
     background: #8000ff;
   }
-  #Uploads input {
-    margin-bottom: 0.8rem;
-  }
+  
   .resource-card:hover {
     transform: translateY(-5px);
   }
   .share-card .search{
-    width:87%;
+    max-width:93% !important;
     align-self: left;
+    text-align: left;
   }
   .resource-card h4 {
     margin: 0 0 10px;
@@ -322,12 +333,10 @@
     outline: none;
     font-size: 0.95rem;
     background: #fff;
-    
+    width:100%;
+    text-align: left;
   }
   
-  .shadow-card .search{
-    width:73%;
-  }
   /* resource post card */
   .resource-card{
     border: 1px solid #e5e7eb;   
@@ -371,6 +380,82 @@
     margin:0.5px;
     margin-right: 0.5rem;
   }
+  .study-buddies {
+    background: #fff;
+    border: 1px solid #eee;
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  }
+  
+  .buddy-item {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    margin-top: 20px;
+  }
+  .buddy-item:hover{
+    background:#dde3e8;  
+    border-radius: 0.5rem;
+    padding:5px;
+  }
+  .avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 18px;
+    font-weight: 600;
+    margin-right: 12px;
+    flex-shrink: 0;
+  }
+  
+  .buddy-info {
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+  }
+  
+  .buddy-name {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #222;
+  }
+  
+  .buddy-course {
+    font-size: 0.9rem;
+    color: #555;
+  }
+  
+  .buddy-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.7rem;
+    color: #666;
+  }
+  
+  .status-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+  
+  .status-dot.online {
+    background: green;
+  }
+  .status-dot.studying {
+    background: blue;
+  }
+  .status-dot.offline {
+    background: gray;
+  }
+  
   /* Empty states */
   .empty-text{
     color: #666;
@@ -382,10 +467,16 @@
   /* ------- Responsive ------- */
   @media (max-width: 1200px){
     .dashboard{ grid-template-columns: 260px 1fr 300px; }
+    .share-card .search{
+      max-width:97% !important;
+    }
   }
   @media (max-width: 1024px){
     .dashboard{ grid-template-columns: 240px 1fr; }
     .rightbar{ display:none; } /* hide right column on tablets like many dashboards */
+    .share-card .search{
+      max-width:97% !important;
+    }
   }
   @media (max-width: 600px){
     .dashboard{ grid-template-columns: 1fr; }
@@ -396,7 +487,7 @@
       position: absolute;
       top: 60px; /* adjust to navbar height */
       right: 0;
-      width: 220px;
+      width:100%;
       background: #fff;
       border: 1px solid #ddd;
       box-shadow: -2px 0 6px rgba(0,0,0,0.1);

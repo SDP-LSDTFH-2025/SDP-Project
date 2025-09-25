@@ -1,0 +1,182 @@
+.friends {
+  
+  font-family: Arial, sans-serif;
+  color: #111827;
+}
+
+.friends-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 20px 0 10px;
+}
+
+.friends-header h2 {
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.friends-header .count {
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.search  {
+  width: 100% !important;
+  padding: 10px 10px !important;
+   margin: 0 0 20px 10px !important;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+/* Grid Layout */
+.friends-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px,1fr)); /* Always 3 per row */
+  gap: 30px;
+}
+
+/* Card */
+.friend-card {
+  width:100%;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 16px;
+  background: #ffffff;
+  transition: box-shadow 0.2s ease-in-out;
+  
+}
+
+.friend-card:hover {
+  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+}
+
+/* Avatar + Name */
+.friend-header {
+  display: flex;
+  align-items: left;
+  margin-bottom: 10px;
+}
+
+.friend-header .avatar {
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  background: #7c3aed;
+  flex-shrink: 0;
+}
+
+.friend-title {
+  display: flex;
+  flex-direction: column; /* Stack vertically */
+  align-items: flex-start;
+}
+
+.friend-title h3 {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.friend-title .username {
+  font-size: 10px;
+  color: #6b7280;
+  margin-top: 2px;
+}
+
+.role {
+  font-size: 12px;
+  color: #6b7280;
+  text-align: left;
+  
+}
+
+.friend-meta {
+  display: flex;
+  align-items: left;
+  gap: 12px; /* spacing between friend tag and status */
+  margin-top: 6px;
+  
+}
+
+.friend-meta .friend-tag {
+  font-size: 13px;
+  color: #374151;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.friend-meta .status {
+  font-size: 13px;
+}
+
+.friend-meta .online {
+  color: green;
+}
+
+.friend-meta .last-seen {
+  color: #6b7280;
+}
+
+
+/* Actions */
+.actions {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.actions button {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 14px;
+  font-weight: 350;
+  border-radius: 6px;
+  cursor: pointer;
+  border: none;
+}
+
+/* Status icon styling (online/offline) */
+.status-icon {
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
+/* Online status (inherits green from active state) */
+.status-icon.online {
+  color: green; /* Matches button's white text */
+}
+
+/* Offline status (inherits red from deactivated state) */
+.status-icon.offline {
+  color: red; /* Matches button's white text */
+}
+
+.message-btn {
+  margin-left: 0.1rem;
+  flex: 1;
+  padding: 7px 3px;
+  background: #2563eb;
+  color: white;
+}
+
+.add-btn {
+  flex: 1;
+  padding: 8px;
+  background: #10b981;
+  color: white;
+}
+
+.profile-btn {
+  margin-right:0.1rem;
+  padding: 7px 8px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+}
+.profile-btn:hover {
+    background: #94c4da;
+}

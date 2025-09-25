@@ -1,0 +1,258 @@
+.plan-sessions {
+  padding: 24px;
+  font-family: system-ui, sans-serif;
+  color: #111;
+}
+
+/* Header */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+.header h2 {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #111;
+}
+.header p {
+  color: #111;
+  font-size: 0.9rem;
+}
+
+/* Search */
+.search-card {
+  background: #fff;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 16px;
+}
+.search-input {
+  position: relative;
+}
+.search-input input {
+  width: 95%;
+  padding: 8px 8px 8px 28px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 0.9rem;
+}
+.search-icon {
+  position: absolute;
+  top: 50%;
+  left: 8px;
+  transform: translateY(-50%);
+  color: #666;
+}
+
+/* Filter */
+.filter-bar {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+.filter-btn {
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+  background: #f9f9f9;
+  font-size: 0.85rem;
+  cursor: pointer;
+  
+}
+.filter-btn.active {
+  background: #2563eb;
+  color: #fff;
+  border: 1px solid #2563eb;
+}
+
+/* Sessions Grid */
+.sessions-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+.session-card {
+  background: #fff;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+}
+.session-badges {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.badge {
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+}
+.badge-blue {
+  background: #2563eb;
+  color: #fff;
+}
+.badge-gray {
+  background: #e5e7eb;
+  color: #111;
+}
+.badge-outline {
+  border: 1px solid #ccc;
+  color: #111;
+  background: transparent;
+}
+
+.session-card h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: #111;
+}
+.session-card .description {
+  font-size: 0.85rem;
+  color: #111;
+  margin-bottom: 10px;
+}
+.details {
+  font-size: 0.8rem;
+  color: #111;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.details div {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Buttons */
+.card-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+.create-btn {
+  padding: 12px 10px;
+  font-size: 0.85rem;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: #2563eb;
+  color: white;
+  border: none;  
+}
+.blue-btn,
+.outline-btn {
+  flex: 1;
+  padding: 6px 10px;
+  font-size: 0.85rem;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.blue-btn {
+  background: #2563eb;
+  color: white;
+  border: none;
+}
+.outline-btn {
+  background: white;
+  border: 1px solid #2563eb;
+  color: #2563eb;
+}
+.blue-btn:disabled {
+  background: #999;
+  cursor: not-allowed;
+}
+
+/* Empty state */
+.empty-card {
+  text-align: center;
+  padding: 40px;
+  background: #fff;
+  border: 1px solid #eee;
+  border-radius: 8px;
+}
+.empty-card h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+.empty-card p {
+  font-size: 0.85rem;
+  color: #666;
+  margin-bottom: 12px;
+}
+.empty-icon {
+  color: #aaa;
+  margin-bottom: 12px;
+}
+
+/* Modal */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+.modal-content {
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  width: 360px;
+  max-width: 90%;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+.modal-content h3 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: 16px;
+  text-align: center;
+}
+.modal-content label {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin-bottom: 10px;
+  color: #333;
+}
+.modal-content input,
+.modal-content textarea {
+  margin-top: 4px;
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 0.85rem;
+}
+.modal-content textarea {
+  min-height: 60px;
+  resize: vertical;
+}
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 14px;
+}
+.modal-actions .blue-btn,
+.modal-actions .outline-btn {
+  flex: unset;
+  padding: 6px 14px;
+  font-size: 0.85rem;
+}

@@ -1,10 +1,14 @@
 import React, { useState } from "react";
+import { useLocation } from "react-router-dom";
 import ChatList from "./ChatList";
 import ChatWindow from "./ChatWindow";
 import "./Message.css";
 
 export default function Message() {
-  const [selectedChat, setSelectedChat] = useState(null);
+  const location = useLocation();
+  const initialChat = location.state?.chat || null;
+
+  const [selectedChat, setSelectedChat] = useState(initialChat);
 
   return (
     <div className="messages-container">

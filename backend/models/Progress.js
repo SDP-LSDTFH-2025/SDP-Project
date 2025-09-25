@@ -7,6 +7,7 @@ const Progress = sequelize.define('progress', {
         primaryKey: true,
         allowNull: false,
         unique: true,
+        autoIncrement: true,
     },
     user_id: {
         type: DataTypes.UUID,

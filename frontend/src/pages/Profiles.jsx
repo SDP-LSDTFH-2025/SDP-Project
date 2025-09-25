@@ -1,38 +1,20 @@
 import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import "./Profiles.css";
 import { MapPin, Calendar, CircleDot, Circle } from "lucide-react";
 
-const Profiles = () => {
-  const [user, setUser] = useState(null);
-
-  useEffect(() => {
-    const stored = localStorage.getItem("user");
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored);
-
-        // Generate initials
-        const initials = parsed.username
-          ? parsed.username
-              .replaceAll("_", " ")
-              .split(" ")
-              .map((n) => n[0])
-              .join("")
-              .toUpperCase()
-          : "U";
-
-        setUser({
-          ...parsed,
-          initials,
-        });
-      } catch (error) {
-        console.error("Invalid JSON in localStorage", error);
-      }
-    }
-  }, []);
+const Profiles = ({ user }) => {
+  
+  const [isFriend, setIsFriend] = useState(false);
 
   if (!user) return <p>No profile data found.</p>;
 
+  const handleFriendToggle = () => {
+    setIsFriend((prev) => !prev);
+    // 🔹 TODO: Here you’d also call your backend API
+    // fetch(`/api/friends/toggle/${user.id}`, { method: "POST" })
+  };
+  
   return (
     <div className="profile-container">
       {/* Header */}
@@ -52,6 +34,7 @@ const Profiles = () => {
           <p className="title">
             {user.role} • {user.location || "N/A"}
           </p>
+
           <div className="profile-details">
             <span className="detail-item">
               <MapPin size={16} className="icon" />
@@ -69,6 +52,31 @@ const Profiles = () => {
               )}
               {user.is_active ? "Online" : "Offline"}
             </span>
+          </div>
+
+          {/* 🔹 Friend button row */}
+          <div className="friend-action">
+            <button
+              className={`friend-btn ${isFriend ? "unfriend" : "add"}`}
+              onClick={handleFriendToggle}
+            >
+              {isFriend ? "Unfriend" : "Add Friend"}
+            </button>
+            <Link
+              to="/messages"
+              state={{
+                chat: {
+                  name: user.username.replaceAll("_", " "),
+                  online: user.is_active,
+                },
+              }}
+              style={{ textDecoration: "none", color: "inherit" }} // removes underline + keeps styles
+            >
+              <button className="sending">
+                Send Message
+              </button>
+            </Link>
+
           </div>
         </div>
       </div>

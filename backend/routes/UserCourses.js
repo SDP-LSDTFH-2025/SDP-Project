@@ -475,7 +475,7 @@ router.get('/instructor/:id', async (req, res) => {
  *       - name: limit
  *         in: query
  *         required: false
- *         description: Number of enrollments to return (default: 10)
+ *         description: Number of enrollments to return (default 10)
  *         schema:
  *           type: integer
  *           default: 10
@@ -532,7 +532,7 @@ router.get('/recent', async (req, res) => {
  *       - name: limit
  *         in: query
  *         required: false
- *         description: Number of courses to return (default: 10)
+ *         description: Number of courses to return (default 10)
  *         schema:
  *           type: integer
  *           default: 10

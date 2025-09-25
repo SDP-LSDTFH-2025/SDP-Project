@@ -12,6 +12,7 @@ import {
 	MessageSquare, 
 	UserPlus, 
 	Upload,
+  Calendar,
 	Heart,
 	Share2,
 	MessageCircle,
@@ -21,15 +22,21 @@ import {
 	Settings,
   User,
   X,
-  LogOut 
+  LogOut,
   } from "lucide-react";
 import {DragAndDropArea} from "./DragAndDrop.jsx";
 import FriendList from "./FriendList.jsx";
+import Profiles from "../pages/Profiles.jsx";
+import Friends from "../pages/Friends.jsx";
+import FullCalendar from '@fullcalendar/react';
+import dayGridPlugin from '@fullcalendar/daygrid';
+import googleCalendarPlugin from '@fullcalendar/google-calendar';
+import interactionPlugin from '@fullcalendar/interaction';
 import "./Home.css";
 
-import StudyPartnersPage from "../pages/StudyPartnersPage.jsx";
 import ProfilePage from "../pages/ProfilePage.jsx";
 import Feed from "../pages/Feed.jsx";
+import PlanSessions from "../pages/Sessions.jsx";
 
 function Home({ user }) {
   
@@ -42,6 +49,9 @@ function Home({ user }) {
   const [pictureFile, setPictureFile] = useState(null);
   const [error, setError] = useState("");
   const [isFormValid, setIsFormValid] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [selectedEvent, setSelectedEvent] = useState(null);
+
 
  const [friendsList, setFriends] = useState([]);
  const [groupList, setGroups] = useState([]);
@@ -60,7 +70,7 @@ function Home({ user }) {
     const fetchUsers = async () => {
       try {
         const data = await getAllUsers();
-        const friendsArray = data.map(user => ({
+        const friendsArray = data.slice(0, 5).map(user => ({
           name: user.username, // Rename 'username' to 'name'
           status: user.is_active ? 'Active' : 'Inactive', // Rename 'is_active' to 'status' and convert to string
         }));
@@ -190,20 +200,18 @@ function Home({ user }) {
       {/* Top Navigation Bar */}
       <nav className="navigation">
         <h1 className="logo">StudyBuddy</h1>
-          <Input
-            className="search"
-            placeholder="Search resources, friends, courses..."
-            
-          />
+          
         <div className="nav-actions">
           <Link to="/messages">
             <Button className="nav-button">
               <MessageCircle className="pics" />
             </Button>
           </Link>
+          <Link to ="/notifications">
           <Button className="nav-button">
             <Bell className="pics" />
           </Button>
+          </Link>
           <Button className={`nav-button ${activeView === "profile" ? "active" : ""}`} onClick={() => handleNavigationClick("profile")}>
             <User className="pics" />
           </Button>
@@ -233,6 +241,15 @@ function Home({ user }) {
             >
               <Users className="pics" /> Study Groups
             </Button>
+          </li>
+          <li>
+          <Button 
+                  className={`buttons ${activeView === "friends" ? "active" : ""}`}
+                  onClick={() => handleNavigationClick("friends")}
+                  >
+                  <User className="pics" />
+                  Study Buddies
+                </Button>
           </li>
           <li>
             <Button 
@@ -278,13 +295,15 @@ function Home({ user }) {
                   <BookOpen className="pics" />
                   Resource Feed
                 </Button>
+
                 <Button 
-                  className={`buttons ${activeView === "groups" ? "active" : ""}`}
-                  onClick={() => handleNavigationClick("groups")}
-                >
-                  <Users className="pics" />
-                  Study Groups
+                  className={`buttons ${activeView === "friends" ? "active" : ""}`}
+                  onClick={() => handleNavigationClick("friends")}
+                  >
+                  <User className="pics" />
+                  Study Buddies
                 </Button>
+
                 <Button 
                   className={`buttons ${activeView === "requests" ? "active" : ""}`}
                   onClick={() => handleNavigationClick("requests")}
@@ -292,6 +311,15 @@ function Home({ user }) {
                   <UserPlus className="pics" />
                   Friend Requests
                 </Button>
+
+                <Button 
+                  className={`buttons ${activeView === "groups" ? "active" : ""}`}
+                  onClick={() => handleNavigationClick("groups")}
+                >
+                  <Users className="pics" />
+                  Study Groups
+                </Button>
+
                 <Button
                   className={`buttons ${activeView === "upload" ? "active" : ""}`}
                   onClick={() => handleNavigationClick("upload")}
@@ -303,34 +331,74 @@ function Home({ user }) {
             </Card>
           </div>
 
-          <div className="filtersearch">
+          <div className="calender">
             <Card className="shadow-card">
-              <CardHeader>
-                <CardTitle className="title">
-                  <Filter className="pics" />
-                  Filters
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div>
-                  <label className="filters">Course</label>
-                  <Input className="search" placeholder="Enter course code" />
-                </div>
-                <div>
-                  <label className="filters">School</label>
-                  <Input className="search" placeholder="Enter school name" />
-                </div>
-                <div className="filter-badges">
-                  <Badge className="badges" variant="outline">
-                    Mathematics
-                  </Badge>
-                  <Badge className="badges" variant="outline">
-                    Chemistry
-                  </Badge>
-                  <Badge className="badges" variant="outline">
-                    Physics
-                  </Badge>
-                </div>
+            <CardHeader className="calendar-header">
+              <div className="header-content">
+                <Calendar className="pics" />
+                <CardTitle className="title">Upcoming Events</CardTitle>
+              </div>
+            </CardHeader>
+              <CardContent className="calendar-preview">
+                {/* Mini Calendar Preview */}
+                <FullCalendar
+                  plugins={[dayGridPlugin]}
+                  initialView="dayGridMonth"
+                  headerToolbar={false}
+                  height="320px"
+                  aspectRatio={1.2}
+                  dayMaxEvents={true}
+                  dayHeaderFormat={{weekday: 'short'}}
+                  dayHeaders={true}
+                  dayHeaderContent={(arg)=>{
+                    const dayChars=['S','M','T','W','T','F','S']
+                    return dayChars[arg.dow];
+                  }}
+                  eventContent={()=> {
+                    return {html:`<div class="event-dot"></div>`};
+                  }}
+                  events={[
+                    {
+                      title: 'Study Session',
+                      start: new Date(),
+                      
+                      
+                    },
+                    {
+                      title: 'Group Meeting',
+                      start: new Date(new Date().setDate(new Date().getDate() + 2)),
+                      
+                    }
+                  ]}
+                  eventClick={(info) => {
+                    info.jsEvent.preventDefault();
+                    setSelectedEvent({
+                      title: info.event.title,
+                      start: info.event.start,
+                      end: info.event.end,
+                      color: info.event.backgroundColor
+                    });
+                  }}
+                />
+                {selectedEvent && (
+                  <div className="event-modal">
+                    <div className="event-modal-content">
+                      <h3 style={{ color: '#0000ff' }}>{selectedEvent.title}</h3>
+                      <p>
+                        Date: {selectedEvent.start.toLocaleDateString()} <br />
+                        Time: {selectedEvent.start.toLocaleTimeString()} <br />
+                      </p>
+                      <button style={{padding: '8px 16px',
+                          fontSize: '14px',
+                          borderRadius: '0.5rem',
+                          fontWeight: '600',
+                          cursor: 'pointer',
+                          border: 'none',
+                          background: '#6366f1',
+                          color: 'white'}}onClick={() => setSelectedEvent(null)}>Close</button>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -342,19 +410,7 @@ function Home({ user }) {
 
             {activeView === "feed" && (
               <div className="share-card">
-                <h2>Share a Thought...</h2>
-                <Input
-                  className="search"
-                  placeholder="What would you like to share with your buddies?"
-                />
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  onChange={handleFileSelect}
-                  className="hidden-file-input"
-                  multiple
-                  accept=".jpg,.jpeg,.png,.gif,.bmp,.webp,.pdf"
-                />
+                <h2>Resources</h2>
                 <Button className="upload-btn" onClick={() => setActiveView("upload")}>
                   <Share2 className="pics" /> Share
                 </Button>
@@ -363,7 +419,7 @@ function Home({ user }) {
 
               </div>
             )}
-            {activeView === "requests" && <FriendList/>}
+            {activeView === "requests" && <FriendList handleNavigationClick={handleNavigationClick} setSelectedUser={setSelectedUser} />}
             {activeView === "upload" && (
               <div id="Uploads" className="share-card">
                 <h2>Upload Study Resource</h2>
@@ -405,13 +461,18 @@ function Home({ user }) {
                 </form>
               </div>
             )}
-
-
             {activeView === "profile" && <ProfilePage />}
+            {activeView === "usersprof" && <Profiles user={selectedUser}/> }
+
+            {activeView === "friends" && 
+            (<div className="share-card">
+                <Friends  handleNavigationClick={handleNavigationClick} setSelectedUser={setSelectedUser} />
+              </div>
+            )}
 
             {activeView === "groups" && (
               <div className="share-card">
-                <h2>Groups Section to be implemented...</h2>
+                <PlanSessions/>
               </div>
             )}
 
@@ -427,9 +488,29 @@ function Home({ user }) {
             </h3>
             {friends.length > 0 ? (
               friends.map((f, i) => (
-                <p key={i}>
-                  {f.name} – {f.status}
-                </p>
+                <Link
+                key={i}
+                to="/messages"
+                state={{ chat: { name: f.name, online: f.status === "Active" } }}
+                className="buddy-item"
+                style={{ textDecoration: "none", color: "inherit" }}
+              >
+                <div className="avatar">
+                  {f.username
+                    ?.split("_")
+                    .map((n) => n[0])
+                    .join("")
+                    .toUpperCase()}
+                </div>
+        
+                <div className="buddy-info">
+                  <strong className="buddy-name">{f.name}</strong>
+                  <div className="buddy-course">{f.course}</div>
+                  <div className="buddy-status">
+                    <span>{f.status}</span>
+                  </div>
+                </div>
+              </Link>
               ))
             ) : (
               <p className="empty-text">No friends yet.</p>
@@ -439,7 +520,7 @@ function Home({ user }) {
 
 				{/* Active study groups */}
 				<div className="study-groups">
-					<h3>Active Study Groups</h3>
+					<h3>Group Activities</h3>
 					{groups.length > 0 ? (
 						groups.map((g, i) => (
 							<p key={i}>

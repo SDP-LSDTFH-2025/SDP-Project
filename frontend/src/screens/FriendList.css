@@ -2,20 +2,19 @@
 
 /* Container styles */
 .friend-list-container {
-  width: 100%;
-  max-width: 600px;
-  margin: 0 auto;
+  align-self: start;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   color: #333;
+  align-items: center;
 }
 
 /* Card styles */
 .friend-card {
-  width:100%;
+  width: 95% !important;
   background: white;
   border-radius: 12px;
   border: 1px solid #e5e7eb;
-  margin-bottom: 20px;
+  margin-bottom: 5px;
   overflow: hidden;
   align-items: center;
 }
@@ -189,13 +188,12 @@
 }
 
 .suggested-item {
-  padding: 16px 20px;
+  padding: 16px 10px;
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   background: #fff;
-  height: 70px; 
-  width: 35pc;
+  height: 35px; 
   margin-bottom: 0.8rem;
 }
 
@@ -219,6 +217,17 @@
 
 .add-friend-btn:hover {
   background: #f0f0ff;
+}
+
+.sent-btn {
+  background: #9ca3af; /* gray */
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 14px;
+  cursor: not-allowed;
+  opacity: 0.8;
 }
 
 /* Divider */

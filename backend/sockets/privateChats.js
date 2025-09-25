@@ -10,12 +10,12 @@ const PrivateChats = require('../models/PrivateChats');
 
 /**
  * @swagger
- * /api/v1/sockets/private-chats:
+ * /sockets/private-chats:
  *   get:
  *     summary: Socket.IO connection details
  *     tags: [Sockets]
  *     description: |
- *       Connect using Socket.IO client to `ws://<host>/api/v1/sockets/private-chats` with JWT token.
+ *       Connect using Socket.IO client to `ws://<host>/sockets/private-chats` with JWT token.
  *       The token should be provided as `Authorization: Bearer <JWT>` header or `auth.token` in the handshake.
  *     responses:
  *       200:
@@ -34,13 +34,13 @@ const PrivateChats = require('../models/PrivateChats');
 
 /**
  * @swagger
- * /api/v1/sockets/private-chats:
+ * /sockets/private-chats:
  *   get:
  *     summary: Private chat Socket.IO events (documentation only)
  *     tags: [PrivateChats]
  *     description: |
  *       This endpoint documents Socket.IO events for private chats. These are not HTTP routes.
- *       Connect to the namespace `/api/v1/sockets/private-chats` and emit the following events:
+ *       Connect to the namespace `/sockets/private-chats` and emit the following events:
  *
  *       - `private:join` with body `PrivateJoinRequest`
  *       - `private:message` with body `PrivateMessageRequest`
@@ -49,7 +49,7 @@ const PrivateChats = require('../models/PrivateChats');
  *
  *       Example (client):
  *       ```js
- *       const socket = io('http://localhost:3000/api/v1/sockets/private-chats', { auth: { userId: '123' } });
+ *       const socket = io('http://localhost:3000/sockets/private-chats', { auth: { userId: '123' } });
  *       socket.emit('private:join', { chatId: 'abc' });
  *       ```
  *     responses:

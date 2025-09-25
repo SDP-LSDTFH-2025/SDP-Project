@@ -66,8 +66,11 @@ const Profiles = ({ user }) => {
               to="/messages"
               state={{
                 chat: {
+                  id: user.id,
+                  username: user.username,
+                  is_active: user.is_active,
+                  course: user.course || "",
                   name: user.username.replaceAll("_", " "),
-                  online: user.is_active,
                 },
               }}
               style={{ textDecoration: "none", color: "inherit" }} // removes underline + keeps styles

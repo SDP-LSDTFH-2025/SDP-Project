@@ -71,7 +71,11 @@ function Home({ user }) {
       try {
         const data = await getAllUsers();
         const friendsArray = data.slice(0, 5).map(user => ({
-          name: user.username, // Rename 'username' to 'name'
+          id: user.id,
+          username: user.username, // Rename 'username' to 'name'
+          name: user.username.replaceAll("_", " "),
+          is_active: user.is_active,
+          course: user.course || "",
           status: user.is_active ? 'Active' : 'Inactive', // Rename 'is_active' to 'status' and convert to string
         }));
         setFriends(friendsArray);
@@ -491,7 +495,7 @@ function Home({ user }) {
                 <Link
                 key={i}
                 to="/messages"
-                state={{ chat: { name: f.name, online: f.status === "Active" } }}
+                state={{ chat: f }}
                 className="buddy-item"
                 style={{ textDecoration: "none", color: "inherit" }}
               >

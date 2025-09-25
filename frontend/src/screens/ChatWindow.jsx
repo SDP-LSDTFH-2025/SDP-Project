@@ -164,4 +164,3 @@ export default function ChatWindow({ chat, onBack }) {
     </div>
   );
 }
-

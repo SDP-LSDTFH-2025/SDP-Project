@@ -6,8 +6,7 @@ import "./Message.css";
 
 export default function Message() {
   const location = useLocation();
-  const initialChat = location.state?.chat || null;
-
+  const initialChat = location.state?.chat||null;
   const [selectedChat, setSelectedChat] = useState(initialChat);
 
   return (

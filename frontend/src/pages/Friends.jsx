@@ -114,7 +114,11 @@ export default function Friends({ setSelectedUser, handleNavigationClick }) {
             <div className="actions">
             <Link
               to="/messages"
-              state={{ chat: { name: friend.username, online: friend.is_active } }}
+              state={{ chat: { id: friend.id,
+                username: friend.username,
+                is_active: friend.is_active,
+                course: friend.course || "",
+                name: friend.username.replaceAll("_", " "),} }}
               style={{ textDecoration: "none" }}
             >
               <button className="message-btn">

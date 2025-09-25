@@ -1,6 +1,4 @@
-import React from "react";
-
-const chats = [];
+import React, { useEffect, useState } from "react";
 
 export default function ChatList({ onSelectChat }) {
   const [Friends, setFriends] = useState([]);
@@ -41,7 +39,7 @@ export default function ChatList({ onSelectChat }) {
     fetchFriends();
     }, []);
 
-  if (loading) return <p>Loading friends...</p>;
+  
 
   return (
     <div className="chat-list-container">
@@ -49,7 +47,7 @@ export default function ChatList({ onSelectChat }) {
     <div className="chat-list-header">
       <h2>Chats</h2>
     </div>
-
+  
     {/* Chat Items */}
     {Friends.map((chat) => {
       const initials = chat.username.split("_").map((p) => p[0]).join("").toUpperCase();

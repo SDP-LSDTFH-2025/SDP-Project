@@ -79,25 +79,29 @@ router.post('/create',async(req,res)=>{
         // if (!verifyToken.fireBaseToken(token,id)){
         //     return errorClass.errorRes('Invalid Token',res,401);
         // }
-        const date = new Date();
+        const course = await Courses.findOne({where:{code:course_code}});
+        if (!course){
+            return errorClass.errorRes('Course not found',res,404);
+        }
         const group = await Study_groups.create({
             name:title,
+            course_id:course.id,
             course_code:course_code,
             creator_id:id,
             disabled:false,
-            created_at: date||new Date(),
+            created_at: new Date(),
             description:description||'no group description'
         })
         await Group_members.create({
             group_id:group.id,
             user_id:id,
-            joined_at: date||new Date()
+            joined_at: new Date()
         })
         for (let member_id in participants){
             await Group_members.create({
                 group_id:group.id,
                 user_id:member_id,
-                joined_at: date||new Date()
+                joined_at: new Date()
             });
         }
         res.status(200).json({message:"Group created successfully"});
@@ -373,10 +377,6 @@ router.post('/leave',async(req,res)=>{
 router.get('/',async(req,res)=>{
     try{
         const groups = await Study_groups.findAll();
-
-        for (let group in groups){
-            console.log(group);
-        }
 
         res.status(200).json({message:"Successfully fetched all the groups", groups:groups});
     }

@@ -64,6 +64,8 @@ const { sequelize } = require('../config/database');
  *         description: Insufficient information provided
  *       401:
  *         description: Invalid token
+ *       404:
+ *         description: Course not found
  *       500:
  *         description: Internal server error
  */

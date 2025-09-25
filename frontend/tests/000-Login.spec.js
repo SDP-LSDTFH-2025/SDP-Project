@@ -1,4 +1,6 @@
 import { test, expect } from "@playwright/test";
+import { chromium } from "playwright-extra";
+import StealthPlugin from "puppeteer-extra-plugin-stealth";
 import path from "path";
 import { dirname } from "path";
 import { fileURLToPath } from "url";
@@ -7,17 +9,29 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const stateFile = path.join(__dirname, "./state/storageState.json");
 
-test.describe("Login and Setup Process", () => {
-  test("Login Test + Setup", async ({ page, context }) => {
-    // Set default timeout for the entire context
-    context.setDefaultTimeout(60000);
+// Add stealth plugin
+chromium.use(StealthPlugin());
 
+test.describe("Login and Setup Process", () => {
+  test("Login Test + Setup with Stealth", async () => {
     const email = process.env.GOOGLE_TEST_EMAIL;
     const password = process.env.GOOGLE_TEST_PASSWORD;
 
     if (!email || !password) {
-      throw new Error("Google test credentials not found. Please set GOOGLE_TEST_EMAIL and GOOGLE_TEST_PASSWORD.");
+      throw new Error(
+        "Google test credentials not found. Please set GOOGLE_TEST_EMAIL and GOOGLE_TEST_PASSWORD."
+      );
     }
+
+    // Launch stealth browser
+    const browser = await chromium.launch({ headless: false });
+    const context = await browser.newContext({
+      storageState: undefined,
+    });
+
+    // Set default timeout
+    context.setDefaultTimeout(60000);
+    const page = await context.newPage();
 
     // Navigate to the initial page
     await page.goto("http://localhost:5173/");
@@ -53,5 +67,7 @@ test.describe("Login and Setup Process", () => {
 
     // Save the storage state for session persistence
     await context.storageState({ path: stateFile });
+
+    await browser.close();
   });
 });

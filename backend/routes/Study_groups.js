@@ -43,11 +43,6 @@ const { sequelize } = require('../config/database');
  *                 type: string
  *                 description: Optional group description
  *                 example: "Group to prepare for final exam"
- *               date:
- *                 type: string
- *                 format: date-time
- *                 description: Optional creation date (defaults to now)
- *                 example: "2025-09-24"
  *               participants:
  *                 type: array
  *                 items:

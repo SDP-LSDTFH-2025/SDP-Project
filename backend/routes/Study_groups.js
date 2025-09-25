@@ -30,7 +30,7 @@ const { sequelize } = require('../config/database');
  *               id:
  *                 type: string
  *                 description: ID of the user creating the group
- *                 example: "12345"
+ *                 example: "d05d85d5-8864-4ebf-9326-0970011cace7"
  *               title:
  *                 type: string
  *                 description: Title of the study group
@@ -48,7 +48,7 @@ const { sequelize } = require('../config/database');
  *                 items:
  *                   type: string
  *                 description: List of user IDs to add as participants
- *                 example: ["67890", "24680"]
+ *                 example: ["d05d85d5-8864-4ebf-9326-0970011cace7"]
  *     responses:
  *       200:
  *         description: Group created successfully
@@ -81,13 +81,9 @@ router.post('/create',async(req,res)=>{
         // if (!verifyToken.fireBaseToken(token,id)){
         //     return errorClass.errorRes('Invalid Token',res,401);
         // }
-        const course = await Courses.findOne({where:{code:course_code}});
-        if (!course){
-            return errorClass.errorRes('Course not found',res,404);
-        }
+   
         const group = await Study_groups.create({
             name:title,
-            course_id:course.id,
             course_code:course_code,
             creator_id:id,
             disabled:false,
@@ -99,7 +95,7 @@ router.post('/create',async(req,res)=>{
             user_id:id,
             joined_at: new Date()
         })
-        for (let member_id in participants){
+        for (let member_id of participants){
             await Group_members.create({
                 group_id:group.id,
                 user_id:member_id,

@@ -21,7 +21,7 @@ const { sequelize } = require('../config/database');
  *               - token
  *               - id
  *               - title
- *               - course_id
+ *               - course_code
  *             properties:
  *               token:
  *                 type: string
@@ -35,10 +35,10 @@ const { sequelize } = require('../config/database');
  *                 type: string
  *                 description: Title of the study group
  *                 example: "Algorithms Revision"
- *               course_id:
- *                 type: integer
- *                 description: Associated course id
- *                 example: "23"
+ *               course_code:
+ *                 type: code
+ *                 description: Associated course code
+ *                 example: "23A"
  *               description:
  *                 type: string
  *                 description: Optional group description
@@ -87,7 +87,7 @@ router.post('/create',async(req,res)=>{
         const date = new Date();
         const group = await Study_groups.create({
             name:title,
-            course_id:course_id,
+            course_code:course_code,
             creator_id:id,
             disabled:false,
             created_at: date||new Date(),
@@ -357,8 +357,8 @@ router.post('/leave',async(req,res)=>{
  *                         type: integer
  *                       name:
  *                         type: string
- *                       course_id:
- *                         type: integer
+ *                       course_code:
+ *                         type: string
  *                       created_at:
  *                         type: string
  *                         format: date-time

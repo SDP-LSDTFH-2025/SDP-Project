@@ -76,9 +76,9 @@ const { sequelize } = require('../config/database');
 
 router.post('/create',async(req,res)=>{
     try{
-        const {token,id,title,course_id,description,participants} = req.body;
+        const {token,id,title,course_code,description,participants} = req.body;
 
-        if (!token||!id||!title||!course_id){
+        if (!token||!id||!title||!course_code){
             return errorClass.insufficientInfo(res);
         }
         // if (!verifyToken.fireBaseToken(token,id)){

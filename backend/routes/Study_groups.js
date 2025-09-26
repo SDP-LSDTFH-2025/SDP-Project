@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { Study_groups,Group_members} = require('../models');
+const { Study_groups,Group_members, Courses} = require('../models');
 const {verifyToken, errorClass} = require('../middleware/tools');
 const { sequelize } = require('../config/database');
 
@@ -8,7 +8,8 @@ const { sequelize } = require('../config/database');
  * @swagger
  * /api/v1/study_groups/create:
  *   post:
- *     summary: Create a new study group and add the creator as a member
+ *     summary: Create a new study group
+ *     description: Creates a new study group with the given details and adds the creator and participants as members.
  *     tags: [Groups]
  *     requestBody:
  *       required: true
@@ -19,22 +20,35 @@ const { sequelize } = require('../config/database');
  *             required:
  *               - token
  *               - id
- *               - name
- *               - course_id
+ *               - title
+ *               - course_code
  *             properties:
  *               token:
  *                 type: string
- *                 description: Firebase token of the user
+ *                 description: Authentication token
+ *                 example: "eyJhbGciOiJIUzI1NiIsInR..."
  *               id:
  *                 type: string
- *                 format: uuid
  *                 description: ID of the user creating the group
- *               name:
+ *                 example: "d05d85d5-8864-4ebf-9326-0970011cace7"
+ *               title:
  *                 type: string
- *                 description: Name of the group
- *               course_id:
- *                 type: integer
- *                 description: ID of the course this group belongs to
+ *                 description: Title of the study group
+ *                 example: "Algorithms Revision"
+ *               course_code:
+ *                 type: code
+ *                 description: Associated course code
+ *                 example: "23A"
+ *               description:
+ *                 type: string
+ *                 description: Optional group description
+ *                 example: "Group to prepare for final exam"
+ *               participants:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 description: List of user IDs to add as participants
+ *                 example: ["d05d85d5-8864-4ebf-9326-0970011cace7"]
  *     responses:
  *       200:
  *         description: Group created successfully
@@ -47,53 +61,47 @@ const { sequelize } = require('../config/database');
  *                   type: string
  *                   example: Group created successfully
  *       400:
- *         description: Missing required information
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: Insufficient information provided
+ *         description: Insufficient information provided
  *       401:
  *         description: Invalid token
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: Invalid Token
+ *       404:
+ *         description: Course not found
  *       500:
- *         description: Server error
+ *         description: Internal server error
  */
 
-//friend requests
+
 router.post('/create',async(req,res)=>{
     try{
-        const {token,id,name,course_id} = req.body;
+        const {token,id,title,course_code,description,participants} = req.body;
 
-        if (!token||!id||!name||!course_id){
+        if (!token||!id||!title||!course_code){
             return errorClass.insufficientInfo(res);
         }
         // if (!verifyToken.fireBaseToken(token,id)){
         //     return errorClass.errorRes('Invalid Token',res,401);
         // }
-        
+   
         const group = await Study_groups.create({
-            name:name,
-            course_id:course_id,
+            name:title,
+            course_code:course_code,
             creator_id:id,
             disabled:false,
-            created_at: new Date()
+            created_at: new Date(),
+            description:description||'no group description'
         })
         await Group_members.create({
             group_id:group.id,
             user_id:id,
             joined_at: new Date()
         })
+        for (let member_id of participants){
+            await Group_members.create({
+                group_id:group.id,
+                user_id:member_id,
+                joined_at: new Date()
+            });
+        }
         res.status(200).json({message:"Group created successfully"});
     }
     catch(error){
@@ -346,8 +354,8 @@ router.post('/leave',async(req,res)=>{
  *                         type: integer
  *                       name:
  *                         type: string
- *                       course_id:
- *                         type: integer
+ *                       course_code:
+ *                         type: string
  *                       created_at:
  *                         type: string
  *                         format: date-time

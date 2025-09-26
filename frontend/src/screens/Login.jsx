@@ -3,6 +3,7 @@ import { useState } from "react";
 import { GoogleLogin } from "@react-oauth/google";
 import "./Login.css";
 
+const CALENDAR_SCOPE = "https://www.googleapis.com/auth/calendar.events";
 
 function Login({ setUser }) {
   const navigate = useNavigate();
@@ -42,6 +43,20 @@ function Login({ setUser }) {
         localStorage.setItem("user", JSON.stringify(data.data));
         localStorage.setItem("token", data.token);
         setUser(data.data);
+
+        // Now request Calendar access token
+        const client = window.google.accounts.oauth2.initTokenClient({
+          client_id: import.meta.env.VITE_CLIENT_ID,
+          scope: CALENDAR_SCOPE,
+          callback: (resp) => {
+            if (resp.access_token) {
+              localStorage.setItem("calendar_token", resp.access_token);
+              console.log("Calendar token acquired:", resp.access_token);
+            }
+          },
+        });
+        client.requestAccessToken();
+
         navigate("/home");
       } else {
         alert(data.success || "Authentication failed");
@@ -70,8 +85,8 @@ function Login({ setUser }) {
         console.log("Signed In!");
         localStorage.setItem("user", JSON.stringify(data.data)); 
         localStorage.setItem("token", data.token);
-
         setUser(data.data);
+
         navigate("/home");
       } else {
         alert(data.success || "Authentication failed");
@@ -114,7 +129,7 @@ function Login({ setUser }) {
         <div className="google-btn">
           <GoogleLogin
             onSuccess={handleLogin}
-            onError={() => alert(`Signin Failed + ${credentialResponse} `)}
+            onError={() => alert("Google login failed")}
           />
         </div>
 

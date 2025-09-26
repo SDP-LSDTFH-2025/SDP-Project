@@ -1,4 +1,4 @@
-import React, { useEffect,useState,useRef } from "react";
+import React, { useEffect,useState } from "react";
 import { Link } from "react-router-dom";
 import { getAllUsers } from "../functions/users";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
@@ -41,7 +41,6 @@ import PlanSessions from "../pages/Sessions.jsx";
 function Home({ user }) {
   
   const [activeView, setActiveView] = useState("feed");
-  const fileInputRef = useRef(null);
   const [title, setTitle] = useState("");
   const [courseId, setCourseId] = useState("");
   const [description, setDescription] = useState("");
@@ -57,6 +56,11 @@ function Home({ user }) {
  const [groupList, setGroups] = useState([]);
  const [isMenuOpen, setIsMenuOpen] = useState(false);
  const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
+ const [events, setEvents] = useState([]);
+
+  const calendar_token = localStorage.getItem("calendar_token");
+  const token = JSON.parse(localStorage.getItem("user"));
+  const SERVER = import.meta.env.VITE_PROD_SERVER || import.meta.env.VITE_DEV_SERVER || "http://localhost:3000";
   // Validate form whenever inputs change
   useEffect(() => {
     const isValid = title.trim() !== '' && 
@@ -69,14 +73,27 @@ function Home({ user }) {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const data = await getAllUsers();
-        const friendsArray = data.slice(0, 5).map(user => ({
+        const res = await fetch(`${SERVER}/api/v1/friends`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            token,
+            id: user.id,
+          }),
+        });
+        if (!res.ok) {
+          throw new Error("Failed to fetch friends");
+        }
+        const data = await res.json();
+        const friendsArray = data.followers.slice(0, 4).map((user) => ({
           id: user.id,
-          username: user.username, // Rename 'username' to 'name'
+          username: user.username,
           name: user.username.replaceAll("_", " "),
           is_active: user.is_active,
           course: user.course || "",
-          status: user.is_active ? 'Active' : 'Inactive', // Rename 'is_active' to 'status' and convert to string
+          status: user.is_active ? "Active" : "Inactive",
         }));
         setFriends(friendsArray);
       } catch (error) {
@@ -84,8 +101,30 @@ function Home({ user }) {
         console.error("Error fetching users:", error.message);
       }
     };
+
+    async function fetchEvents() {
+      if (!calendar_token) return;
+      const res = await fetch(
+        "https://www.googleapis.com/calendar/v3/calendars/primary/events",
+        {
+          headers: { Authorization: `Bearer ${calendar_token}` },
+        }
+      );
+      const data = await res.json();
+      if (data.items) {
+        setEvents(
+          data.items.map((ev) => ({
+            title: ev.summary,
+            start: ev.start.dateTime || ev.start.date,
+            end: ev.end.dateTime || ev.end.date,
+          }))
+        );
+      }
+    }
+
+    fetchEvents();
     fetchUsers();
-  }, []);
+  }, [calendar_token, token, user.id, SERVER]);
 
   useEffect(() => {
     const fetchGroups = async () => {
@@ -116,18 +155,6 @@ function Home({ user }) {
   function handleNavigationClick(view) {
     setActiveView(view);
   }
-
-  const handleFileSelect = (event) => {
-    const files = event.target.files;
-    if (files && files.length > 0) {
-      setActiveView("upload");
-      const pdf = Array.from(files).find((f) => f.type.includes("pdf"));
-      const image = Array.from(files).find((f) => f.type.startsWith("image/"));
-      if (pdf) setPdfFile(pdf);
-      if (image) setPictureFile(image);
-      console.log("Files selected:", { pdf, image });
-    }
-  };
 
   const handleUploadSubmit = async (e) => {
     e.preventDefault();
@@ -361,19 +388,7 @@ function Home({ user }) {
                   eventContent={()=> {
                     return {html:`<div class="event-dot"></div>`};
                   }}
-                  events={[
-                    {
-                      title: 'Study Session',
-                      start: new Date(),
-                      
-                      
-                    },
-                    {
-                      title: 'Group Meeting',
-                      start: new Date(new Date().setDate(new Date().getDate() + 2)),
-                      
-                    }
-                  ]}
+                  events={events}
                   eventClick={(info) => {
                     info.jsEvent.preventDefault();
                     setSelectedEvent({
@@ -522,20 +537,20 @@ function Home({ user }) {
           </div>
 
 
-				{/* Active study groups */}
-				<div className="study-groups">
-					<h3>Group Activities</h3>
-					{groups.length > 0 ? (
-						groups.map((g, i) => (
-							<p key={i}>
-								{g.name} ({g.online} online)
-							</p>
-						))
-					) : (
-						<p className="empty-text">No groups yet.</p>
-					)}
-				</div>
-			</aside>
+          {/* Active study groups */}
+          <div className="study-groups">
+            <h3>Group Activities</h3>
+            {groups.length > 0 ? (
+              groups.map((g, i) => (
+                <p key={i}>
+                  {g.name} ({g.online} online)
+                </p>
+              ))
+            ) : (
+              <p className="empty-text">No groups yet.</p>
+            )}
+          </div>
+        </aside>
 		</main>
     </div>
 	);

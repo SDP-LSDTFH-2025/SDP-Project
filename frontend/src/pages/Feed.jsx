@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import FileCard from "./FileCard";
-import { Search } from "lucide-react";
 import {Input} from "../components/ui/input";
 import "./Feed.css";
 const Feed = () => {
@@ -75,7 +74,6 @@ const Feed = () => {
   return (
     <>
       <div className="search-input">
-        <Search size={16} className="search-icon" />
         <Input
           className="search"
           placeholder="Search resource by Title, Course Code, or Username..."

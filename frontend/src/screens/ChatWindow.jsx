@@ -68,7 +68,7 @@ export default function ChatWindow({ chat, onBack }) {
       socket.off("private:typing");
       socket.off("private:read");
     };
-  }, [chatId, currentUserId]);
+  }, [chatId, currentUserId, chat.id, chat.username]);
 
   const sendMessage = () => {
     if (!input.trim()) return;
@@ -132,10 +132,12 @@ export default function ChatWindow({ chat, onBack }) {
         </div>
         <div className="header-info">
           <h2>{chat.username.replaceAll("_", " ")}</h2>
-          <p style={{ color: chat.is_active ? "green" : "gray" }}>
+          {isTyping ?
+           <p style={{ fontStyle: "italic" }}>Typing...</p> :
+                     <p style={{ color: chat.is_active ? "green" : "gray" }}>
             {chat.is_active ? "Online" : "Offline"}
           </p>
-          {isTyping && <small style={{ fontStyle: "italic" }}>Typing...</small>}
+          }
         </div>
       </div>
 

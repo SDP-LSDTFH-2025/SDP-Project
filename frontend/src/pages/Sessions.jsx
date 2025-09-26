@@ -8,12 +8,12 @@ import {
 import GroupChat from "./GroupChat";
 import "./Sessions.css";
 
-const dummySessions = [
+const dummyGroups = [
   {
     id: 1,
     title: "Math Study Group",
     description: "Reviewing calculus and linear algebra for the upcoming test.",
-    subject: "Mathematics",
+    subject: "Course 101",
     date: "2025-09-20",
     participants: 3,
     organizer: "Alice",
@@ -23,54 +23,122 @@ const dummySessions = [
     id: 2,
     title: "AI & ML Crash Course",
     description: "Quick walkthrough of neural networks and deep learning.",
-    subject: "AI",
+    subject: "Course 202",
     date: "2025-09-22",
     participants: 1,
     organizer: "Bob",
     joined: false,
   },
-  {
-    id: 3,
-    title: "Physics Problem Solving",
-    description: "Group work on quantum mechanics exercises.",
-    subject: "Physics",
-    date: "2025-09-10",
-    participants: 4,
-    organizer: "Eve",
-    joined: false,
-  },
 ];
 
-export default function PlanSessions() {
-  const [sessionSearch] = useState("");
+export default function PlanGroups() {
+  const [groupSearch] = useState("");
   const [selectedSubject, setSelectedSubject] = useState("Discover groups");
-  const [showCreateSession, setShowCreateSession] = useState(false);
+  const [showCreateGroup, setShowCreateGroup] = useState(false);
   const [activeGroup, setActiveGroup] = useState(null);
-  const [sessions, setSessions] = useState(dummySessions);
+  const [groups, setGroups] = useState(dummyGroups);
+
+  const [newGroup, setNewGroup] = useState({
+    title: "",
+    courseId: "",
+    description: "",
+  });
+
+  const [loading, setLoading] = useState(false);
 
   const subjects = ["My groups", "Discover groups"];
 
-  const filteredSessions = sessions.filter((session) => {
-    if (selectedSubject === "My groups" && !session.joined) return false;
-    if (selectedSubject === "Discover groups" && session.joined) return false;
-    
+  const filteredGroups = groups.filter((group) => {
+    if (selectedSubject === "My groups" && !group.joined) return false;
+    if (selectedSubject === "Discover groups" && group.joined) return false;
+
     return (
-      session.title.toLowerCase().includes(sessionSearch.toLowerCase()) ||
-      session.subject.toLowerCase().includes(sessionSearch.toLowerCase()) ||
-      session.organizer.toLowerCase().includes(sessionSearch.toLowerCase())
+      group.title.toLowerCase().includes(groupSearch.toLowerCase()) ||
+      group.subject.toLowerCase().includes(groupSearch.toLowerCase()) ||
+      group.organizer.toLowerCase().includes(groupSearch.toLowerCase())
     );
   });
 
-  const handleJoinSession = (id) => {
-    setSessions((prev) =>
-      prev.map((s) =>
-        s.id === id ? { ...s, joined: true, participants: s.participants + 1 } : s
+  const handleJoinGroup = (id) => {
+    setGroups((prev) =>
+      prev.map((g) =>
+        g.id === id ? { ...g, joined: true, participants: g.participants + 1 } : g
       )
     );
   };
 
-  const handleViewSessionDetails = (session) => {
-    setActiveGroup(session);
+  const handleViewGroupDetails = (group) => {
+    setActiveGroup(group);
+  };
+
+  const createGroup = async () => {
+    try {
+      setLoading(true);
+
+      const SERVER = import.meta.env.VITE_PROD_SERVER || import.meta.env.VITE_DEV_SERVER || "http://localhost:3000";
+
+      const token = localStorage.getItem("token");
+      const creatorId = JSON.parse(localStorage.getItem("user")).id;
+
+      const today = new Date().toISOString().split("T")[0];
+
+      if (!newGroup.title || !newGroup.courseId || !newGroup.description) {
+        alert("Please fill in all required fields");
+        setLoading(false);
+        return;
+      }
+
+      const payload = {
+        token,
+        id: creatorId,
+        title: newGroup.title,
+        course_code: newGroup.courseId,
+        description: newGroup.description,
+        participants: [creatorId],
+      };
+
+      const res = await fetch(`${SERVER}/api/v1/study_groups/create`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        console.error(data);
+        throw new Error(data.message || "Failed to create group");
+      }
+
+      console.log("Group created:", data);
+
+      setGroups((prev) => [
+        ...prev,
+        {
+          id: data.id || prev.length + 1,
+          title: newGroup.title,
+          description: newGroup.description,
+          subject: newGroup.courseId,
+          date: today,
+          participants: 1,
+          organizer: "You",
+          joined: true,
+        },
+      ]);
+
+      setNewGroup({
+        title: "",
+        courseId: "",
+        description: "",
+      });
+
+    } catch (err) {
+      console.error(err);
+      alert("Error creating group: " + err.message);
+    } finally {
+      setLoading(false);
+      setShowCreateGroup(false);
+    }
   };
 
   if (activeGroup) {
@@ -78,7 +146,7 @@ export default function PlanSessions() {
   }
 
   return (
-    <div className="plan-sessions">
+    <div className="plan-groups">
       {/* Header */}
       <div className="header">
         <div>
@@ -87,7 +155,7 @@ export default function PlanSessions() {
         </div>
         <button
           className="create-btn"
-          onClick={() => setShowCreateSession(true)}
+          onClick={() => setShowCreateGroup(true)}
         >
           <Plus size={16} /> Create Group
         </button>
@@ -98,9 +166,7 @@ export default function PlanSessions() {
         {subjects.map((subj) => (
           <button
             key={subj}
-            className={`filter-btn ${
-              selectedSubject === subj ? "active" : ""
-            }`}
+            className={`filter-btn ${selectedSubject === subj ? "active" : ""}`}
             onClick={() => setSelectedSubject(subj)}
           >
             {subj}
@@ -108,44 +174,45 @@ export default function PlanSessions() {
         ))}
       </div>
 
-      {/* Sessions Grid */}
-      <div className="sessions-grid">
-        {filteredSessions.map((session) => (
-          <div key={session.id} className="session-card">
+      {/* Groups Grid */}
+      <div className="groups-grid">
+        {filteredGroups.map((group) => (
+          <div key={group.id} className="session-card">
             <div className="session-badges">
-              <span className="badge badge-outline">{session.subject}</span>
+              <span className="badge badge-outline">{group.subject}</span>
             </div>
 
-            <h3>{session.title}</h3>
-            <p className="description">{session.description}</p>
+            <h3>{group.title}</h3>
+            <p className="description">{group.description}</p>
 
             <div className="details">
               <div>
                 <Calendar size={14} />{" "}
-                {new Date(session.date).toLocaleDateString()}
+                {new Date(group.date).toLocaleDateString()}
               </div>
               <div>
                 <Users size={14} />{" "}
-                {session.participants} participants
+                {group.participants} participants
               </div>
               <div>
-                <User size={14} /> Created by {session.organizer}
+                <User size={14} /> Created by {group.organizer}
               </div>
             </div>
 
             <div className="card-actions">
-              {session.joined ? (
+              {group.joined ? (
                 <button
                   className="outline-btn"
-                  onClick={() => handleViewSessionDetails(session)}
+                  onClick={() => handleViewGroupDetails(group)}
                 >
                   View
                 </button>
               ) : (
                 <button
                   className="blue-btn"
-                  onClick={() => handleJoinSession(session.id)}
-                > Join
+                  onClick={() => handleJoinGroup(group.id)}
+                >
+                  Join
                 </button>
               )}
             </div>
@@ -153,7 +220,7 @@ export default function PlanSessions() {
         ))}
       </div>
 
-      {filteredSessions.length === 0 && (
+      {filteredGroups.length === 0 && (
         <div className="empty-card">
           <Calendar size={48} className="empty-icon" />
           <h3> No groups found </h3>
@@ -162,42 +229,57 @@ export default function PlanSessions() {
       )}
 
       {/* Modal */}
-      {showCreateSession && (
+      {showCreateGroup && (
         <div className="modal-overlay">
           <div className="modal-content">
             <h3>Create New Group</h3>
             <label>
               Title
-              <input type="text" placeholder="Enter session title" />
+              <input
+                type="text"
+                value={newGroup.title}
+                onChange={(e) =>
+                  setNewGroup({ ...newGroup, title: e.target.value })
+                }
+                placeholder="Enter group title"
+              />
             </label>
             <label>
-              Subject
-              <input placeholder="Enter subject" />
+              Course Code
+              <input
+                type="text"
+                value={newGroup.courseId}
+                onChange={(e) =>
+                  setNewGroup({ ...newGroup, courseId: e.target.value })
+                }
+                placeholder="Enter course Code"
+              />
             </label>
             <label>
               Description
-              <textarea placeholder="Enter description" />
-            </label>
-            <label>
-              Date
-              <input type="date" />
+              <textarea
+                value={newGroup.description}
+                onChange={(e) =>
+                  setNewGroup({ ...newGroup, description: e.target.value })
+                }
+                placeholder="Enter description"
+              />
             </label>
 
             <div className="modal-actions">
               <button
                 className="outline-btn"
-                onClick={() => setShowCreateSession(false)}
+                onClick={() => setShowCreateGroup(false)}
+                disabled={loading}
               >
                 Cancel
               </button>
               <button
                 className="blue-btn"
-                onClick={() => {
-                  alert("Session created!");
-                  setShowCreateSession(false);
-                }}
+                onClick={createGroup}
+                disabled={loading}
               >
-                Create
+                {loading ? "Creating..." : "Create"}
               </button>
             </div>
           </div>

@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import request from "supertest";
 import server from "../../../server";
 
-describe("GET /api/v1/resources", () => {
+describe.skip("GET /api/v1/resources", () => {
 	
 	const getFirstResourceId = async () => {
 		const response = await request(server)

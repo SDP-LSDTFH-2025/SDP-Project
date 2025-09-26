@@ -1,8 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const { Study_groups,Group_members, Courses} = require('../models');
-const {verifyToken, errorClass} = require('../middleware/tools');
+const { Study_groups,Group_members, Courses, User} = require('../models');
+const {verifyToken, errorClass, courseVariants} = require('../middleware/tools');
 const { sequelize } = require('../config/database');
+const { spliceStr } = require('sequelize/lib/utils');
+const { Op} = require("sequelize");
 
 /**
  * @swagger
@@ -639,6 +641,134 @@ router.get('/myGroups/:token/:id',async(req,res)=>{
 
 
         res.status(200).json({message:"Successfully fetched the specified group", groups:myGroups});
+    }
+    catch(error){
+        errorClass.serverError(res);
+        console.log(error);
+    }
+})
+
+/**
+ * @swagger
+ * /api/v1/study_groups/recommendedGroups/{token}/{id}:
+ *   get:
+ *     summary: Fetch recommended study groups for a user
+ *     description: Returns a list of study groups recommended based on the user's academic interests.  
+ *     tags:
+ *       - Groups
+ *     parameters:
+ *       - in: path
+ *         name: token
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Authentication token for the request.
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The user ID whose recommended groups will be fetched.
+ *     responses:
+ *       200:
+ *         description: Successfully fetched recommended groups.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Successfully fetched the specified group
+ *                 groups:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     description: Recommended study group object
+ *                     properties:
+ *                       id:
+ *                         type: string
+ *                         example: "123"
+ *                       name:
+ *                         type: string
+ *                         example: "Mathematics Study Group"
+ *                       course_code:
+ *                         type: string
+ *                         example: "MATH101"
+ *                       description:
+ *                         type: string
+ *                         example: "A group for students interested in calculus and linear algebra."
+ *       400:
+ *         description: Missing token or user ID (Insufficient info).
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 response:
+ *                   type: string
+ *                   example: Insufficient info provided by client
+ *       401:
+ *         description: Invalid token.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 response:
+ *                   type: string
+ *                   example: Invalid Token
+ *       500:
+ *         description: Internal server error.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 response:
+ *                   type: string
+ *                   example: Internal server error
+ */
+
+
+router.get('/recommendedGroups/:token/:id',async(req,res)=>{
+    try{
+        const {token,id} = req.params;
+
+        if (!token||!id) {
+            return errorClass.insufficientInfo(res);
+        }
+        // if (!verifyToken.fireBaseToken(token,id)){
+        //     return errorClass.errorRes('Invalid Token',res,401);
+        // }
+        let myGroups = [];
+        const user = await User.findOne({
+            where:{id}
+        })
+
+        if (!user["academic_interests"]){
+            res.status(200).json({message:"User has no academic interests"});
+            return;
+        }
+        const interest = user["academic_interests"].split(",");
+        const interestExpand = courseVariants(interest);
+
+        for (let potential of interestExpand){
+            const groups = await Study_groups.findAll({
+                where: {
+                    name: {
+                        [Op.iLike]: `%${potential}%`  // contains "math" in any case
+                    }
+                }
+                });
+
+            for (let group of groups){
+                myGroups.push(group)
+            }
+        }
+
+
+        res.status(200).json({message:"Successfully fetched the specified group", groups:myGroups, success: true});
     }
     catch(error){
         errorClass.serverError(res);

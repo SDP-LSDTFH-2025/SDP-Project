@@ -771,6 +771,7 @@ router.get('/recommendedGroups/:token/:id',async(req,res)=>{
         res.status(200).json({message:"Successfully fetched the specified group", groups:myGroups, success: true});
     }
     catch(error){
+        //server error
         errorClass.serverError(res);
         console.log(error);
     }

@@ -17,12 +17,12 @@ const PrivateChats = sequelize.define('PrivateChats', {
     },
     message: {
         type: DataTypes.TEXT,
-        allowNull: false
+        allowNull: true
     },
     deleted: {
         type: DataTypes.BOOLEAN,
         allowNull: false,
-        defaultValue: false
+        defaultValue: true
     },
     created_at: {
         type: DataTypes.DATE,

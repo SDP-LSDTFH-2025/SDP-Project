@@ -11,8 +11,8 @@ function createSocketServer(httpServer, corsOrigins) {
     }
   });
 
-  const apiPrefix = (process.env.API_PREFIX || '/api/v1').replace(/\/$/, '');
-  const nsp = io.of(`${apiPrefix}/sockets`);
+  // Use a stable namespace without API prefix
+  const nsp = io.of('/sockets');
 
   // No authorization required: optionally accept userId from handshake
   nsp.use((socket, next) => {

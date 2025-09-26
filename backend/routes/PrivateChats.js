@@ -8,6 +8,19 @@ const { PrivateChats } = require('../models');
  *   get:
  *     summary: Get all private chats
  *     tags: [PrivateChats]
+ *     parameters:
+ *       - name: sender_id
+ *         in: query
+ *         required: true
+ *         description: The ID of the sender
+ *         schema:
+ *           type: string
+ *       - name: receiver_id
+ *         in: query
+ *         required: true
+ *         description: The ID of the receiver
+ *         schema:
+ *           type: string
  *     responses:
  *       200:
  *         description: A list of private chats
@@ -26,7 +39,8 @@ const { PrivateChats } = require('../models');
  */
 router.get('/', async (req, res) => {
     try{
-    const privateChats = await PrivateChats.findAll();
+        const {sender_id, receiver_id} = req.query;
+    const privateChats = await PrivateChats.findAll({where: {sender_id, receiver_id}});
     if(!privateChats){
         return res.status(404).json({success: false, error: 'Private chats not found'});
     }

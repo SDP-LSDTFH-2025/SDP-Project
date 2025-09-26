@@ -103,9 +103,18 @@ function requireUserId(req, res) {
  *                 success:
  *                   type: boolean
  *                 data:
- *                   type: array
- *                   items:
- *                     $ref: '#/components/schemas/Event'
+ *                   type: object
+ *                   properties:
+ *                     events:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         description: Event object returned by Planit API
+ *                     guests:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         description: Guests list per event returned by Planit API
  */
 router.get('/events', async (req, res) => {
   const eventPlanner = requireUserId(req, res);

@@ -5,7 +5,7 @@ const SERVER = import.meta.env.VITE_PROD_SERVER || "http://localhost:3000";
 const token = localStorage.getItem("token");
 const user = JSON.parse(localStorage.getItem("user"));
 
-export const socket = io(`${SERVER}/api/v1/sockets`, {
+export const socket = io(`${SERVER}/sockets`, {
   transports: ["websocket"],
   auth: { token, userId: user?.id },
   extraHeaders: {

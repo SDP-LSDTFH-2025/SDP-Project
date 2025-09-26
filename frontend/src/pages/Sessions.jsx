@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Calendar,
   Users,
@@ -8,35 +8,12 @@ import {
 import GroupChat from "./GroupChat";
 import "./Sessions.css";
 
-const dummyGroups = [
-  {
-    id: 1,
-    title: "Math Study Group",
-    description: "Reviewing calculus and linear algebra for the upcoming test.",
-    subject: "Course 101",
-    date: "2025-09-20",
-    participants: 3,
-    organizer: "Alice",
-    joined: true,
-  },
-  {
-    id: 2,
-    title: "AI & ML Crash Course",
-    description: "Quick walkthrough of neural networks and deep learning.",
-    subject: "Course 202",
-    date: "2025-09-22",
-    participants: 1,
-    organizer: "Bob",
-    joined: false,
-  },
-];
-
 export default function PlanGroups() {
   const [groupSearch] = useState("");
   const [selectedSubject, setSelectedSubject] = useState("Discover groups");
   const [showCreateGroup, setShowCreateGroup] = useState(false);
   const [activeGroup, setActiveGroup] = useState(null);
-  const [groups, setGroups] = useState(dummyGroups);
+  const [groups, setGroups] = useState([]);
 
   const [newGroup, setNewGroup] = useState({
     title: "",
@@ -45,8 +22,52 @@ export default function PlanGroups() {
   });
 
   const [loading, setLoading] = useState(false);
+  const [joining, setJoining] = useState(null);
+  const [creatingGroup, setCreatingGroup] = useState(false);
+
+  const SERVER = import.meta.env.VITE_PROD_SERVER || import.meta.env.VITE_DEV_SERVER || "http://localhost:3000";
+  const token = localStorage.getItem("user");
+  const creatorId = JSON.parse(localStorage.getItem("user")).id;
 
   const subjects = ["My groups", "Discover groups"];
+
+  useEffect(() => {
+    const fetchGroups = async () => {
+      try {
+        setLoading(true);
+
+        const res = await fetch(`${SERVER}/api/v1/study_groups`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          console.error(data);
+          throw new Error(data.message || "Failed to fetch groups");
+        }
+
+        const formatted = data.groups.map((g) => ({
+          id: g.id,
+          title: g.name,
+          description: g.description,
+          subject: g.course_id ? `Course ${g.course_id}` : "General",
+          date: g.created_at || new Date().toISOString(), 
+          participants: g.participants?.length || 0,
+          organizer: g.creator_id || g.creator_name,
+          joined: false,
+        }));
+
+        setGroups(formatted);
+      } catch (err) {
+        console.error("Error fetching groups:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchGroups();
+  }, [SERVER, token]);
 
   const filteredGroups = groups.filter((group) => {
     if (selectedSubject === "My groups" && !group.joined) return false;
@@ -59,13 +80,72 @@ export default function PlanGroups() {
     );
   });
 
-  const handleJoinGroup = (id) => {
-    setGroups((prev) =>
-      prev.map((g) =>
-        g.id === id ? { ...g, joined: true, participants: g.participants + 1 } : g
-      )
-    );
+  const handleJoinGroup = async (id) => {
+    setJoining(id);
+    try {
+      const res = await fetch(`${SERVER}/api/v1/study_groups/join`, {
+        method: "POST",
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          token,
+          id: creatorId,
+          groupID: id,
+        }),
+
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error("Failed to join group");
+      alert(data.message);
+      setGroups((prev) =>
+        prev.map((g) =>
+          g.id === id ? { ...g, joined: true, participants: g.participants + 1 } : g
+        )
+      );
+    } catch (err) {
+      console.error(err);
+      alert("Could not join group: " + err.message);
+    }finally {
+      setJoining(null);
+    }
   };
+  const handleLeaveGroup = async (id) => {
+    setJoining(id);
+    try {
+      const res = await fetch(`${SERVER}/api/v1/study_groups/leave`, {
+        method: "POST",
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          token,
+          id: creatorId,
+          groupID: id
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.message || "Failed to leave group");
+
+      alert(data.message);
+
+      setGroups((prev) =>
+        prev.map((g) =>
+          g.id === id ? { ...g, joined: false, participants: g.participants - 1 } : g
+        )
+      );
+    } catch (err) {
+      console.error(err);
+      alert("Could not leave group: " + err.message);
+    } finally {
+      setJoining(false);
+    }
+  };
+
 
   const handleViewGroupDetails = (group) => {
     setActiveGroup(group);
@@ -73,18 +153,12 @@ export default function PlanGroups() {
 
   const createGroup = async () => {
     try {
-      setLoading(true);
-
-      const SERVER = import.meta.env.VITE_PROD_SERVER || import.meta.env.VITE_DEV_SERVER || "http://localhost:3000";
-
-      const token = localStorage.getItem("token");
-      const creatorId = JSON.parse(localStorage.getItem("user")).id;
-
+      setCreatingGroup(true);
       const today = new Date().toISOString().split("T")[0];
 
       if (!newGroup.title || !newGroup.courseId || !newGroup.description) {
         alert("Please fill in all required fields");
-        setLoading(false);
+        setCreatingGroup(false);
         return;
       }
 
@@ -136,7 +210,7 @@ export default function PlanGroups() {
       console.error(err);
       alert("Error creating group: " + err.message);
     } finally {
-      setLoading(false);
+      setCreatingGroup(false);
       setShowCreateGroup(false);
     }
   };
@@ -201,18 +275,28 @@ export default function PlanGroups() {
 
             <div className="card-actions">
               {group.joined ? (
-                <button
-                  className="outline-btn"
-                  onClick={() => handleViewGroupDetails(group)}
-                >
-                  View
-                </button>
+                <>
+                  <button
+                    className="outline-btn"
+                    onClick={() => handleViewGroupDetails(group)}
+                  >
+                    View
+                  </button>
+                  <button
+                    className="red-btn"
+                    onClick={() => handleLeaveGroup(group.id)}
+                    disabled={joining === group.id}
+                  >
+                    {joining === group.id ? "Leaving..." : "Leave"}
+                  </button>
+                </>
               ) : (
                 <button
                   className="blue-btn"
                   onClick={() => handleJoinGroup(group.id)}
+                  disabled={joining === group.id}
                 >
-                  Join
+                  {joining === group.id ? "Joining..." : "Join"}
                 </button>
               )}
             </div>
@@ -270,16 +354,16 @@ export default function PlanGroups() {
               <button
                 className="outline-btn"
                 onClick={() => setShowCreateGroup(false)}
-                disabled={loading}
+                disabled={creatingGroup}
               >
                 Cancel
               </button>
               <button
                 className="blue-btn"
                 onClick={createGroup}
-                disabled={loading}
+                disabled={creatingGroup}
               >
-                {loading ? "Creating..." : "Create"}
+                {creatingGroup ? "Creating..." : "Create"}
               </button>
             </div>
           </div>

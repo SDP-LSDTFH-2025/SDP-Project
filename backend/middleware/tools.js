@@ -73,13 +73,13 @@ class errorClass{
         res.status(500).json({response:'Internal server error'})
     }
     static insufficientInfo(res){
-        res.status(422).json({response:'Insufficient info provided by client'})
+        res.status(400).json({response:'Insufficient info provided by client'})
     }
     static userNotFound(res){
-        res.status(404).json({response:'User does not exist'})
+        res.status(400).json({response:'User does not exist'})
     }
     static Token(res){
-        res.status(401).json({response:'Invalid token'})
+        res.status(400).json({response:'Invalid token'})
     }
 }
 

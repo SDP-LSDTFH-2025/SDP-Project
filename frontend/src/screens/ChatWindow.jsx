@@ -12,7 +12,7 @@ export default function ChatWindow({ chat, onBack }) {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
-  const [online, setOnline] = useState(chat.Active || false);
+  const [online, setOnline] = useState(chat.is_active || false);
 
   const lastTempIdSent = useRef(null);
   const typingTimeout = useRef(null);
@@ -26,6 +26,42 @@ export default function ChatWindow({ chat, onBack }) {
     .map((p) => p[0])
     .join("")
     .toUpperCase();
+
+  const SERVER = import.meta.env.VITE_PROD_SERVER || import.meta.env.VITE_DEV_SERVER || "http://localhost:3000";
+
+  useEffect(() => {
+    async function fetchHistory() {
+      try {
+        const [sentRes, receivedRes] = await Promise.all([
+          fetch(`${SERVER}/api/v1/private-chats?sender_id=${currentUserId}&receiver_id=${chat.id}`),
+          fetch(`${SERVER}/api/v1/private-chats?sender_id=${chat.id}&receiver_id=${currentUserId}`)
+        ]);
+
+        if (!sentRes.ok || !receivedRes.ok) throw new Error("Failed to fetch history");
+
+        const [sentMsgs, receivedMsgs] = await Promise.all([sentRes.json(), receivedRes.json()]);
+
+        const allMsgs = [...sentMsgs, ...receivedMsgs].sort(
+          (a, b) => new Date(a.created_at) - new Date(b.created_at)
+        );
+
+        const formatted = allMsgs.map((msg) => ({
+          from: msg.sender_id === currentUserId ? "me" : "other",
+          text: msg.message,
+          time: new Date(msg.created_at).toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+        }));
+
+        setMessages(formatted);
+      } catch (err) {
+        console.error("Failed to fetch messages:", err);
+      }
+    }
+
+    fetchHistory();
+  }, [chat.id, currentUserId, SERVER]);
 
   useEffect(() => {
     if (!socket.connected) socket.connect();
@@ -48,7 +84,6 @@ export default function ChatWindow({ chat, onBack }) {
           },
         ]);
 
-        // Send read receipt
         socket.emit("private:read", { fromUserId: msg.sender_id });
       }
     });
@@ -132,12 +167,13 @@ export default function ChatWindow({ chat, onBack }) {
         </div>
         <div className="header-info">
           <h2>{chat.username.replaceAll("_", " ")}</h2>
-          {isTyping ?
-           <p style={{ fontStyle: "italic" }}>Typing...</p> :
-                     <p style={{ color: chat.is_active ? "green" : "gray" }}>
-            {chat.is_active ? "Online" : "Offline"}
-          </p>
-          }
+          {isTyping ? (
+            <p style={{ fontStyle: "italic" }}>Typing...</p>
+          ) : (
+            <p style={{ color: chat.is_active ? "green" : "gray" }}>
+              {chat.is_active ? "Online" : "Offline"}
+            </p>
+          )}
         </div>
       </div>
 

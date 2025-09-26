@@ -18,10 +18,6 @@ const Study_groups = sequelize.define('study_groups',{
         type:DataTypes.INTEGER,
         allowNull: true,
     },
-    course_code:{
-        type:DataTypes.STRING,
-        allowNull: false,
-    },
     creator_id:{
         type:DataTypes.UUID,
         allowNull:false,
@@ -40,10 +36,6 @@ const Study_groups = sequelize.define('study_groups',{
     },
     created_at:{
         type:DataTypes.TIME
-    },
-    description:{
-        type:DataTypes.STRING,
-        allowNull: true
     }
 },{
     tableName: "study_groups",

@@ -51,17 +51,16 @@ function Home({ user }) {
   const [selectedUser, setSelectedUser] = useState(null);
   const [selectedEvent, setSelectedEvent] = useState(null);
 
-
- const [friendsList, setFriends] = useState([]);
- const [groupList, setGroups] = useState([]);
- const [isMenuOpen, setIsMenuOpen] = useState(false);
- const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
- const [events, setEvents] = useState([]);
+  const [friendsList, setFriends] = useState([]);
+  const [groupList, setGroups] = useState([]);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
+  const [events, setEvents] = useState([]);
 
   const calendar_token = localStorage.getItem("calendar_token");
   const token = JSON.parse(localStorage.getItem("user"));
   const SERVER = import.meta.env.VITE_PROD_SERVER || import.meta.env.VITE_DEV_SERVER || "http://localhost:3000";
-  // Validate form whenever inputs change
+
   useEffect(() => {
     const isValid = title.trim() !== '' && 
                     courseId.trim() !== '' && 

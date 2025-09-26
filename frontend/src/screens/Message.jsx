@@ -17,7 +17,7 @@ export default function Message() {
 
       <div className={`chat-window ${!selectedChat ? "hide-on-mobile" : ""}`}>
         {selectedChat ? (
-          <ChatWindow chat={selectedChat} onBack={() => setSelectedChat(null)} />
+          <ChatWindow key={selectedChat.id} chat={selectedChat} onBack={() => setSelectedChat(null)} />
         ) : (
           <div className="no-chat"></div>
         )}

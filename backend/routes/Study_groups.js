@@ -623,11 +623,22 @@ router.get('/myGroups/:token/:id',async(req,res)=>{
         //     return errorClass.errorRes('Invalid Token',res,401);
         // }
 
-        const group = await Group_members.findAll({
+        const groups = await Group_members.findAll({
             where:{user_id:id}
             });
 
-        res.status(200).json({message:"Successfully fetched the specified group", group:group});
+        let myGroups = [];
+
+        for (let group of groups){
+            group_element = await Study_groups.findOne({
+                where:{id:group.group_id}
+            })
+            if (!group_element) continue;
+            myGroups.push(group_element);
+        }
+
+
+        res.status(200).json({message:"Successfully fetched the specified group", groups:myGroups});
     }
     catch(error){
         errorClass.serverError(res);

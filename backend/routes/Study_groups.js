@@ -386,7 +386,7 @@ router.get('/',async(req,res)=>{
 
 /**
  * @swagger
- * /byID/{id}:
+ * /api/v1/study_groups/byID/{id}:
  *   get:
  *     summary: Get a study group by ID
  *     description: Fetches the details of a study group by its unique identifier.
@@ -438,7 +438,7 @@ router.get('/byID/:id',async(req,res)=>{
 })
 /**
  * @swagger
- * /byName/{name}:
+ * /api/v1/study_groups/byName/{name}:
  *   get:
  *     summary: Get a study group by name
  *     description: Fetches the details of a study group by its unique name.
@@ -491,7 +491,7 @@ router.get('/byName/:name',async(req,res)=>{
 
 /**
  * @swagger
- * /byCreator/{creatorID}:
+ * /api/v1/study_groups/byCreator/{creatorID}:
  *   get:
  *     summary: Get a study group by creator ID
  *     description: Fetches the details of a study group created by a specific user.
@@ -532,6 +532,99 @@ router.get('/byCreator/:creatorID',async(req,res)=>{
         const group = await Study_groups.findOne({
             attributes: { exclude: ['creator_id','disabled'] },
             where:{creator_id:creatorID}
+            });
+
+        res.status(200).json({message:"Successfully fetched the specified group", group:group});
+    }
+    catch(error){
+        errorClass.serverError(res);
+        console.log(error);
+    }
+})
+
+/**
+ * @swagger
+ * /api/v1/study_groups/myGroups/{token}/{id}:
+ *   get:
+ *     summary: Fetch groups belonging to a specific user
+ *     description: Returns all groups where the given user ID is a member. Requires a token and user ID.
+ *     tags:
+ *       - Groups
+ *     parameters:
+ *       - in: path
+ *         name: token
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Authentication token for the request.
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the user whose groups are being fetched.
+ *     responses:
+ *       200:
+ *         description: Successfully fetched the specified group(s).
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Successfully fetched the specified group
+ *                 group:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     description: Group member object
+ *       400:
+ *         description: Missing token or user ID (Insufficient info).
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 response:
+ *                   type: string
+ *                   example: Insufficient info provided by client
+ *       401:
+ *         description: Invalid token.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 response:
+ *                   type: string
+ *                   example: Invalid Token
+ *       500:
+ *         description: Internal server error.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 response:
+ *                   type: string
+ *                   example: Internal server error
+ */
+
+
+router.get('/myGroups/:token/:id',async(req,res)=>{
+    try{
+        const {token,id} = req.params;
+
+        if (!token||!id) {
+            return errorClass.insufficientInfo(res);
+        }
+        // if (!verifyToken.fireBaseToken(token,id)){
+        //     return errorClass.errorRes('Invalid Token',res,401);
+        // }
+
+        const group = await Group_members.findAll({
+            where:{user_id:id}
             });
 
         res.status(200).json({message:"Successfully fetched the specified group", group:group});

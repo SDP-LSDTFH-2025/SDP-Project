@@ -23,6 +23,9 @@ const Study_sessions = require('./Study_sessions');
 const Follows_requests = require('./follows_requests');
 const public_resources = require('./public_resources');
 
+//Events
+const Events = require('./Events');
+
 
 // Define associations
 // User associations
@@ -92,6 +95,8 @@ Follows.belongsTo(User, { as: 'Followee', foreignKey: 'followee_id', targetKey: 
 Follows_requests.belongsTo(User, { as: 'Follower_requesting', foreignKey: 'follower_id', targetKey: 'id' });
 Follows_requests.belongsTo(User, { as: 'Followee_requested', foreignKey: 'followee_id', targetKey: 'id' });
 Courses.belongsTo(User, { foreignKey: 'created_by', targetKey: 'id' });
+Events.belongsTo(User, { foreignKey: 'eventPlanner', targetKey: 'id' });
+Events.belongsTo(User, { foreignKey: 'guest_id', targetKey: 'id' });
 
 module.exports = {
   sequelize,
@@ -112,5 +117,6 @@ module.exports = {
   Study_groups,
   Study_sessions,
   Likes,
-  public_resources
+  public_resources,
+  Events
 };

@@ -15,6 +15,7 @@ const resourcethreadsRoutes = require('./Resource_threads');
 const liked_Routes = require('./Likes');
 const publicApiRoutes = require('./PublicApi');
 const privateChatsRoutes = require('./PrivateChats');
+const planitProxyRoutes = require('./PlanitProxy');
 
 
 // API Documentation
@@ -77,4 +78,5 @@ router.use('/resource_threads', resourcethreadsRoutes);
 router.use('/likes', liked_Routes);
 router.use('/public', publicApiRoutes);
 router.use('/private-chats', privateChatsRoutes);
+router.use('/planit', planitProxyRoutes);
 module.exports = router; 

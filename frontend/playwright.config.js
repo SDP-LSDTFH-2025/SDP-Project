@@ -39,8 +39,8 @@ export default defineConfig({
 		// storageState: stateFile,
 	},
 
-	// globalSetup: "./tests/global.setup.js",
-	globalTeardown: './tests/global.teardown.js',
+	// globalSetup: "./tests/global.setup2.js",
+	// globalTeardown: "./tests/global.teardown.js",
 
 	/* Configure projects for major browsers */
 	projects: [
@@ -49,19 +49,19 @@ export default defineConfig({
 			workers: 1,
 			use: {
 				...devices["Desktop Chrome"],
-				// storageState: stateFile,
+				storageState: stateFile,
 			},
 		},
 
 		/*{
 			name: "firefox",
-			use: { ...devices["Desktop Firefox"],
-			storageState: stateFile,
+			use: {
+				...devices["Desktop Firefox"],
+				storageState: stateFile,
 			},
+		},*/
 
-		},
-
-		{
+		/*{
 			name: "webkit",
 			use: { ...devices["Desktop Safari"],storageState: stateFile, },
 		},*/

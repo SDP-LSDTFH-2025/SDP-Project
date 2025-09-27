@@ -67,6 +67,7 @@ playwright-report/
 blob-report/
 playwright/.cache/
 storageState.json
+JSON_CONFIG_BASE64.txt
 
 # Optional npm cache directory
 .npm

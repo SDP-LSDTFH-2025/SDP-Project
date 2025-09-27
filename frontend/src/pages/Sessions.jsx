@@ -29,9 +29,9 @@ export default function PlanGroups() {
   const token = localStorage.getItem("user");
   const creatorId = JSON.parse(localStorage.getItem("user")).id;
 
-  const subjects = ["My groups", "Discover groups"];
+  const subjects = ["Discover groups", "My groups"];
 
-  useEffect(() => {
+  useEffect(() => { 
     const fetchGroups = async () => {
       try {
         setLoading(true);
@@ -51,11 +51,11 @@ export default function PlanGroups() {
           id: g.id,
           title: g.name,
           description: g.description,
-          subject: g.course_id ? `Course ${g.course_id}` : "General",
+          subject: g.course_code,
           date: g.created_at || new Date().toISOString(), 
           participants: g.participants?.length || 0,
           organizer: g.creator_id || g.creator_name,
-          joined: false,
+          joined: true,
         }));
 
         setGroups(formatted);
@@ -70,8 +70,9 @@ export default function PlanGroups() {
   }, [SERVER, token]);
 
   const filteredGroups = groups.filter((group) => {
-    if (selectedSubject === "My groups" && !group.joined) return false;
+
     if (selectedSubject === "Discover groups" && group.joined) return false;
+    if (selectedSubject === "My groups" && !group.joined) return false;
 
     return (
       group.title.toLowerCase().includes(groupSearch.toLowerCase()) ||

@@ -127,23 +127,6 @@ function Home({ user }) {
     fetchUsers();
   }, [calendar_token, token, user.id, SERVER]);
 
-  useEffect(() => {
-    const fetchGroups = async () => {
-      try {
-        const data = await getAllGroups();
-        const groupsArray = data.map(group => ({
-          name: group.name, 
-          online: Math.random() < 0.5 ? 'Online' : 'Offline',
-        }));
-        setGroups(groupsArray);
-      } catch (error) {
-        setError(error.message);
-        console.error("Error fetching groups:", error.message);
-      }
-    };
-    fetchGroups();
-  }, []);
-
   function logout() {
     localStorage.removeItem("user");
     localStorage.removeItem("isLoggedIn");

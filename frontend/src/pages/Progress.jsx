@@ -106,40 +106,13 @@ const Progress = () => {
     ? progressData.courses
     : progressData.courses.slice(0, 4);
 
-  const SERVER =
+  /*const SERVER =
     import.meta.env.VITE_PROD_SERVER ||
     import.meta.env.VITE_DEV_SERVER ||
     "http://localhost:3000";
   const token = localStorage.getItem("user");
-  const userId = JSON.parse(localStorage.getItem("user") || "{}").id;
+  const userId = JSON.parse(localStorage.getItem("user") || "{}").id;*/
 
-  const handleJoinSession = async (session) => {
-    setJoining(true);
-    try {
-      const res = await fetch(`${SERVER}/api/v1/sessions/join`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          sessionId: session.id,
-          userId,
-        }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Failed to join session");
-
-      alert("You joined the session successfully!");
-      setSelectedSession(null);
-    } catch (err) {
-      console.error(err);
-      alert("Error joining session: " + err.message);
-    } finally {
-      setJoining(false);
-    }
-  };
 
   return (
     <div className="progress-container">
@@ -340,15 +313,9 @@ const Progress = () => {
                 className="outline-btn"
                 onClick={() => setSelectedSession(null)}
               >
-                Cancel
+                Close
               </button>
-              <button
-                className="blue-btn"
-                onClick={() => handleJoinSession(selectedSession)}
-                disabled={joining}
-              >
-                {joining ? "Joining..." : "Join"}
-              </button>
+
             </div>
           </div>
         </div>

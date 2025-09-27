@@ -42,7 +42,7 @@ jobs:
           CLOUDINARY_API_KEY: ${{ secrets.CLOUDINARY_API_KEY }}
       run: |
         cd backend
-        npm start &
+        npm run dev &
         echo "Server started in background (Node.js v22)"
         # Wait for server to be ready
         sleep 10

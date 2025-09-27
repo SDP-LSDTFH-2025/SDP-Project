@@ -2,9 +2,9 @@ name: Backend Tests
 
 on:
   push:
-    branches: [ main, test/Lebo ]
+    branches: [ main ]
   pull_request:
-    branches: [ main, test/Lebo ]
+    branches: [ main ]
 
 jobs:
   api-test:

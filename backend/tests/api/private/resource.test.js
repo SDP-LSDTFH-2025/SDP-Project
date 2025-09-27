@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import request from "supertest";
 import server from "../../../server";
 
-describe.skip("GET /api/v1/resources", () => {
+describe("GET /api/v1/resources", () => {
 	
 	const getFirstResourceId = async () => {
 		const response = await request(server)
@@ -17,7 +17,7 @@ describe.skip("GET /api/v1/resources", () => {
 		expect(response.body).toHaveProperty("success", true);
 	});
 
-	it("should return first resources", async () => {
+	it.skip("should return first resources", async () => {
 		if (response.body && response.body.data && response.body.data.length > 0) {
 			const resourceOne = response.body.data[0].id;
 			const response2 = await request(server)

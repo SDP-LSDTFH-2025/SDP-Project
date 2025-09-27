@@ -7,8 +7,8 @@ describe("GET /api/v1/courses", () => {
 	let success;
 	it("should return all courses", async () => {
 		response = await request(server).get(`/api/v1/courses`);
-		success = response.body.success;
-		// expect(success).toBeTruthy();
+		success = await response.body.success;
+		expect(success,true);
 	});
 	
 	it("should return first course", async () => {

@@ -45,7 +45,7 @@ jobs:
         npm run dev &
         echo "Server started in background (Node.js v22)"
         # Wait for server to be ready
-        sleep 10
+        sleep 15
         # Optional: Check if server is responding
         curl -f http://localhost:3000 || true
       

@@ -17,7 +17,7 @@ describe("GET /api/v1/resources", () => {
 		expect(response.body).toHaveProperty("success", true);
 	});
 
-	it.skip("should return first resources", async () => {
+	it("should return first resources", async () => {
 		if (response.body && response.body.data && response.body.data.length > 0) {
 			const resourceOne = response.body.data[0].id;
 			const response2 = await request(server)

@@ -9,7 +9,7 @@ describe("User Get API Endpoints", () => {
 		expect(response.body).toHaveProperty("data");
 	});
 
-	it.skip("should return first users", async () => {
+	it("should return first users", async () => {
        const userOne = response.body.data[0].id;
 
         const response2 = await request(server).get(`/api/v1/users/${userOne}`).expect(200);

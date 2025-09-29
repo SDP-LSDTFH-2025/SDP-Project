@@ -408,13 +408,19 @@ router.get('/',async(req,res)=>{
                 .filter(gm => gm.group_id === group.id)
                 .map(gm => gm.user_id);
 
-            const participants = users.filter(u => participant_ids.includes(u.id));
+            const participants = users.filter(u => participant_ids.includes(u.id)).map(u => ({id: u.id,username: u.username}));
 
             // Push enriched group
-            const plainGroup = group.toJSON();
-            plainGroup.creator_name= creator?.username;
-            plainGroup.participants = participants;
-            myGroups.push(plainGroup);
+            myGroups.push({
+                id: group.id,
+                name: group.name,
+                description: group.description,
+                course_code: group.course_code,
+                created_at: group.created_at,
+                creator_name: creator?.username,
+                creator_id: creator?.id,
+                participants: participants
+            });
         }
 
         res.status(200).json({
@@ -702,13 +708,19 @@ router.get('/myGroups/:token/:id',async(req,res)=>{
                 .filter(gm => gm.group_id === group.id)
                 .map(gm => gm.user_id);
 
-            const participants = users.filter(u => participant_ids.includes(u.id));
+            const participants = users.filter(u => participant_ids.includes(u.id)).map(u => ({id: u.id,username: u.username}));
 
             // Push enriched group
-            const plainGroup = group.toJSON();
-            plainGroup.creator_name= creator?.username;
-            plainGroup.participants = participants;
-            myGroups.push(plainGroup);
+            myGroups.push({
+                id: group.id,
+                name: group.name,
+                description: group.description,
+                course_code: group.course_code,
+                created_at: group.created_at,
+                creator_name: creator?.username,
+                creator_id: creator?.id,
+                participants: participants
+            });
         }
 
         res.status(200).json({

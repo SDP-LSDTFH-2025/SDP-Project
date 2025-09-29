@@ -29,6 +29,11 @@ export default function Friends({ setSelectedUser, handleNavigationClick }) {
         f.academic_interests?.toLowerCase().includes(search.toLowerCase())
     );
 
+  /*const handleAddFriend = (friend) => {
+    setSuggested((prev) => prev.filter((f) => f.id !== friend.id));
+    setFriends((prev) => [...prev, friend]);
+  };*/
+
   const handleProfileClick = (friend) => {
     setSelectedUser(friend);
     handleNavigationClick("usersprof");

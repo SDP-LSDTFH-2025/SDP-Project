@@ -100,7 +100,7 @@ const FileCard = ({ file }) => {
     return createdAt.toLocaleString();
   };
 
-  // LIKE handler
+  // LIKE handler (not working the endpoint is not good)
   const handleLike = async () => {
     try {
       const res = await fetch(`${SERVER}/api/v1/likes/${file.id}`, {
@@ -109,12 +109,15 @@ const FileCard = ({ file }) => {
         body: JSON.stringify({ user_id: storedUser.id }),
       });
       const data = await res.json();
+
       if (data.success) {
         setLikes((prev) => prev + (liked ? -1 : 1));
         setLiked(!liked);
       }
     } catch (err) {
       console.error("Like error:", err);
+      setLiked(false);
+      setLikes(likes);
     }
   };
 
@@ -177,9 +180,7 @@ const FileCard = ({ file }) => {
         <div className="file-user">
           <div className="file-avatar">{file.initials}</div>
           <div>
-            <div className="file-author">
-              {file.user_name.replaceAll("_", " ")}
-            </div>
+            <div className="file-author">{file.user_name.replaceAll("_", " ")}</div>
             <div className="file-meta">
               {formatTimeAgo(file.created_at)} • {file.course_code}
             </div>
@@ -222,7 +223,7 @@ const FileCard = ({ file }) => {
             <Heart size={18} fill={liked ? "red" : "none"} />
             {likes}
           </span>
-          <span onClick={() => setShowComments((prev) => !prev)}>
+          <span  onClick={() => setShowComments((prev) => !prev)} >
             <MessageCircle size={18} /> {comments.length}
           </span>
           <span>
@@ -239,7 +240,7 @@ const FileCard = ({ file }) => {
         </button>
       </div>
 
-      {/* Comments Section (toggle) */}
+      {/* Comments Section */}
       {showComments && (
         <div className="comments-section">
           {comments.map((c) => (
@@ -255,7 +256,7 @@ const FileCard = ({ file }) => {
 
           {/* Add Comment */}
           <div className="comment-input">
-            <div className="comment-avatar"> {initial_user} </div>
+            <div className="comment-avatar">{initial_user}</div>
             <input
               type="text"
               placeholder="Add a comment..."

@@ -6,7 +6,7 @@ const { Events} = require('../models');
 const router = express.Router();
 
 // Base URL for Planit API (can be overridden via env)
-const PLANIT_BASE_URL = process.env.PLANIT_BASE_URL;
+const PLANIT_BASE_URL = process.env.PLANIT_BASE_URL || 'https://planit-backend-amfkhqcgbvfhamhx.canadacentral-01.azurewebsites.net';
 
 function buildPlanitUrl(pathname) {
   const url = new URL(PLANIT_BASE_URL);
@@ -288,7 +288,8 @@ router.post('/events', async (req, res) => {
  *         description: Success
  */
 router.patch('/events/:id', async (req, res) => {
-  if (!requireUserId(req, res)) return;
+  const userId = requireUserId(req, res);
+  if (!userId) return;
   const { id } = req.params;
   try {
     const response = await forwardToPlanit('PATCH', `/api/events/${encodeURIComponent(id)}`, req, req.body || {});
@@ -299,7 +300,8 @@ router.patch('/events/:id', async (req, res) => {
 });
 
 router.delete('/events/:id', async (req, res) => {
-  if (!requireUserId(req, res)) return;
+  const userId = requireUserId(req, res);
+  if (!userId) return;
   const { id } = req.params;
   try {
     const response = await forwardToPlanit('DELETE', `/api/events/${encodeURIComponent(id)}`, req);
@@ -323,18 +325,72 @@ router.delete('/events/:id', async (req, res) => {
  *         required: true
  *         schema:
  *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 description: The name of the guest
+ *               email:
+ *                 type: string
+ *                 description: The email of the guest
+ *               phone:
+ *                 type: string
+ *                 description: The phone of the guest
+ *               rsvpStatus:
+ *                 type: string
+ *                 description: The RSVP status of the guest
+ *               dietaryPreferences:
+ *                 type: string
+ *                 description: The dietary preferences of the guest
  *     responses:
- *       201:
+ *       200:
  *         description: Created
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: string
+ *                   description: The ID of the created guest
+ *                 name:
+ *                   type: string
+ *                   description: The name of the guest
+ *                   example: "Jane Doe"
+ *                 email:
+ *                   type: string
+ *                   description: The email of the guest
+ *                   example: "jane@example.com"
+ *                 phone:
+ *                   type: string
+ *                   description: The phone of the guest
+ *                   example: "1234567890"
+ *                 rsvpStatus:
+ *                   type: string
+ *                   description: The RSVP status of the guest
+ *                   example: "Pending"
+ *                 dietaryPreferences:
+ *                   type: string
+ *                   description: The dietary preferences of the guest
+ *                   example: "Vegetarian"
+ *              
  */
 router.post('/guests/event/:eventId', async (req, res) => {
-  if (!requireUserId(req, res)) return;
+  const userId = requireUserId(req, res);
+  if (!userId) return;
   const { eventId } = req.params;
   try {
     const response = await forwardToPlanit('POST', `/api/guests/event/${encodeURIComponent(eventId)}`, req, req.body || {});
-    await Guests.create({
+    // Store guest_id in Events table for this event
+    await Events.create({
       event_id: eventId,
-      guest_id: response.data.id
+      guest_id: response.data.id,
+      eventPlanner: userId
     });
     res.status(response.status).json(response.data);
   } catch (e) {
@@ -359,7 +415,8 @@ router.post('/guests/event/:eventId', async (req, res) => {
  *         description: Success
  */
 router.patch('/guests/event/:eventId/guest/:guestId', async (req, res) => {
-  if (!requireUserId(req, res)) return;
+  const userId = requireUserId(req, res);
+  if (!userId) return;
   const { eventId, guestId } = req.params;
   try {
     const response = await forwardToPlanit('PATCH', `/api/guests/event/${encodeURIComponent(eventId)}/guest/${encodeURIComponent(guestId)}`, req, req.body || {});
@@ -386,12 +443,14 @@ router.patch('/guests/event/:eventId/guest/:guestId', async (req, res) => {
  *         description: Success
  */
 router.delete('/guests/event/:eventId/guest/:guestId', async (req, res) => {
-  if (!requireUserId(req, res)) return;
+  const userId = requireUserId(req, res);
+  if (!userId) return;
   const { eventId, guestId } = req.params;
   try {
    
     const response = await forwardToPlanit('DELETE', `/api/guests/event/${encodeURIComponent(eventId)}/guest/${encodeURIComponent(guestId)}`, req);
-    await Guests.destroy({ where: { guest_id: guestId } });
+    // Remove guest_id from Events table for this event
+    await Events.destroy({ where: { event_id: eventId, guest_id: guestId } });
     res.status(response.status).json(response.data);
   } catch (e) {
     res.status(500).json({ success: false, error: 'Upstream error' });
@@ -416,7 +475,8 @@ router.delete('/guests/event/:eventId/guest/:guestId', async (req, res) => {
  *         description: Success
  */
 router.get('/venues/event/:eventId', async (req, res) => {
-  if (!requireUserId(req, res)) return;
+  const userId = requireUserId(req, res);
+  if (!userId) return;
   const { eventId } = req.params;
   try {
     const response = await forwardToPlanit('GET', `/api/venues/event/${encodeURIComponent(eventId)}`, req);
@@ -443,7 +503,8 @@ router.get('/venues/event/:eventId', async (req, res) => {
  *         description: Created
  */
 router.post('/venues/event/:eventId', async (req, res) => {
-  if (!requireUserId(req, res)) return;
+  const userId = requireUserId(req, res);
+  if (!userId) return;
   const { eventId } = req.params;
   try {
     const response   = await forwardToPlanit('POST', `/api/venues/event/${encodeURIComponent(eventId)}`, req, req.body || {});
@@ -476,7 +537,8 @@ router.post('/venues/event/:eventId', async (req, res) => {
  *         description: Success
  */
 router.patch('/venues/event/:eventId/venue/:venueId', async (req, res) => {
-  if (!requireUserId(req, res)) return;
+  const userId = requireUserId(req, res);
+  if (!userId) return;
   const { eventId, venueId } = req.params;
   try {
     const response = await forwardToPlanit('PATCH', `/api/venues/event/${encodeURIComponent(eventId)}/venue/${encodeURIComponent(venueId)}`, req, req.body || {});
@@ -503,7 +565,8 @@ router.patch('/venues/event/:eventId/venue/:venueId', async (req, res) => {
  *         description: Success
  */
 router.delete('/venues/event/:eventId/venue/:venueId', async (req, res) => {
-  if (!requireUserId(req, res)) return;
+  const userId = requireUserId(req, res);
+  if (!userId) return;
   const { eventId, venueId } = req.params;
   try {
     const response = await forwardToPlanit('DELETE', `/api/venues/event/${encodeURIComponent(eventId)}/venue/${encodeURIComponent(venueId)}`, req);
@@ -532,7 +595,8 @@ router.delete('/venues/event/:eventId/venue/:venueId', async (req, res) => {
  *         description: Success
  */
     router.get('/schedules/event/:eventId', async (req, res) => {
-  if (!requireUserId(req, res)) return;
+  const userId = requireUserId(req, res);
+  if (!userId) return;
   const { eventId } = req.params;
   try {
     const response = await forwardToPlanit('GET', `/api/schedules/event/${encodeURIComponent(eventId)}`, req);
@@ -559,7 +623,8 @@ router.delete('/venues/event/:eventId/venue/:venueId', async (req, res) => {
  *         description: Created
  */
 router.post('/schedules/event/:eventId', async (req, res) => {
-  if (!requireUserId(req, res)) return;
+  const userId = requireUserId(req, res);
+  if (!userId) return;
   const { eventId } = req.params;
   try {
     const response = await forwardToPlanit('POST', `/api/schedules/event/${encodeURIComponent(eventId)}`, req, req.body || {});
@@ -586,7 +651,8 @@ router.post('/schedules/event/:eventId', async (req, res) => {
  *         description: Success
  */
 router.patch('/schedules/event/:eventId/schedule/:scheduleId', async (req, res) => {
-  if (!requireUserId(req, res)) return;
+  const userId = requireUserId(req, res);
+  if (!userId) return;
   const { eventId, scheduleId } = req.params;
   try {
     const response = await forwardToPlanit('PATCH', `/api/schedules/event/${encodeURIComponent(eventId)}/schedule/${encodeURIComponent(scheduleId)}`, req, req.body || {});
@@ -612,8 +678,9 @@ router.patch('/schedules/event/:eventId/schedule/:scheduleId', async (req, res) 
  *       200:
  *         description: Success
  */
-router.delete('/schedules/event/:eventId/schedule/:scheduleId', async (req, res) => {
-    if (!requireUserId(req, res)) return;
+    router.delete('/schedules/event/:eventId/schedule/:scheduleId', async (req, res) => {
+    const userId = requireUserId(req, res);
+  if (!userId) return;
   const { eventId, scheduleId } = req.params;
   try {
     const response = await forwardToPlanit('DELETE', `/api/schedules/event/${encodeURIComponent(eventId)}/schedule/${encodeURIComponent(scheduleId)}`, req);
@@ -641,7 +708,8 @@ router.delete('/schedules/event/:eventId/schedule/:scheduleId', async (req, res)
  *         description: Success
  */
 router.get('/export/event/:eventId', async (req, res) => {
-  if (!requireUserId(req, res)) return;
+  const userId = requireUserId(req, res);
+  if (!userId) return;
   const { eventId } = req.params;
   try {
     const response = await forwardToPlanit('GET', `/api/export/event/${encodeURIComponent(eventId)}`, req);

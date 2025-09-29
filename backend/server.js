@@ -8,7 +8,11 @@ const compression = require('compression');
 const rateLimit = require('express-rate-limit');
 const { generateAllSwaggerSpecs } = require('./config/swagger');
 const { createMainApiSwaggerUI, createPublicApiSwaggerUI } = require('./config/swagger/uiConfig');
+const path = require('path');
+
+// Load env from project root .env if present, then fallback to backend/env
 require('dotenv').config();
+require('dotenv').config({ path: path.join(__dirname, '.env') });
 const router = require('express').Router();
 const { sequelize } = require('./config/database');
 const routes = require('./routes');

@@ -1,6 +1,6 @@
 import { test, expect } from "playwright-test-coverage";
 
-test.describe("Home Page Shows Correctly", () => {
+test.describe("StudyBuddy Page Shows Correctly", () => {
 	test("Check if all needed things show", async ({ page }) => {
 		await page.goto('http://localhost:5173/home');
 		await expect(page.getByRole('button').filter({ hasText: /^$/ }).nth(1)).toBeVisible();

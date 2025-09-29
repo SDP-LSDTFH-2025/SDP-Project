@@ -340,6 +340,11 @@ module.exports = function attachGroupChatHandlers(nsp) {
 
     socket.on('disconnect', () => {
       // No-op for now
+      socket.emit('group:user:left', {
+        userId: connectedUserId,
+        groupId,
+        timestamp: new Date().toISOString()
+      });
     });
   });
 };

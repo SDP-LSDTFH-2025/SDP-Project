@@ -70,7 +70,7 @@ export function Interests({ user }) {
       const userty = JSON.parse(localStorage.getItem("user"));
 
       const payload = {
-        id: userty.id,
+        user_id: userty.id,
         course: registrationData.course || "",
         year_of_study: registrationData.year || "",
         academic_interests: selectedInterests.join(", "),

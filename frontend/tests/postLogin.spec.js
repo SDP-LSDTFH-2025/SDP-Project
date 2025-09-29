@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "playwright-test-coverage";
 
 test.describe("Home Page Shows Correctly", () => {
 	test("Check if all needed things show", async ({ page }) => {

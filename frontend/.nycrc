@@ -1,7 +1,7 @@
 {
   "all": true,
   "include": ["src/**/*.{js,jsx}"],
-  "exclude": ["tests/**", "node_modules/**"],
+  "exclude": ["tests/**", "node_modules/**", "src/api/**","src/functions/**"],
   "reporter": ["html", "lcov", "text"],
   "report-dir": "./coverage",
   "sourceMap": true,

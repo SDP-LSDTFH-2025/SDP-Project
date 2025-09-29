@@ -357,6 +357,7 @@ function Home({ user }) {
                   Study Groups
                 </Button>
 
+
                 <Button
                   className={`buttons ${
                     activeView === "upload" ? "active" : ""

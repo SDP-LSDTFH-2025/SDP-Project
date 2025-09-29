@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   Calendar,
   Users,
@@ -8,12 +8,14 @@ import {
 import GroupChat from "./GroupChat";
 import "./Sessions.css";
 
+import { useQuery } from "@tanstack/react-query";
+import { getGroups, joinGroup, leaveGroup, createGroup } from "../api/groups";
+
 export default function PlanGroups() {
   const [groupSearch] = useState("");
   const [selectedSubject, setSelectedSubject] = useState("Discover groups");
   const [showCreateGroup, setShowCreateGroup] = useState(false);
   const [activeGroup, setActiveGroup] = useState(null);
-  const [groups, setGroups] = useState([]);
 
   const [newGroup, setNewGroup] = useState({
     title: "",
@@ -21,53 +23,22 @@ export default function PlanGroups() {
     description: "",
   });
 
-  const [loading, setLoading] = useState(false);
   const [joining, setJoining] = useState(null);
   const [creatingGroup, setCreatingGroup] = useState(false);
 
-  const SERVER = import.meta.env.VITE_PROD_SERVER || import.meta.env.VITE_DEV_SERVER || "http://localhost:3000";
   const token = localStorage.getItem("user");
   const creatorId = JSON.parse(localStorage.getItem("user")).id;
 
   const subjects = ["Discover groups", "My groups"];
 
-  useEffect(() => { 
-    const fetchGroups = async () => {
-      try {
-        setLoading(true);
-
-        const res = await fetch(`${SERVER}/api/v1/study_groups`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        const data = await res.json();
-
-        if (!res.ok) {
-          console.error(data);
-          throw new Error(data.message || "Failed to fetch groups");
-        }
-
-        const formatted = data.groups.map((g) => ({
-          id: g.id,
-          title: g.name,
-          description: g.description,
-          subject: g.course_code,
-          date: g.created_at || new Date().toISOString(), 
-          participants: g.participants?.length || 0,
-          organizer: g.creator_id || g.creator_name,
-          joined: true,
-        }));
-
-        setGroups(formatted);
-      } catch (err) {
-        console.error("Error fetching groups:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchGroups();
-  }, [SERVER, token]);
+  const {
+    data: groups = [],refetch
+  } = useQuery({
+    queryKey: ["groups"],
+    queryFn: getGroups,
+    staleTime: 20 * 60 * 1000, // 20 minutes
+    cacheTime: 25 * 60 * 1000, // slightly longer cache
+  });
 
   const filteredGroups = groups.filter((group) => {
 
@@ -84,66 +55,24 @@ export default function PlanGroups() {
   const handleJoinGroup = async (id) => {
     setJoining(id);
     try {
-      const res = await fetch(`${SERVER}/api/v1/study_groups/join`, {
-        method: "POST",
-        headers: { 
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          token,
-          id: creatorId,
-          groupID: id,
-        }),
-
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error("Failed to join group");
+      const data = await joinGroup(token, creatorId, id);
       alert(data.message);
-      setGroups((prev) =>
-        prev.map((g) =>
-          g.id === id ? { ...g, joined: true, participants: g.participants + 1 } : g
-        )
-      );
     } catch (err) {
-      console.error(err);
       alert("Could not join group: " + err.message);
-    }finally {
+    } finally {
       setJoining(null);
     }
   };
+  
   const handleLeaveGroup = async (id) => {
     setJoining(id);
     try {
-      const res = await fetch(`${SERVER}/api/v1/study_groups/leave`, {
-        method: "POST",
-        headers: { 
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          token,
-          id: creatorId,
-          groupID: id
-        }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) throw new Error(data.message || "Failed to leave group");
-
+      const data = await leaveGroup(token, creatorId, id);
       alert(data.message);
-
-      setGroups((prev) =>
-        prev.map((g) =>
-          g.id === id ? { ...g, joined: false, participants: g.participants - 1 } : g
-        )
-      );
     } catch (err) {
-      console.error(err);
       alert("Could not leave group: " + err.message);
     } finally {
-      setJoining(false);
+      setJoining(null);
     }
   };
 
@@ -155,60 +84,14 @@ export default function PlanGroups() {
   const createGroup = async () => {
     try {
       setCreatingGroup(true);
-      const today = new Date().toISOString().split("T")[0];
-
-      if (!newGroup.title || !newGroup.courseId || !newGroup.description) {
-        alert("Please fill in all required fields");
-        setCreatingGroup(false);
-        return;
-      }
-
-      const payload = {
-        token,
-        id: creatorId,
+      await createGroup(token, creatorId, {
         title: newGroup.title,
-        course_code: newGroup.courseId,
-        description: newGroup.description,
-        participants: [creatorId],
-      };
-
-      const res = await fetch(`${SERVER}/api/v1/study_groups/create`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        courseCode: newGroup.courseId,
+        description: newGroup.description
       });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        console.error(data);
-        throw new Error(data.message || "Failed to create group");
-      }
-
-      console.log("Group created:", data);
-
-      setGroups((prev) => [
-        ...prev,
-        {
-          id: data.id || prev.length + 1,
-          title: newGroup.title,
-          description: newGroup.description,
-          subject: newGroup.courseId,
-          date: today,
-          participants: 1,
-          organizer: "You",
-          joined: true,
-        },
-      ]);
-
-      setNewGroup({
-        title: "",
-        courseId: "",
-        description: "",
-      });
-
+      await refetch();
+      setNewGroup({ title: "", courseId: "", description: "" });
     } catch (err) {
-      console.error(err);
       alert("Error creating group: " + err.message);
     } finally {
       setCreatingGroup(false);

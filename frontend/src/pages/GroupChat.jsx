@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { ArrowLeft, Send, Users, Plus } from "lucide-react";
 import "./GroupChat.css";
+import { useQuery } from "@tanstack/react-query";
+import { getUpcomingSessions } from "../api/groups";
 
 export default function GroupChat({ group, onBack }) {
   const [messages, setMessages] = useState([
@@ -25,9 +27,6 @@ export default function GroupChat({ group, onBack }) {
     endTime: "",
   });
 
-  const [guests, setGuests] = useState([]);
-  const [upcomingSessions, setUpcomingSessions] = useState([]);
-
   const user = JSON.parse(localStorage.getItem("user")) || {};
   const token = localStorage.getItem("token");
   const calendar_token = localStorage.getItem("calendar_token");
@@ -36,32 +35,41 @@ export default function GroupChat({ group, onBack }) {
     import.meta.env.VITE_DEV_SERVER ||
     "http://localhost:3000";
 
-  useEffect(() => {
-    const fetchUpcomingSessions = async () => {
-      try {
-        const res = await fetch(`${SERVER}/api/v1/planit/events`, {
-          headers: {
-            "Content-Type": "application/json",
-            "user_id": user.id,
-          },
-        });
+  const { data: upcomingData, refetch } = useQuery({
+  queryKey: ["upcomingSessions", user.id],
+  queryFn: () => getUpcomingSessions(user.id),
+  staleTime: 20 * 60 * 1000
+});
 
-        const data = await res.json();
-
-        if (!res.ok) {
-          console.error("Failed to fetch sessions:", data.message);
-          return;
-        }
-
-        setUpcomingSessions(data.data.events || []);
-        setGuests(data.data.guests || []);
-      } catch (err) {
-        console.error("Error fetching sessions:", err);
-      }
-    };
-
-    fetchUpcomingSessions();
-  }, [SERVER, token, user.id]);
+  const guests = upcomingData?.guests || [];
+  const upcomingSessions = upcomingData?.events || [
+    {
+      id: 1,
+      title: "Calculus Study Group",
+      description: "Review calculus problems together.",
+      location: "Library Room 101",
+      category: "Mathematics",
+      eventPlanner: "Alice",
+      capacity: 10,
+      theme: "Derivatives",
+      date: "2025-09-30",
+      startTime: "15:00",
+      endTime: "16:00",
+    },
+    {
+      id: 2,
+      title: "Physics Problem Solving",
+      description: "Work on mechanics exercises.",
+      location: "Physics Lab 2",
+      category: "Physics",
+      eventPlanner: "Bob",
+      capacity: 12,
+      theme: "Forces & Motion",
+      date: "2025-10-01",
+      startTime: "16:30",
+      endTime: "18:00",
+    },
+  ];
 
   const handleJoinSession = async (session) => {
     setJoining(true);
@@ -108,7 +116,7 @@ export default function GroupChat({ group, onBack }) {
   };
 
   const handleCreateSession = async (e) => {
-    e.preventDefault(); // ✅ prevents page reload
+    e.preventDefault(); 
     setCreatingSession(true);
 
     const start = new Date(`${sessionData.date}T${sessionData.time}`);

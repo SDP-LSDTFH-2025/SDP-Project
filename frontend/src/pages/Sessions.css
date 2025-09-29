@@ -271,3 +271,7 @@
   padding: 6px 14px;
   font-size: 0.85rem;
 }
+.groups-grid {
+  overflow-y: auto;
+  max-height: 80vh;
+}

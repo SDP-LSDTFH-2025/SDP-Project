@@ -1,47 +1,24 @@
-import React, { useEffect, useState } from "react";
+// src/components/Friends.jsx
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { MessageCircle, UserPlus, User, Users, Circle, CircleDot } from "lucide-react";
+import { MessageCircle, User, Users, Circle, CircleDot } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { getAllFriends } from "../api/resources";
 import "./Friends.css";
 
 export default function Friends({ setSelectedUser, handleNavigationClick }) {
   const [search, setSearch] = useState("");
-  const [friends, setFriends] = useState([]);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchFriends = async () => {
-      try {
-        const token = JSON.parse(localStorage.getItem("user"));
-        const user = JSON.parse(localStorage.getItem("user"));
-        const SERVER = import.meta.env.VITE_PROD_SERVER || import.meta.env.VITE_DEV_SERVER || "http://localhost:3000";
-
-        const res = await fetch(`${SERVER}/api/v1/friends`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            token,  
-            id: user.id, 
-          }),
-        });
-
-        const json = await res.json();
-
-        if (json.success && Array.isArray(json.followers)) {
-          setFriends(json.followers);
-        } else {
-          console.error("Invalid response:", json);
-        }
-      } catch (err) {
-        console.error("Error fetching users:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchFriends();
-  }, []);
+  const {
+    data: friends = [],
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["friends"],
+    queryFn: getAllFriends,
+    staleTime: 20 * 60 * 1000,
+    cacheTime: 25 * 60 * 1000,
+  });
 
   const filterList = (list) =>
     list.filter(
@@ -53,11 +30,12 @@ export default function Friends({ setSelectedUser, handleNavigationClick }) {
     );
 
   const handleProfileClick = (friend) => {
-    setSelectedUser(friend); 
+    setSelectedUser(friend);
     handleNavigationClick("usersprof");
   };
 
-  if (loading) return <p>Loading friends...</p>;
+  if (isLoading) return <p>Loading friends...</p>;
+  if (error) return <p>Error loading friends.</p>;
 
   return (
     <section className="friends">
@@ -97,38 +75,40 @@ export default function Friends({ setSelectedUser, handleNavigationClick }) {
               </div>
             </div>
 
-            <div className="role">{friend.course} • {friend.institution}</div>
-            
+            <div className="role">
+              {friend.course} • {friend.institution}
+            </div>
 
             <div className="friend-meta">
               <p className="friend-tag">
                 <Users size={12} /> Friend
               </p>
-                <span className="friend-tag">
+              <span className="friend-tag">
                 {friend.is_active && <CircleDot className="status-icon online" size={10} />}
                 {!friend.is_active && <Circle className="status-icon offline" size={10} />}
-                  {friend.is_active ? "Online" : "Offline"}
-                </span>
+                {friend.is_active ? "Online" : "Offline"}
+              </span>
             </div>
 
             <div className="actions">
-            <Link
-              to="/messages"
-              state={{ chat: { id: friend.id,
-                username: friend.username,
-                is_active: friend.is_active,
-                course: friend.course || "",
-                name: friend.username.replaceAll("_", " "),} }}
-              style={{ textDecoration: "none" }}
-            >
-              <button className="message-btn">
-                <MessageCircle size={13} /> Message
-              </button>
-              </Link>
-              <button
-                className="profile-btn"
-                onClick={() => handleProfileClick(friend)}
+              <Link
+                to="/messages"
+                state={{
+                  chat: {
+                    id: friend.id,
+                    username: friend.username,
+                    is_active: friend.is_active,
+                    course: friend.course || "",
+                    name: friend.username.replaceAll("_", " "),
+                  },
+                }}
+                style={{ textDecoration: "none" }}
               >
+                <button className="message-btn">
+                  <MessageCircle size={13} /> Message
+                </button>
+              </Link>
+              <button className="profile-btn" onClick={() => handleProfileClick(friend)}>
                 <User size={13} /> Profile
               </button>
             </div>

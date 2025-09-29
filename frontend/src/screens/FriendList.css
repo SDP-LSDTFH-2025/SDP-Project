@@ -39,6 +39,11 @@
   color: #6366f1;
 }
 
+.card-scroll {
+  overflow-y: auto;
+  max-height: 50vh;
+}
+
 .request-count {
   margin-left: 10px;
   background: #6366f1;

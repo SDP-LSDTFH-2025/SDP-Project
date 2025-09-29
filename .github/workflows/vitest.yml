@@ -1,57 +1,58 @@
 name: Backend Tests
 
+env:
+  DB_HOST: ${{ secrets.DB_HOST }}
+  DB_PORT: ${{ secrets.DB_PORT }}
+  DB_NAME: ${{ secrets.DB_NAME }}
+  DB_USER: ${{ secrets.DB_USER }}
+  DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+  JWT_SECRET: ${{ secrets.JWT_SECRET }}
+  DATABASE_URL: ${{ secrets.DATABASE_URL }}
+  API_PREFIX: ${{ secrets.API_PREFIX }}
+  BACKEND_URL: ${{ secrets.BACKEND_URL }}
+  CLOUDINARY_CLOUD_NAME: ${{ secrets.CLOUDINARY_CLOUD_NAME }}
+  CLOUDINARY_API_KEY: ${{ secrets.CLOUDINARY_API_KEY }}
+  CLOUDINARY_API_SECRET: ${{ secrets.CLOUDINARY_API_SECRET }}
+
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   api-test:
     runs-on: ubuntu-latest
-        
+
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
-    - name: Setup Node.js v22
-      uses: actions/setup-node@v4
-      with:
-        node-version: '22'
-        cache: 'npm'
-        cache-dependency-path: backend/package-lock.json
-        
-    - name: Navigate to backend and install dependencies
-      run: |
-        cd backend
-        npm ci
-        
-    - name: Start server in background
-      env:
-          DB_HOST: ${{ secrets.DB_HOST }}
-          DB_PORT: ${{ secrets.DB_PORT }}
-          DB_NAME: ${{ secrets.DB_NAME }}
-          DB_USER: ${{ secrets.DB_USER }}
-          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-          JWT_SECRET: ${{ secrets.JWT_SECRET }}
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js v22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Navigate to backend and install dependencies
+        run: |
+          cd backend
+          npm ci
+
+      - name: Start server in background
+        run: |
+          cd backend
+          npm run dev &
+          echo "Server started in background (Node.js v22)"
+          # Wait for server to be ready
+          sleep 15
+          # Optional: Check if server is responding
+          curl -f http://localhost:3000 || true
+
+      - name: Run tests
+        env:
           API_PREFIX: ${{ secrets.API_PREFIX }}
-          BACKEND_URL: ${{ secrets.BACKEND_URL }}
-          CLOUDINARY_CLOUD_NAME: ${{ secrets.CLOUDINARY_CLOUD_NAME }}
-          CLOUDINARY_API_KEY: ${{ secrets.CLOUDINARY_API_KEY }}
-          CLOUDINARY_API_SECRET: ${{ secrets.CLOUDINARY_API_SECRET }}
-      run: |
-        cd backend
-        npm run dev &
-        echo "Server started in background (Node.js v22)"
-        # Wait for server to be ready
-        sleep 15
-        # Optional: Check if server is responding
-        curl -f http://localhost:3000 || true
-      
-    - name: Run tests
-      env:
-        API_PREFIX: ${{ secrets.API_PREFIX }}
-      run: |
-        cd backend
-        npm run test
+        run: |
+          cd backend
+          npm run test

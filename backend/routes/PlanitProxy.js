@@ -6,7 +6,7 @@ const { Events} = require('../models');
 const router = express.Router();
 
 // Base URL for Planit API (can be overridden via env)
-const PLANIT_BASE_URL = process.env.PLANIT_BASE_URL || 'https://planit-backend-amfkhqcgbvfhamhx.canadacentral-01.azurewebsites.net';
+const PLANIT_BASE_URL = process.env.PLANIT_BASE_URL;
 
 function buildPlanitUrl(pathname) {
   const url = new URL(PLANIT_BASE_URL);

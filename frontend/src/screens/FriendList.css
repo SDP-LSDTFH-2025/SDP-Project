@@ -2,19 +2,19 @@
 
 /* Container styles */
 .friend-list-container {
-  width: 100%;
-  max-width: 520px;
-  margin: 0 auto;
+  align-self: start;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   color: #333;
+  align-items: center;
 }
 
 /* Card styles */
 .friend-card {
+  width: 95% !important;
   background: white;
   border-radius: 12px;
   border: 1px solid #e5e7eb;
-  margin-bottom: 20px;
+  margin-bottom: 5px;
   overflow: hidden;
   align-items: center;
 }
@@ -39,6 +39,11 @@
   color: #6366f1;
 }
 
+.card-scroll {
+  overflow-y: auto;
+  max-height: 50vh;
+}
+
 .request-count {
   margin-left: 10px;
   background: #6366f1;
@@ -57,7 +62,6 @@
   align-items: flex-start;
   justify-content: space-between;
   background-color: #fff; 
-  max-width: 100%; 
   height: 70px; 
   margin-bottom: 0.8rem;
   
@@ -189,12 +193,12 @@
 }
 
 .suggested-item {
-  padding: 16px 20px;
+  padding: 16px 10px;
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   background: #fff;
-  height: 70px; 
+  height: 35px; 
   margin-bottom: 0.8rem;
 }
 
@@ -246,7 +250,7 @@
   }
   
   .request-item, .suggested-item {
-    flex-direction: column;
+    flex-direction: row;
   }
   
   .request-actions {

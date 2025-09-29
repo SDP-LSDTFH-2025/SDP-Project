@@ -1,94 +1,74 @@
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useState } from "react";
 import { GoogleLogin } from "@react-oauth/google";
+import { manualSignup, googleAuth } from "../api/auth";
 import "./Signup.css";
+
+const CALENDAR_SCOPE = "https://www.googleapis.com/auth/calendar.events";
 
 function Signup({ setUser }) {
   const navigate = useNavigate();
   const location = useLocation();
-  //const isRoot = location.pathname === "/signup";
 
   const [formData, setFormData] = useState({
     email: "",
-    username:"",
-    password:""
+    username: "",
+    password: ""
   });
+  const [loading, setLoading] = useState(false);
 
-  function HandleInputChange(field, value){
-    setFormData((prev) => ({...prev, [field]: value }));
+  function handleInputChange(field, value) {
+    setFormData((prev) => ({ ...prev, [field]: value }));
   }
 
   const isFormValid = formData.email && formData.password;
 
-  async function handleLogin(credentialResponse) {
+  // --- Manual signup ---
+  async function handleSignup() {
     try {
-      const SERVER = import.meta.env.VITE_PROD_SERVER || import.meta.env.VITE_DEV_SERVER ;
-      const token = credentialResponse.credential;
-
-      // Send token to backend for verification  /* this shall be changend to env*/
-      const res = await fetch(`${SERVER}/api/v1/auth/google/verify`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ access_token: token }),
-      });
-
-      const data = await res.json();
-
-      if (data.success) {
-        console.log("Signed up!");
-        localStorage.setItem("user", JSON.stringify(data.data));
-        localStorage.setItem("token", data.token);
-
-        setUser(data.data);
-        navigate("registration");
-      } else {
-        alert(data.success || "Authentication failed");
-      }
+      setLoading(true);
+      const data = await manualSignup(formData.email, formData.username, formData.password);
+      setUser(data);
+      navigate("registration");
     } catch (error) {
       console.error("Sign up error:", error);
-      alert("Something went wrong. Please try again.");
+      alert("Authentication failed. Please try again.");
+    } finally {
+      setLoading(false);
     }
   }
 
-  // this will call Huli's api(hopefully);
-  async function handleSignup(){
-    try{
-      const SERVER = import.meta.env.VITE_PROD_SERVER || import.meta.env.VITE_DEV_SERVER ;
-      console.log("handle sign up");
-      const res = await fetch(`${SERVER}/api/v1/auth/signIn`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          email: formData.email || "usermail@gmail.com",
-          username: formData.username || "user123",
-          password: formData.password || "password1"
-         }),
+  // --- Google signup ---
+  async function handleGoogleSignup(credentialResponse) {
+    try {
+      setLoading(true);
+      const data = await googleAuth(credentialResponse.credential);
+      setUser(data);
+
+      // Request Google Calendar token
+      const client = window.google.accounts.oauth2.initTokenClient({
+        client_id: import.meta.env.VITE_CLIENT_ID,
+        scope: CALENDAR_SCOPE,
+        callback: (resp) => {
+          if (resp.access_token) {
+            localStorage.setItem("calendar_token", resp.access_token);
+            console.log("Calendar token acquired:", resp.access_token);
+          }
+        }
       });
+      client.requestAccessToken();
 
-      const data = await res.json();
-
-      if (res.ok) {
-        console.log("Signed up!");
-        localStorage.setItem("user", JSON.stringify(data.data));
-
-        setUser(data.data);
-        navigate("registration");
-      } else {
-        alert(data.success || "Authentication failed");
-      }
-
+      navigate("registration");
     } catch (error) {
-      console.error("Sign up error:", error);
-      alert("Something went wrong. Please try again.");
+      console.error("Google signup error:", error);
+      alert("Google signup failed. Please try again.");
+    } finally {
+      setLoading(false);
     }
   }
 
-  /*const isRegistering = location.pathname.endsWith("/registration");
-  const isInterests = location.pathname.endsWith("/interests");
-  const isSuccess = location.pathname.endsWith("/success");*/
-
-  const isSignupRoot = location.pathname.endsWith("/signup") ||
-  location.pathname === "/signup";
+  const isSignupRoot =
+    location.pathname.endsWith("/signup") || location.pathname === "/signup";
 
   if (isSignupRoot) {
     return (
@@ -97,18 +77,42 @@ function Signup({ setUser }) {
           <h1 className="logo">StudyBuddy</h1>
           <p className="subtitle">Welcome! Create your account to get started</p>
 
-          <form className="signup-form" onSubmit={ (e) => {e.preventDefault(); handleSignup(); } }>
+          <form
+            className="signup-form"
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleSignup();
+            }}
+          >
             <label>Email</label>
-            <input type="email" placeholder="Enter your email" value={formData.email} onChange={(e) => HandleInputChange("email",e.target.value)}/>
+            <input
+              type="email"
+              placeholder="Enter your email"
+              value={formData.email}
+              onChange={(e) => handleInputChange("email", e.target.value)}
+            />
 
             <label>Username</label>
-            <input placeholder="Optional" value={formData.username} onChange={(e) => HandleInputChange("username",e.target.value)}/>
+            <input
+              placeholder="Optional"
+              value={formData.username}
+              onChange={(e) => handleInputChange("username", e.target.value)}
+            />
 
             <label>Password</label>
-            <input type="password" placeholder="Enter your password" value={formData.password} onChange={(e) => HandleInputChange("password",e.target.value)}/>
+            <input
+              type="password"
+              placeholder="Enter your password"
+              value={formData.password}
+              onChange={(e) => handleInputChange("password", e.target.value)}
+            />
 
-            <button type="submit" className="signup-btn" disabled={!isFormValid}>
-              Sign Up
+            <button
+              type="submit"
+              className="signup-btn"
+              disabled={!isFormValid || loading}
+            >
+              {loading ? "Signing Up..." : "Sign Up"}
             </button>
           </form>
 
@@ -118,8 +122,8 @@ function Signup({ setUser }) {
 
           <div className="google-btn">
             <GoogleLogin
-              onSuccess={handleLogin}
-              onError={() => alert(`Signin Failed + ${credentialResponse} `)}
+              onSuccess={handleGoogleSignup}
+              onError={() => alert("Google signup failed")}
             />
           </div>
 

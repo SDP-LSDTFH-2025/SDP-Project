@@ -58,8 +58,13 @@ router.get('/', (req, res) => {
       resource_threads: '/resource_threads',
       likes: '/likes/:id',
       public: '/public',
-      private_chats: '/private-chats'
-
+      private_chats: '/private-chats',
+      planit: '/planit',
+      sockets: {
+        private_chats: 'ws://localhost:3000/sockets/private-chats',
+        group_chats: 'ws://localhost:3000/sockets/group-chats', 
+        notifications: 'ws://localhost:3000/sockets/notifications'
+      }
     }
   });
 });

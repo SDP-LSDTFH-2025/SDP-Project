@@ -376,9 +376,58 @@ router.post('/leave',async(req,res)=>{
 
 router.get('/',async(req,res)=>{
     try{
-        const groups = await Study_groups.findAll();
+        // Get groups
+        const groups = await Group_members.findAll();
+        const groupIds = groups.map(g => g.group_id);
 
-        res.status(200).json({message:"Successfully fetched all the groups", groups:groups});
+        // Fetch all study groups in one go
+        const studyGroups = await Study_groups.findAll({
+        where: { id: groupIds }
+        });
+
+        // Count participants per group in one query
+        const participantCounts = await Group_members.findAll({
+        attributes: [
+            "group_id",
+            [sequelize.fn("COUNT", sequelize.col("user_id")), "count"]
+        ],
+        where: { group_id: groupIds },
+        group: ["group_id"]
+        });
+
+        // Convert counts into a map
+        const countsMap = Object.fromEntries(
+        participantCounts.map(pc => [pc.group_id, parseInt(pc.dataValues.count)])
+        );
+
+
+        //for creators
+        // Collect creator_ids from study groups
+        const creatorIds = studyGroups.map(g => g.creator_id);
+
+        // Fetch user info in one go
+        const creators = await User.findAll({
+        where: { id: creatorIds },
+        attributes: ["id", "username"]
+        });
+
+        // Build lookup map
+        const creatorMap = Object.fromEntries(
+        creators.map(c => [c.id, c.username])
+        );
+
+        // Attach creator_name to each group
+        const myGroups = studyGroups.map(g => ({
+        ...g.toJSON(),
+        participants_count: countsMap[g.id] || 0,
+        creator_name: creatorMap[g.creator_id] || null
+        }));
+
+
+        res.status(200).json({
+        message: "Successfully fetched the group",
+        groups: myGroups
+        });
     }
     catch(error){
         errorClass.serverError(res);
@@ -625,22 +674,61 @@ router.get('/myGroups/:token/:id',async(req,res)=>{
         //     return errorClass.errorRes('Invalid Token',res,401);
         // }
 
+        // Get user’s groups
         const groups = await Group_members.findAll({
-            where:{user_id:id}
-            });
+        where: { user_id: id }
+        });
+        const groupIds = groups.map(g => g.group_id);
 
-        let myGroups = [];
+        // Fetch all study groups in one go
+        const studyGroups = await Study_groups.findAll({
+        where: { id: groupIds }
+        });
 
-        for (let group of groups){
-            group_element = await Study_groups.findOne({
-                where:{id:group.group_id}
-            })
-            if (!group_element) continue;
-            myGroups.push(group_element);
-        }
+        // Count participants per group in one query
+        const participantCounts = await Group_members.findAll({
+        attributes: [
+            "group_id",
+            [sequelize.fn("COUNT", sequelize.col("user_id")), "count"]
+        ],
+        where: { group_id: groupIds },
+        group: ["group_id"]
+        });
+
+        // Convert counts into a map
+        const countsMap = Object.fromEntries(
+        participantCounts.map(pc => [pc.group_id, parseInt(pc.dataValues.count)])
+        );
 
 
-        res.status(200).json({message:"Successfully fetched the specified group", groups:myGroups});
+        //for creators
+        // Collect creator_ids from study groups
+        const creatorIds = studyGroups.map(g => g.creator_id);
+
+        // Fetch user info in one go
+        const creators = await User.findAll({
+        where: { id: creatorIds },
+        attributes: ["id", "username"]
+        });
+
+        // Build lookup map
+        const creatorMap = Object.fromEntries(
+        creators.map(c => [c.id, c.username])
+        );
+
+        // Attach creator_name to each group
+        const myGroups = studyGroups.map(g => ({
+        ...g.toJSON(),
+        participants_count: countsMap[g.id] || 0,
+        creator_name: creatorMap[g.creator_id] || null
+        }));
+
+
+        res.status(200).json({
+        message: "Successfully fetched the specified group",
+        groups: myGroups
+        });
+
     }
     catch(error){
         errorClass.serverError(res);
@@ -750,6 +838,7 @@ router.get('/recommendedGroups/:token/:id',async(req,res)=>{
             res.status(200).json({message:"User has no academic interests"});
             return;
         }
+        let count = 0;
         const interest = user["academic_interests"].split(",");
         const interestExpand = courseVariants(interest);
 
@@ -763,12 +852,13 @@ router.get('/recommendedGroups/:token/:id',async(req,res)=>{
                 });
 
             for (let group of groups){
+                count++;
                 myGroups.push(group)
             }
         }
 
 
-        res.status(200).json({message:"Successfully fetched the specified group", groups:myGroups, success: true});
+        res.status(200).json({message:"Successfully fetched the specified group", groups:myGroups, success: true},count);
     }
     catch(error){
         //server error

@@ -1,73 +1,67 @@
-import React, { useEffect, useState } from "react";
+// src/components/Feed.jsx
+import React, { useState } from "react";
 import FileCard from "./FileCard";
+import { Input } from "../components/ui/input";
+import { useQuery } from "@tanstack/react-query";
+import { getAllUsers, getAllResources } from "../api/resources";
+import "./Feed.css";
 
 const Feed = () => {
-  const [files, setFiles] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
 
-  useEffect(() => {
-    const fetchFiles = async () => {
-      try {
-        const SERVER = import.meta.env.VITE_PROD_SERVER || import.meta.env.VITE_DEV_SERVER || "http://localhost:3000";
-        const res = await fetch(`${SERVER}/api/v1/resources/all`);
-        const json = await res.json();
+  const {
+    data: users = [],
+    isLoading: loadingUsers,
+    error: errorUsers,
+  } = useQuery({
+    queryKey: ["users"], 
+    queryFn: getAllUsers,
+    staleTime: 60 * 60 * 1000, // 1 hour in milliseconds
+    cacheTime: 65 * 60 * 1000, // slightly longer than staleTime so it stays cached
+  });
 
-        if (json.success) {
-          // Enrich resources with user info
-          const enrichedResources = await Promise.all(
-            json.data.map(async (resource) => {
-              try {
-                const userRes = await fetch(
-                  `${SERVER}/api/v1/users/${resource.user_id}`
-                );
-                const userData = await userRes.json();
-                console.log(userData);
-                if (userData.success) {
-                  const username = userData.data.username;
-                  const initials = username
-                    .split("_")
-                    .map((n) => n[0])
-                    .join("")
-                    .toUpperCase();
+  const {
+    data: files = [],
+    isLoading: loadingResources,
+    error: errorResources,
+  } = useQuery({
+    queryKey: ["resources"],
+    queryFn: getAllResources,
+    enabled: users.length > 0,
+    staleTime: 20 * 60 * 1000,
+    cacheTime: 25 * 60 * 1000,
+  });
+  
 
-                  return {
-                    ...resource,
-                    user_name: username,
-                    initials,
-                  };
-                }
-              } catch (err) {
-                console.error("User fetch error:", err);
-              }
+  const filterList = (list) =>
+    list.filter(
+      (f) =>
+        f.title?.toLowerCase().includes(search.toLowerCase()) ||
+        f.user_name?.toLowerCase().includes(search.toLowerCase()) ||
+        f.course_code?.toLowerCase().includes(search.toLowerCase())
+    );
 
-              return {
-                ...resource,
-                user_name: `User ${resource.user_id.slice(0, 4)}`,
-                initials: resource.user_id.slice(0, 2).toUpperCase(),
-              };
-            })
-          );
-
-          setFiles(enrichedResources);
-        }
-      } catch (err) {
-        console.error("Error fetching files:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchFiles();
-  }, []);
-
-  if (loading) return <p>Loading resources...</p>;
+  if (loadingUsers || loadingResources) return <p>Loading resources...</p>;
+  if (errorUsers || errorResources)
+    return <p>Error loading resources or users.</p>;
 
   return (
-    <div className="feed">
-      {files.map((file) => (
-        <FileCard key={file.id} file={file} />
-      ))}
-    </div>
+    <>
+      <div className="search-input">
+        <Input
+          className="search"
+          placeholder="Search resource by Title, Course Code, or Username..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+      </div>
+
+      <div className="feed">
+        {filterList(files).map((file) => (
+          <FileCard key={file.id} file={file} />
+        ))}
+      </div>
+    </>
   );
 };
 

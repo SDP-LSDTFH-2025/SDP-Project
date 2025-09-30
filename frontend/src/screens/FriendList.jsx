@@ -2,6 +2,11 @@ import React, { useState } from "react";
 import { Check, X, UserPlus } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { getAllUsers, getPendingFriendRequests } from "../api/resources";
+import {
+  respondToFriendRequest,
+  sendFriendRequest,
+  declineFriendRequest,
+} from "../api/friends";
 import "./FriendList.css";
 
 const FriendList = ({ handleNavigationClick, setSelectedUser }) => {
@@ -14,12 +19,13 @@ const FriendList = ({ handleNavigationClick, setSelectedUser }) => {
     isLoading: loadingUsers,
     error: usersError,
   } = useQuery({
-      queryKey: ["users"], 
-      queryFn: getAllUsers,
-    staleTime: 60 * 60 * 1000, // 1 hour in milliseconds
-    cacheTime: 65 * 60 * 1000, // slightly longer than staleTime so it stays cached
-    });
+    queryKey: ["users"],
+    queryFn: getAllUsers,
+    staleTime: 60 * 60 * 1000, // 1 hour
+    cacheTime: 65 * 60 * 1000,
+  });
 
+  // Fetch pending friend requests
   const {
     data: friendRequests = [],
     isLoading: loadingRequestsQuery,
@@ -27,7 +33,7 @@ const FriendList = ({ handleNavigationClick, setSelectedUser }) => {
   } = useQuery({
     queryKey: ["friendRequests"],
     queryFn: getPendingFriendRequests,
-    staleTime: 5 * 60 * 1000, // friend requests are more dynamic
+    staleTime: 5 * 60 * 1000, // more dynamic
   });
 
   // --- Action handlers ---
@@ -35,18 +41,12 @@ const FriendList = ({ handleNavigationClick, setSelectedUser }) => {
     e.stopPropagation();
     try {
       const user = JSON.parse(localStorage.getItem("user"));
-      const res = await fetch(`${import.meta.env.VITE_PROD_SERVER || import.meta.env.VITE_DEV_SERVER || "http://localhost:3000"}/api/v1/friends/request/response`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          token: user,
-          id: user.id,
-          requestID: fr.request.id,
-          response: "accept",
-        }),
+      const data = await respondToFriendRequest({
+        token: user,
+        id: user.id,
+        requestID: fr.request.id,
+        response: "accept",
       });
-
-      const data = await res.json();
       if (data.success) {
         alert(`You are now friends with ${fr.user.username}`);
       } else {
@@ -57,9 +57,23 @@ const FriendList = ({ handleNavigationClick, setSelectedUser }) => {
     }
   };
 
-  const handleDecline = (user, e) => {
+  const handleDecline = async (fr, e) => {
     e.stopPropagation();
-    console.log("Declined:", user.username);
+    try {
+      const user = JSON.parse(localStorage.getItem("user"));
+      const data = await declineFriendRequest({
+        token: user,
+        id: user.id,
+        requestID: fr.request.id,
+      });
+      if (data.success) {
+        alert(`Declined request from ${fr.user.username}`);
+      } else {
+        alert(`Could not decline request: ${data.message}`);
+      }
+    } catch (err) {
+      console.error("Error declining request:", err);
+    }
   };
 
   const handleAddFriend = async (receiver, e) => {
@@ -67,18 +81,12 @@ const FriendList = ({ handleNavigationClick, setSelectedUser }) => {
     try {
       setLoadingRequests((prev) => [...prev, receiver.id]);
       const user = JSON.parse(localStorage.getItem("user"));
-      const res = await fetch(`${import.meta.env.VITE_PROD_SERVER || import.meta.env.VITE_DEV_SERVER || "http://localhost:3000"}/api/v1/friends/request`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          token: user,
-          id: user.id,
-          username: receiver.username,
-        }),
+      const data = await sendFriendRequest({
+        token: user,
+        id: user.id,
+        username: receiver.username,
       });
-
-      const json = await res.json();
-      if (json.success) {
+      if (data.success) {
         setSentRequests((prev) => [...prev, receiver.id]);
       }
     } catch (err) {

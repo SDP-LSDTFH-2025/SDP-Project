@@ -83,3 +83,41 @@ export const getPendingFriendRequests = async () => {
   }
   return json.followers;
 };
+
+// Get comments for a file
+export const getResourceComments = async (fileId) => {
+  const res = await api.get(`resource_threads?resource_id=${fileId}`);
+  return res.data;
+};
+
+//  Check if current user liked file
+export const checkLike = async (fileId, userId) => {
+  const res = await api.get(`likes/check/${fileId}`, {
+    params: { user_id: userId },
+  });
+  return res.data;
+};
+
+//Toggle like/unlike
+export const toggleLike = async (fileId, userId, liked) => {
+  if (liked) {
+    const res = await api.delete(`likes/${fileId}`, {
+      data: { user_id: userId }, // keep body since backend wants it
+    });
+    return res.data;
+  } else {
+    const res = await api.post(`likes/${fileId}`, { user_id: userId });
+    return res.data;
+  }
+};
+
+//  Add comment
+export const addResourceComment = async ({ userId, fileId, message }) => {
+  const res = await api.post("resource_threads", {
+    user_id: userId,
+    resource_id: fileId,
+    message,
+    parent_id: 0,
+  });
+  return res.data;
+};

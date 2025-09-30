@@ -72,7 +72,7 @@ app.use(publicApiPath, cors({
   origin: true, // reflect request origin (allows any origin)
   credentials: false,
   methods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'user_id', 'x-user-id']
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 // 2) Restricted CORS for the rest of the app
@@ -98,7 +98,7 @@ const restrictedCors = cors({
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'user_id', 'x-user-id']
+  allowedHeaders: ['Content-Type', 'Authorization']
 });
 
 // Apply restricted CORS except for public API path (already handled above)
@@ -129,7 +129,7 @@ app.get('/health', (req, res) => {
 });
 
 // API routes
-app.use(process.env.API_PREFIX || '/api/v1', routes);
+app.use(process.env.API_PREFIX, routes);
 
 // 404 handler
 app.use('*', (req, res) => {

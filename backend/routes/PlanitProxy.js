@@ -134,6 +134,8 @@ router.get('/events', async (req, res) => {
 
     const events_data = eventResults.map(r => r.data);
     const guests_data = guestResults.map(r => r.data);
+    console.log("Events data:", events_data);
+    console.log("Guests data:", guests_data);
 
     res.status(200).json({ success: true, data: { events: events_data, guests: guests_data } });
   } catch (e) {
@@ -212,13 +214,17 @@ router.post('/events', async (req, res) => {
   try {
     const response = await forwardToPlanit('POST', '/api/events', req, body);
     if (Events && Events.create && response?.data?.id) {
-      await Events.create({
+      const event = await Events.create({
         eventPlanner,
         event_id: response.data.id
       });
+      console.log("create Event:", event);
     }
+    console.log("create event Response data:", response.data);
+    
     res.status(response.status).json(response.data);
   } catch (e) {
+    console.log("create event Error:", e);
     res.status(500).json({ success: false, error: 'Upstream error' });
   }
 });
@@ -293,9 +299,11 @@ router.patch('/events/:id', async (req, res) => {
   const { id } = req.params;
   try {
     const response = await forwardToPlanit('PATCH', `/api/events/${encodeURIComponent(id)}`, req, req.body || {});
+    console.log("update event Response data:", response.data);
     res.status(response.status).json(response.data);
   } catch (e) {
-    res.status(500).json({ success: false, error: 'Upstream error' });
+    console.log("update event Error:", e);
+      res.status(500).json({ success: false, error: 'Upstream error' });
   }
 });
 
@@ -306,8 +314,10 @@ router.delete('/events/:id', async (req, res) => {
   try {
     const response = await forwardToPlanit('DELETE', `/api/events/${encodeURIComponent(id)}`, req);
     await Events.destroy({ where: { event_id: id } });
+    console.log("delete event Response data:", response.data);
     res.status(response.status).json(response.data);
   } catch (e) {
+    console.log("delete event Error:", e);
     res.status(500).json({ success: false, error: 'Upstream error' });
   }
 });
@@ -387,13 +397,16 @@ router.post('/guests/event/:eventId', async (req, res) => {
   try {
     const response = await forwardToPlanit('POST', `/api/guests/event/${encodeURIComponent(eventId)}`, req, req.body || {});
     // Store guest_id in Events table for this event
-    await Events.create({
+   const event = await Events.create({
       event_id: eventId,
       guest_id: response.data.id,
       eventPlanner: userId
     });
+    console.log("create guest Response data:", response.data);
+    console.log(" create guest Event:", event);
     res.status(response.status).json(response.data);
   } catch (e) {
+    console.log("create guest Error:", e);
     res.status(500).json({ success: false, error: 'Upstream error' });
   }
 });
@@ -420,8 +433,10 @@ router.patch('/guests/event/:eventId/guest/:guestId', async (req, res) => {
   const { eventId, guestId } = req.params;
   try {
     const response = await forwardToPlanit('PATCH', `/api/guests/event/${encodeURIComponent(eventId)}/guest/${encodeURIComponent(guestId)}`, req, req.body || {});
+    console.log("update guest Response data:", response.data);
     res.status(response.status).json(response.data);
   } catch (e) {
+    console.log("update guest Error:", e);
     res.status(500).json({ success: false, error: 'Upstream error' });
   }
 });
@@ -451,8 +466,10 @@ router.delete('/guests/event/:eventId/guest/:guestId', async (req, res) => {
     const response = await forwardToPlanit('DELETE', `/api/guests/event/${encodeURIComponent(eventId)}/guest/${encodeURIComponent(guestId)}`, req);
     // Remove guest_id from Events table for this event
     await Events.destroy({ where: { event_id: eventId, guest_id: guestId } });
+    console.log("delete guest Response data:", response.data);
     res.status(response.status).json(response.data);
   } catch (e) {
+    console.log("delete guest Error:", e);
     res.status(500).json({ success: false, error: 'Upstream error' });
   }
 });
@@ -482,6 +499,7 @@ router.get('/venues/event/:eventId', async (req, res) => {
     const response = await forwardToPlanit('GET', `/api/venues/event/${encodeURIComponent(eventId)}`, req);
     res.status(response.status).json(response.data);
   } catch (e) {
+    console.log("get venues Error:", e);
     res.status(500).json({ success: false, error: 'Upstream error' });
   }
 });
@@ -516,6 +534,7 @@ router.post('/venues/event/:eventId', async (req, res) => {
     }
     res.status(response.status).json(response.data);
   } catch (e) {
+    console.log("create venue Error:", e);
     res.status(500).json({ success: false, error: 'Upstream error' });
   }
 });
@@ -544,6 +563,7 @@ router.patch('/venues/event/:eventId/venue/:venueId', async (req, res) => {
     const response = await forwardToPlanit('PATCH', `/api/venues/event/${encodeURIComponent(eventId)}/venue/${encodeURIComponent(venueId)}`, req, req.body || {});
     res.status(response.status).json(response.data);
   } catch (e) {
+    console.log("update venue Error:", e);
     res.status(500).json({ success: false, error: 'Upstream error' });
   }
 });
@@ -573,6 +593,7 @@ router.delete('/venues/event/:eventId/venue/:venueId', async (req, res) => {
     await Events.destroy({ where: {event_id: eventId, venue_id: venueId } });
     res.status(response.status).json(response.data);
   } catch (e) {
+    console.log("delete venue Error:", e);
     res.status(500).json({ success: false, error: 'Upstream error' });
   }
 });
@@ -602,6 +623,7 @@ router.delete('/venues/event/:eventId/venue/:venueId', async (req, res) => {
     const response = await forwardToPlanit('GET', `/api/schedules/event/${encodeURIComponent(eventId)}`, req);
     res.status(response.status).json(response.data);
   } catch (e) {
+    console.log("get schedules Error:", e);
     res.status(500).json({ success: false, error: 'Upstream error' });
   }
 });
@@ -630,6 +652,7 @@ router.post('/schedules/event/:eventId', async (req, res) => {
     const response = await forwardToPlanit('POST', `/api/schedules/event/${encodeURIComponent(eventId)}`, req, req.body || {});
     res.status(response.status).json(response.data);
   } catch (e) {
+    console.log("create schedule Error:", e);
     res.status(500).json({ success: false, error: 'Upstream error' });
   }
 });
@@ -658,6 +681,7 @@ router.patch('/schedules/event/:eventId/schedule/:scheduleId', async (req, res) 
     const response = await forwardToPlanit('PATCH', `/api/schedules/event/${encodeURIComponent(eventId)}/schedule/${encodeURIComponent(scheduleId)}`, req, req.body || {});
     res.status(response.status).json(response.data);
   } catch (e) {
+    console.log("update schedule Error:", e);
     res.status(500).json({ success: false, error: 'Upstream error' });
   }
 });
@@ -686,6 +710,7 @@ router.patch('/schedules/event/:eventId/schedule/:scheduleId', async (req, res) 
     const response = await forwardToPlanit('DELETE', `/api/schedules/event/${encodeURIComponent(eventId)}/schedule/${encodeURIComponent(scheduleId)}`, req);
     res.status(response.status).json(response.data);
   } catch (e) {
+    console.log("delete schedule Error:", e);
     res.status(500).json({ success: false, error: 'Upstream error' });
   }
 });
@@ -715,7 +740,8 @@ router.get('/export/event/:eventId', async (req, res) => {
     const response = await forwardToPlanit('GET', `/api/export/event/${encodeURIComponent(eventId)}`, req);
     res.status(response.status).json(response.data);
   } catch (e) {
-    res.status(500).json({ success: false, error: 'Upstream error' });
+    console.log("export event Error:", e);
+      res.status(500).json({ success: false, error: 'Upstream error' });
   }
 });
 

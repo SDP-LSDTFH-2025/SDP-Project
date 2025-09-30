@@ -84,6 +84,7 @@ const restrictedCors = cors({
       process.env.PROD_LIVE_HOST,
       process.env.PROD_PREVIEW_HOST,
       process.env.CORS_ORIGIN,
+      process.env.PLANIT_BASE_URL,
       'http://localhost:5173',
       'http://localhost:5174',
       'http://localhost:3000'
@@ -158,6 +159,7 @@ async function startServer() {
       process.env.PROD_LIVE_HOST,
       process.env.PROD_PREVIEW_HOST,
       process.env.CORS_ORIGIN,
+      process.env.PLANIT_BASE_URL,
       'http://localhost:5173',
       'http://localhost:5174',
       'http://localhost:3000'

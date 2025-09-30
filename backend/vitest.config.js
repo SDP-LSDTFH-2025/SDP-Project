@@ -17,8 +17,8 @@ export default defineConfig({
         'scripts/**',
         'routes/recommend.js',
         'routes/progress.js',
-        // 'routes/Resource_reports.js',
-        // 'routes/Resource_tags.js',
+        'routes/Resource_reports.js',
+        'routes/Resource_tags.js',
         // 'routes/PrivateChats.js',
 
       ],

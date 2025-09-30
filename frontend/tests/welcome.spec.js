@@ -35,12 +35,6 @@ test.describe("Logging out Page Shows Correctly", () => {
         await page.getByRole('textbox', { name: 'Optional' }).click();
         await page.goto('http://localhost:5173/');
         await page.getByRole('button', { name: 'Get Started →' }).click();
-        // await expect(page.locator('div').filter({ hasText: /^Academic ResourcesAccess study materials and course content$/ }).locator('svg')).toBeVisible();
-        // await expect(page.getByRole('heading', { name: 'Connect with Peers' })).toBeVisible();
-        // await expect(page.getByRole('heading', { name: 'Track Progress' })).toBeVisible();
-        // await page.getByRole('button', { name: 'Get Started', exact: true }).click();
-        // await expect(page.getByRole('heading', { name: 'StudyBuddy' })).toBeVisible();
-
-
+        
 	});
 });

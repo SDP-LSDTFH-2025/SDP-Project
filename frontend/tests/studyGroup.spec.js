@@ -11,6 +11,8 @@ test.describe("Study Groups Page Shows Correctly", () => {
 		await expect(page.getByRole('heading', { name: 'Study Groups' })).toBeVisible();
 		await page.getByRole('button', { name: 'Discover groups' }).click();
 		await page.getByRole('button', { name: 'My groups' }).click();
+		const locator = page.getByRole('heading', { name: 'No groups found' });
+		await locator.waitFor({ state: 'hidden' });
 		await expect(page.locator('.outline-btn').first()).toBeVisible();
 		await expect(page.locator('.red-btn').first()).toBeVisible();
 		await page.locator('.outline-btn').first().click();

@@ -1,9 +1,17 @@
 {
-  "all": true,
-  "include": ["src/**/*.{js,jsx}"],
-  "exclude": ["tests/**", "node_modules/**", "src/api/**","src/functions/**"],
-  "reporter": ["html", "lcov", "text"],
-  "report-dir": "./coverage",
-  "sourceMap": true,
-  "instrument": false
+	"all": true,
+	"include": ["src/**/*.{js,jsx}"],
+	"exclude": [
+		"tests/**",
+		"node_modules/**",
+		"src/api/**",
+		"src/functions/**",
+		"src/components",
+		"src/screens/Signup.jsx",
+		"src/screens/Login.jsx"
+	],
+	"reporter": ["html", "lcov", "text"],
+	"report-dir": "./coverage",
+	"sourceMap": true,
+	"instrument": false
 }

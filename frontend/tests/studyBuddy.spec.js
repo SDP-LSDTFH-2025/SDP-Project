@@ -21,8 +21,8 @@ test.describe("StudyBuddy Page Shows Correctly", () => {
 		await page.getByRole('button', { name: 'Study Buddies' }).click();
 		await expect(page.getByRole('heading', { name: 'My Buddies' })).toBeVisible();
 		await expect(page.getByRole('textbox', { name: 'Search friends...' })).toBeVisible();
-		await expect(page.getByText('Friend', { exact: true })).toBeVisible();
-		await page.getByRole('button', { name: 'Profile' }).click();
+		await expect(page.locator('div').filter({ hasText: /^DMDimpho Matea@Dimpho_MateaComputer • MIT FriendOnline Message Profile$/ }).getByRole('paragraph')).toBeVisible();
+		await page.getByRole('button', { name: 'Profile' }).first().click();
 		await expect(page.getByRole('heading', { name: 'Courses' })).toBeVisible();
 		await expect(page.getByRole('heading', { name: 'About' })).toBeVisible();
 		await expect(page.getByRole('heading', { name: 'Interests' })).toBeVisible();

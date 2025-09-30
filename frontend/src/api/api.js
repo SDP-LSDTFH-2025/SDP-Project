@@ -1,7 +1,7 @@
 // src/api/api.js
 import axios from "axios";
 
- const SERVER = import.meta.env.VITE_PROD_SERVER || import.meta.env.VITE_DEV_SERVER || "http://localhost:3000";
+const SERVER = import.meta.env.MODE === "development" ? import.meta.env.VITE_DEV_SERVER || "http://localhost:3000" : import.meta.env.VITE_PROD_SERVER;
 
 const api = axios.create({
   baseURL: `${SERVER}/api/v1/`, 

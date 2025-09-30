@@ -7,11 +7,14 @@ import {
 } from "lucide-react";
 import GroupChat from "./GroupChat";
 import "./Sessions.css";
-
-import { useQuery } from "@tanstack/react-query";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { getGroups, joinGroup, leaveGroup, createGroup } from "../api/groups";
 
 export default function PlanGroups() {
+  const queryClient = useQueryClient();
+
   const [groupSearch] = useState("");
   const [selectedSubject, setSelectedSubject] = useState("Discover groups");
   const [showCreateGroup, setShowCreateGroup] = useState(false);
@@ -31,13 +34,11 @@ export default function PlanGroups() {
 
   const subjects = ["Discover groups", "My groups"];
 
-  const {
-    data: groups = [],refetch
-  } = useQuery({
+  const { data: groups = [] } = useQuery({
     queryKey: ["groups"],
     queryFn: getGroups,
-    staleTime: 20 * 60 * 1000, // 20 minutes
-    cacheTime: 25 * 60 * 1000, // slightly longer cache
+    staleTime: 15 * 60 * 1000,
+    cacheTime: 17 * 60 * 1000,
   });
 
   const filteredGroups = groups.filter((group) => {
@@ -52,11 +53,18 @@ export default function PlanGroups() {
     );
   });
 
+  const showToast = (message, type = "success") => {
+    if (type === "success") toast.success(message);
+    else if (type === "error") toast.error(message);
+    else toast(message);
+  };
+
   const handleJoinGroup = async (id) => {
     setJoining(id);
     try {
       const data = await joinGroup(token, creatorId, id);
-      alert(data.message);
+      queryClient.invalidateQueries({ queryKey: ["groups"] });
+      showToast(data.message, "success");
     } catch (err) {
       alert("Could not join group: " + err.message);
     } finally {
@@ -68,9 +76,10 @@ export default function PlanGroups() {
     setJoining(id);
     try {
       const data = await leaveGroup(token, creatorId, id);
-      alert(data.message);
+      queryClient.invalidateQueries({ queryKey: ["groups"] });
+      showToast(data.message, "success");
     } catch (err) {
-      alert("Could not leave group: " + err.message);
+      showToast("Could not leave group: " + err.message, "error");
     } finally {
       setJoining(null);
     }
@@ -81,7 +90,7 @@ export default function PlanGroups() {
     setActiveGroup(group);
   };
 
-  const createGroup = async () => {
+  const handleCreateGroup = async () => {
     try {
       setCreatingGroup(true);
       await createGroup(token, creatorId, {
@@ -89,10 +98,10 @@ export default function PlanGroups() {
         courseCode: newGroup.courseId,
         description: newGroup.description
       });
-      await refetch();
+      queryClient.invalidateQueries({ queryKey: ["groups"] });
       setNewGroup({ title: "", courseId: "", description: "" });
     } catch (err) {
-      alert("Error creating group: " + err.message);
+      showToast("Error creating group: " + err.message, "error");
     } finally {
       setCreatingGroup(false);
       setShowCreateGroup(false);
@@ -244,7 +253,7 @@ export default function PlanGroups() {
               </button>
               <button
                 className="blue-btn"
-                onClick={createGroup}
+                onClick={handleCreateGroup}
                 disabled={creatingGroup}
               >
                 {creatingGroup ? "Creating..." : "Create"}
@@ -253,6 +262,16 @@ export default function PlanGroups() {
           </div>
         </div>
       )}
+
+      <ToastContainer
+        position="top-center"  // centers horizontally at the top
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        pauseOnHover
+        draggable
+      />
     </div>
   );
 }

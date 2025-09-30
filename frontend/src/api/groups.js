@@ -1,6 +1,8 @@
 // src/api/groups.js
 import api from "./api";
 
+const user = JSON.parse(localStorage.getItem("user"));
+
 /*
  * All groups
  */
@@ -9,22 +11,25 @@ export const getGroups = async () => {
     const res = await api.get("study_groups");
 
     const data = res.data; 
-
+    console.log("res.data:", res.data);
     if (!data?.groups) {
       console.error(data);
       throw new Error(data.message || "Failed to fetch groups");
     }
 
-    return data.groups.map((g) => ({
-      id: g.id,
-      title: g.name,
-      description: g.description,
-      subject: g.course_code,
-      date: g.created_at || new Date().toISOString(),
-      participants: g.participants?.length || 0,
-      organizer: g.creator_id || g.creator_name,
-      joined: true,
-    }));
+    return data.groups.map((g) => {
+      const participants = Array.isArray(g.participants) ? g.participants : [];
+      return {
+        id: g.id,
+        title: g.name,
+        description: g.description,
+        subject: g.course_code,
+        date: g.created_at,
+        organizer: g.creator_name,
+        participants: participants.length,
+        joined: participants.some((p) => p.id === user?.id) || false,
+      };
+    });
   } catch (err) {
     console.error("getGroups error:", err);
     throw err;
@@ -134,4 +139,26 @@ export const getUpcomingSessions = async (userId) => {
     events: res.data.data.events || [],
     guests: res.data.data.guests || [],
   };
+};
+
+/*
+ * Join a session
+*/
+export const joinSession = async ({ userId, eventId }) => {
+  const res = await api.post(`planit/guests/event/${userId}`, {
+    eventId,
+  });
+  return res.data;
+};
+
+/*
+ * Create a new session
+*/
+export const createSession = async ({ userId, payload }) => {
+  const res = await api.post("planit/events", payload, {
+    headers: {
+      "user_id": userId, 
+    },
+  });
+  return res.data;
 };

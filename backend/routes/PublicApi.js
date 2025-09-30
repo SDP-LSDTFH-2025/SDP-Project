@@ -159,12 +159,6 @@ router.get('/:event_id', async (req, res) => {
  *                 value:
  *                   success: true
  *                   message: "Pictures uploaded successfully"
- *                   data:
- *                     id: "550e8400-e29b-41d4-a716-446655440000"
- *                     picture_url: "https://res.cloudinary.com/demo/image/upload/v1234567890/sdp-project/public/event123/image.jpg"
- *                     public_id: "sdp-project/public/event123/image"
- *                     event_id: "550e8400-e29b-41d4-a716-446655440001"
- *                     created_at: "2024-01-15T10:30:00Z"
  *       400:
  *         description: Bad request - No image files provided
  *         content:
@@ -217,13 +211,13 @@ try{
         created_at: new Date()
       })),
     });
-    const pictures = await public_resources.create({
+    await public_resources.create({
        picture_url: uploadResult.secure_url,
         public_id: uploadResult.public_id,
          event_id: event_id,
          created_at: new Date()
         });
-    res.json({ success: true, message: 'Pictures uploaded successfully', data: pictures });
+    res.json({ success: true, message: 'Pictures uploaded successfully' });
 } catch (error) {
     console.error('Error uploading pictures:', error);
     res.status(500).json({ success: false, error: 'Internal server error' });
@@ -271,12 +265,6 @@ try{
  *                 value:
  *                   success: true
  *                   message: "PDF uploaded successfully"
- *                   data:
- *                     id: "550e8400-e29b-41d4-a716-446655440000"
- *                     file_url: "https://res.cloudinary.com/demo/image/upload/v1234567890/sdp-project/public/event123/document.pdf"
- *                     public_id: "sdp-project/public/event123/document"
- *                     event_id: "550e8400-e29b-41d4-a716-446655440001"
- *                     created_at: "2024-01-15T10:30:00Z"
  *       400:
  *         description: Bad request - No PDF file provided
  *         content:
@@ -316,13 +304,13 @@ try{
     const uploadResult = await CloudinaryService.uploadPDF(req.file.buffer, {
         folder: `sdp-project/public/${event_id}`,
       });
-    const pdf = await public_resources.create({
+    await public_resources.create({
        file_url: uploadResult.secure_url,
         public_id: uploadResult.public_id,
          event_id: event_id,
          created_at: new Date()
         });
-    res.json({ success: true, message: 'PDF uploaded successfully', data: pdf });
+    res.json({ success: true, message: 'PDF uploaded successfully' });
 } catch (error) {
     console.error('Error uploading PDF:', error);
     res.status(500).json({ success: false, error: 'Internal server error' });

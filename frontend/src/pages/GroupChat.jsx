@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { ArrowLeft, Send, Users, Plus } from "lucide-react";
 import "./GroupChat.css";
 import { useQuery } from "@tanstack/react-query";
-import { getUpcomingSessions } from "../api/groups";
+import { getUpcomingSessions, joinSession, createSession } from "../api/groups";
 
 export default function GroupChat({ group, onBack }) {
   const [messages, setMessages] = useState([
@@ -12,7 +12,7 @@ export default function GroupChat({ group, onBack }) {
   const [newMessage, setNewMessage] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [showSessions, setShowSessions] = useState(false);
-  const [selectedSession, setSelectedSession] = useState(null);  
+  const [selectedSession, setSelectedSession] = useState(null);
   const [joining, setJoining] = useState(false);
   const [creatingSession, setCreatingSession] = useState(false);
 
@@ -28,18 +28,13 @@ export default function GroupChat({ group, onBack }) {
   });
 
   const user = JSON.parse(localStorage.getItem("user")) || {};
-  const token = localStorage.getItem("token");
   const calendar_token = localStorage.getItem("calendar_token");
-  const SERVER =
-    import.meta.env.VITE_PROD_SERVER ||
-    import.meta.env.VITE_DEV_SERVER ||
-    "http://localhost:3000";
 
-  const { data: upcomingData, refetch } = useQuery({
-  queryKey: ["upcomingSessions", user.id],
-  queryFn: () => getUpcomingSessions(user.id),
-  staleTime: 20 * 60 * 1000
-});
+  const { data: upcomingData } = useQuery({
+    queryKey: ["upcomingSessions", user.id],
+    queryFn: () => getUpcomingSessions(user.id),
+    staleTime: 20 * 60 * 1000,
+  });
 
   const guests = upcomingData?.guests || [];
   const upcomingSessions = upcomingData?.events || [
@@ -74,21 +69,8 @@ export default function GroupChat({ group, onBack }) {
   const handleJoinSession = async (session) => {
     setJoining(true);
     try {
-      const res = await fetch(
-        `${SERVER}/api/v1/planit/guests/event/${user.id}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            eventId: session.id,
-          }),
-        }
-      );
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Failed to join session");
+      const data = await joinSession({ userId: user.id, eventId: session.id });
+      if (!data.success) throw new Error(data.message || "Failed to join session");
 
       alert("You joined the session successfully!");
       setSelectedSession(null);
@@ -116,7 +98,7 @@ export default function GroupChat({ group, onBack }) {
   };
 
   const handleCreateSession = async (e) => {
-    e.preventDefault(); 
+    e.preventDefault();
     setCreatingSession(true);
 
     const start = new Date(`${sessionData.date}T${sessionData.time}`);
@@ -144,20 +126,11 @@ export default function GroupChat({ group, onBack }) {
     };
 
     try {
-      const res = await fetch(`${SERVER}/api/v1/planit/events`, {
-        method: "POST",
-        headers: { 
-          "Content-Type": "application/json",
-          "user_id": user.id
-        },
-        body: JSON.stringify(payload),
-      });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Failed to create session");
+      const data = await createSession({ userId: user.id, payload });
+      if (!data.success) throw new Error(data.message || "Failed to create session");
 
       console.log("Session created:", data);
-      alert(" Session Created!");
+      alert("Session Created!");
       setShowModal(false);
 
       // Add to Google Calendar

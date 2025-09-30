@@ -3,6 +3,7 @@ import { Input } from "../components/ui/input";
 import { Send } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { socket } from "../socket";
+import { getPrivateChatHistory } from "../api/chat";
 
 function makeChatId(userA, userB) {
   return [userA, userB].sort().join("");
@@ -27,23 +28,11 @@ export default function ChatWindow({ chat, onBack }) {
     .join("")
     .toUpperCase();
 
-  const SERVER = import.meta.env.VITE_PROD_SERVER || import.meta.env.VITE_DEV_SERVER || "http://localhost:3000";
-
+  // Fetch history using centralized API
   useEffect(() => {
     async function fetchHistory() {
       try {
-        const [sentRes, receivedRes] = await Promise.all([
-          fetch(`${SERVER}/api/v1/private-chats?sender_id=${currentUserId}&receiver_id=${chat.id}`),
-          fetch(`${SERVER}/api/v1/private-chats?sender_id=${chat.id}&receiver_id=${currentUserId}`)
-        ]);
-
-        if (!sentRes.ok || !receivedRes.ok) throw new Error("Failed to fetch history");
-
-        const [sentMsgs, receivedMsgs] = await Promise.all([sentRes.json(), receivedRes.json()]);
-
-        const allMsgs = [...sentMsgs, ...receivedMsgs].sort(
-          (a, b) => new Date(a.created_at) - new Date(b.created_at)
-        );
+        const allMsgs = await getPrivateChatHistory(currentUserId, chat.id);
 
         const formatted = allMsgs.map((msg) => ({
           from: msg.sender_id === currentUserId ? "me" : "other",
@@ -61,8 +50,9 @@ export default function ChatWindow({ chat, onBack }) {
     }
 
     fetchHistory();
-  }, [chat.id, currentUserId, SERVER]);
+  }, [chat.id, currentUserId]);
 
+  // Socket listeners
   useEffect(() => {
     if (!socket.connected) socket.connect();
 

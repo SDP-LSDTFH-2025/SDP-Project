@@ -29,6 +29,16 @@ function forwardToPlanit(method, pathname, req, bodyObj) {
       headers['Authorization'] = req.headers.authorization;
     }
 
+    // Pass-through user_id header if present
+    if (req.headers && req.headers.user_id) {
+      headers['user_id'] = req.headers.user_id;
+    }
+
+    // Also check for x-user-id header
+    if (req.headers && req.headers['x-user-id']) {
+      headers['x-user-id'] = req.headers['x-user-id'];
+    }
+
     if (payload) {
       headers['Content-Length'] = Buffer.byteLength(payload);
     }

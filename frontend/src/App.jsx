@@ -51,7 +51,7 @@ export default function App() {
        <Route path="/messages" element={<Message />} />
        <Route path="/forgot" element={<Forgot />} />
        <Route path= "/notifications" element={<Notifications />}/>
-        /* Home route - only for logged-in users */
+          /* Home route - only for logged-in users */
         <Route
           path="/home"
           element={

@@ -4,7 +4,7 @@ const multer = require('multer');
 const crypto = require('crypto');
 const { validate: isUUID } = require('uuid');
 const CloudinaryService = require('../services/cloudinaryService');
-const { Resources, User,Likes } = require('../models');
+const { Resources, User, Likes, Follows } = require('../models');
 const { Op } = require('sequelize');
 
 // Configure multer for file uploads
@@ -272,6 +272,87 @@ router.get('/all', async (req, res) => {
     res.json({ success: true, data: resources });
     } catch (error) {
         console.error('Get all resources error:', error);
+        res.status(500).json({ success: false, error: 'Internal server error' });
+    }
+});
+
+/**
+ * @swagger
+ * /api/v1/resources/friends:
+ *   post:
+ *     summary: Get resources from friends only
+ *     tags: [Resources]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - token
+ *               - id
+ *             properties:
+ *               token:
+ *                 type: string
+ *                 description: Firebase JWT token
+ *               id:
+ *                 type: string
+ *                 format: uuid
+ *                 description: ID of the user whose friends' resources are being retrieved
+ *     responses:
+ *       200:
+ *         description: List of resources from friends
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Resource'
+ *       400:
+ *         description: Missing required information
+ *       500:
+ *         description: Internal server error
+ */
+router.post('/friends', async (req, res) => {
+    try {
+        const { token, id } = req.body;
+
+        if (!token || !id) {
+            return res.status(400).json({ success: false, error: 'Token and user ID are required' });
+        }
+
+        // Get all friends (both followers and followees - mutual friends)
+        const followers = await Follows.findAll({ where: { followee_id: id } });
+        const followees = await Follows.findAll({ where: { follower_id: id } });
+        
+        // Combine both directions to get mutual friends
+        const friendIds = [
+            ...followers.map(f => f.follower_id),
+            ...followees.map(f => f.followee_id)
+        ];
+
+        // Remove duplicates
+        const uniqueFriendIds = [...new Set(friendIds)];
+
+        // If no friends, return empty array
+        if (uniqueFriendIds.length === 0) {
+            return res.json({ success: true, data: [] });
+        }
+
+        // Get resources from friends only
+        const resources = await Resources.findAll({
+            where: { user_id: { [Op.in]: uniqueFriendIds } },
+            order: [['created_at', 'DESC']]
+        });
+
+        res.json({ success: true, data: resources });
+    } catch (error) {
+        console.error('Get friends resources error:', error);
         res.status(500).json({ success: false, error: 'Internal server error' });
     }
 });

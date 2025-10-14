@@ -1,93 +1,53 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { Check, X, UserPlus } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { getAllUsers, getPendingFriendRequests } from "../api/resources";
+import {
+  respondToFriendRequest,
+  sendFriendRequest,
+  declineFriendRequest,
+} from "../api/friends";
 import "./FriendList.css";
 
 const FriendList = ({ handleNavigationClick, setSelectedUser }) => {
-  const [friendRequests, setFriendRequests] = useState([]);
-  const [suggestedFriends, setSuggestedFriends] = useState([]);
   const [sentRequests, setSentRequests] = useState([]);
   const [loadingRequests, setLoadingRequests] = useState([]);
 
-  useEffect(() => {
-    const receivee = JSON.parse(localStorage.getItem("user"));
-    const SERVER = import.meta.env.VITE_PROD_SERVER || import.meta.env.VITE_DEV_SERVER || "http://localhost:3000";
+  // Fetch suggested friends (all users)
+  const {
+    data: suggestedFriends = [],
+    isLoading: loadingUsers,
+    error: usersError,
+  } = useQuery({
+    queryKey: ["users"],
+    queryFn: getAllUsers,
+    staleTime: 60 * 60 * 1000, // 1 hour
+    cacheTime: 65 * 60 * 1000,
+  });
 
-    const fetchUsers = async () => {
-      try {
-
-        const res = await fetch(`${SERVER}/api/v1/users`);
-        const json = await res.json();
-
-        if (json.success && Array.isArray(json.data)) {
-          const allUsers = json.data;
-          setSuggestedFriends(allUsers);
-        } else {
-          console.error("Invalid API response format", json);
-        }
-      } catch (err) {
-        console.error("Error fetching users", err);
-      }
-    };
-
-    const fetchFriendRequests = async () => {
-      try {
-        const token = JSON.parse(localStorage.getItem("user"));
-        console.log(token);
-        const res = await fetch(`${SERVER}/api/v1/friends/request/pending/users`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            token,
-            id: receivee.id,
-          }),
-        });
-
-        const json = await res.json();
-
-      if (json.success && Array.isArray(json.followers)) {
-        //const users = json.followers.map(f => f.user); 
-        setFriendRequests(json.followers);
-      } else {
-        console.error("Invalid pending requests format", json);
-      }
-      } catch (err) {
-        console.error("Error fetching friend requests", err);
-      }
-    };
-
-    fetchUsers();
-    fetchFriendRequests();
-  }, []);
+  // Fetch pending friend requests
+  const {
+    data: friendRequests = [],
+    isLoading: loadingRequestsQuery,
+    error: requestsError,
+  } = useQuery({
+    queryKey: ["friendRequests"],
+    queryFn: getPendingFriendRequests,
+    staleTime: 5 * 60 * 1000, // more dynamic
+  });
 
   // --- Action handlers ---
   const handleAccept = async (fr, e) => {
     e.stopPropagation();
-
     try {
-      const receivee = JSON.parse(localStorage.getItem("user"));
-      const SERVER = import.meta.env.VITE_PROD_SERVER || import.meta.env.VITE_DEV_SERVER || "http://localhost:3000";
-      const token = JSON.parse(localStorage.getItem("user"));
-      const res = await fetch(`${SERVER}/api/v1/friends/request/response`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          token,
-          id: receivee.id,            
-          requestID: fr.request.id, 
-          response: "accept",
-        }),
+      const user = JSON.parse(localStorage.getItem("user"));
+      const data = await respondToFriendRequest({
+        token: user,
+        id: user.id,
+        requestID: fr.request.id,
+        response: "accept",
       });
-
-      const data = await res.json();
-
       if (data.success) {
-        setFriendRequests((prev) =>
-          prev.filter((req) => req.request.id !== fr.request.id)
-        );
         alert(`You are now friends with ${fr.user.username}`);
       } else {
         alert(`Could not accept request: ${data.message}`);
@@ -97,49 +57,53 @@ const FriendList = ({ handleNavigationClick, setSelectedUser }) => {
     }
   };
 
-  const handleDecline = (user, e) => {
+  const handleDecline = async (fr, e) => {
     e.stopPropagation();
-    console.log("Declined:", user.username);
+    try {
+      const user = JSON.parse(localStorage.getItem("user"));
+      const data = await declineFriendRequest({
+        token: user,
+        id: user.id,
+        requestID: fr.request.id,
+      });
+      if (data.success) {
+        alert(`Declined request from ${fr.user.username}`);
+      } else {
+        alert(`Could not decline request: ${data.message}`);
+      }
+    } catch (err) {
+      console.error("Error declining request:", err);
+    }
   };
 
   const handleAddFriend = async (receiver, e) => {
     e.stopPropagation();
     try {
       setLoadingRequests((prev) => [...prev, receiver.id]);
-      const SERVER = import.meta.env.VITE_PROD_SERVER || import.meta.env.VITE_DEV_SERVER || "http://localhost:3000";
-
-      const sender = JSON.parse(localStorage.getItem("user"));
-      const tokenS = JSON.parse(localStorage.getItem("user"));
-
-      const res = await fetch(`${SERVER}/api/v1/friends/request`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          token : tokenS,
-          id: sender.id,
-          username: receiver.username,
-        }),
+      const user = JSON.parse(localStorage.getItem("user"));
+      const data = await sendFriendRequest({
+        token: user,
+        id: user.id,
+        username: receiver.username,
       });
-
-      const json = await res.json();
-
-      if (json.success) {
+      if (data.success) {
         setSentRequests((prev) => [...prev, receiver.id]);
-      } else {
-        console.error("Failed to send request:", json.message);
       }
     } catch (err) {
       console.error("Error sending friend request", err);
     } finally {
-      setLoadingRequests((prev) => prev.filter((id) => id !== receiver.id)); // stop loading
+      setLoadingRequests((prev) => prev.filter((id) => id !== receiver.id));
     }
   };
 
-  // --- Click on card should also navigate ---
   const handleCardClick = (user) => {
     setSelectedUser(user);
-    handleNavigationClick("usersprof"); // ✅ navigate to profile
+    handleNavigationClick("usersprof");
   };
+
+  // --- Loading/Error states ---
+  if (loadingUsers || loadingRequestsQuery) return <p>Loading friends...</p>;
+  if (usersError || requestsError) return <p>Error loading friends data</p>;
 
   return (
     <div className="friend-list-container">
@@ -151,7 +115,7 @@ const FriendList = ({ handleNavigationClick, setSelectedUser }) => {
           <span className="request-count">{friendRequests.length}</span>
         </div>
 
-        <div>
+        <div className="card-scroll" >
           {friendRequests.length === 0 ? (
             <p>No friend requests right now.</p>
           ) : (
@@ -159,7 +123,7 @@ const FriendList = ({ handleNavigationClick, setSelectedUser }) => {
               <div
                 key={fr.request.id}
                 className="request-item clickable"
-                onClick={() => handleCardClick(fr)}
+                onClick={() => handleCardClick(fr.user)}
               >
                 <div className="request-info">
                   <div className="avatar">
@@ -180,16 +144,10 @@ const FriendList = ({ handleNavigationClick, setSelectedUser }) => {
                 </div>
 
                 <div className="request-actions">
-                  <button
-                    className="accept-btn"
-                    onClick={(e) => handleAccept(fr, e)}
-                  >
+                  <button className="accept-btn" onClick={(e) => handleAccept(fr, e)}>
                     <Check size={16} />
                   </button>
-                  <button
-                    className="decline-btn"
-                    onClick={(e) => handleDecline(fr, e)}
-                  >
+                  <button className="decline-btn" onClick={(e) => handleDecline(fr.user, e)}>
                     <X size={16} />
                   </button>
                 </div>
@@ -205,7 +163,7 @@ const FriendList = ({ handleNavigationClick, setSelectedUser }) => {
           <h2>Suggested Study Buddies</h2>
         </div>
 
-        <div>
+        <div className="card-scroll">
           {suggestedFriends.length === 0 ? (
             <p>No suggested friends found.</p>
           ) : (
@@ -233,18 +191,11 @@ const FriendList = ({ handleNavigationClick, setSelectedUser }) => {
                   </div>
                 </div>
                 {sentRequests.includes(friend.id) ? (
-                  <button className="sent-btn" disabled>
-                    Sent
-                  </button>
+                  <button className="sent-btn" disabled>Sent</button>
                 ) : loadingRequests.includes(friend.id) ? (
-                  <button className="sent-btn" disabled>
-                    Sending...
-                  </button>
+                  <button className="sent-btn" disabled>Sending...</button>
                 ) : (
-                  <button
-                    className="add-friend-btn"
-                    onClick={(e) => handleAddFriend(friend, e)}
-                  >
+                  <button className="add-friend-btn" onClick={(e) => handleAddFriend(friend, e)}>
                     Add Friend
                   </button>
                 )}

@@ -8,7 +8,11 @@ const compression = require('compression');
 const rateLimit = require('express-rate-limit');
 const { generateAllSwaggerSpecs } = require('./config/swagger');
 const { createMainApiSwaggerUI, createPublicApiSwaggerUI } = require('./config/swagger/uiConfig');
+const path = require('path');
+
+// Load env from project root .env if present, then fallback to backend/env
 require('dotenv').config();
+require('dotenv').config({ path: path.join(__dirname, '.env') });
 const router = require('express').Router();
 const { sequelize } = require('./config/database');
 const routes = require('./routes');
@@ -68,7 +72,7 @@ app.use(publicApiPath, cors({
   origin: true, // reflect request origin (allows any origin)
   credentials: false,
   methods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization', 'user_id', 'x-user-id']
 }));
 
 // 2) Restricted CORS for the rest of the app
@@ -80,6 +84,7 @@ const restrictedCors = cors({
       process.env.PROD_LIVE_HOST,
       process.env.PROD_PREVIEW_HOST,
       process.env.CORS_ORIGIN,
+      process.env.PLANIT_BASE_URL,
       'http://localhost:5173',
       'http://localhost:5174',
       'http://localhost:3000'
@@ -93,8 +98,8 @@ const restrictedCors = cors({
     }
   },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'user_id', 'x-user-id']
 });
 
 // Apply restricted CORS except for public API path (already handled above)
@@ -154,6 +159,7 @@ async function startServer() {
       process.env.PROD_LIVE_HOST,
       process.env.PROD_PREVIEW_HOST,
       process.env.CORS_ORIGIN,
+      process.env.PLANIT_BASE_URL,
       'http://localhost:5173',
       'http://localhost:5174',
       'http://localhost:3000'

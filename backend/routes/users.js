@@ -226,7 +226,7 @@ router.post('/register', async (req, res) => {
   try{
   console.log("Payload received on backend:", req.body)
   const {user_id,course,year_of_study,academic_interests,study_preferences,institution,school} = req.body;
-  const user = await User.findOne({where:{user_id}});
+  const user = await User.findOne({where:{id: user_id}});
   if (!user) {
     return res.status(404).json({
       success: false,
@@ -236,10 +236,10 @@ router.post('/register', async (req, res) => {
 
   await User.update(
   { course, year_of_study, academic_interests, study_preferences, institution, school },
-  { where: { user_id } }
+  { where: { id: user_id } }
 );
 
-const updated_user = await User.findOne({ where: { user_id } });
+const updated_user = await User.findOne({ where: { id: user_id } });
 
   res.json({
     success: true,

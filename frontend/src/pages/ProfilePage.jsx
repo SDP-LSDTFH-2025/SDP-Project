@@ -173,15 +173,15 @@ const ProfilePage = () => {
         <div className="card activity">
           <h2>About</h2>
           <div className="kv">
-            <span className="label">Role</span>
+            <span className="label">Role:</span>
             <span className="value">{editForm.role}</span>
           </div>
           <div className="kv">
-            <span className="label">Year of Study</span>
+            <span className="label">Year of Study:</span>
             <span className="value">{editForm.year_of_study}</span>
           </div>
           <div className="kv">
-            <span className="label">Last Login</span>
+            <span className="label">Last Login:</span>
             <span className="value">
               {formatTimeAgo(user.last_login)}
             </span>

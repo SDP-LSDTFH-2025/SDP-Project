@@ -22,6 +22,8 @@ function createSocketServer(httpServer, corsOrigins) {
   });
 
   require('./privateChats')(nsp);
+  require('./groupChats')(nsp);
+  require('./notifications')(nsp);
 
   return io;
 }

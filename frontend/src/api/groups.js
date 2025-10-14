@@ -2,7 +2,7 @@
 import api from "./api";
 
 const user = JSON.parse(localStorage.getItem("user"));
-
+const token = JSON.parse(localStorage.getItem("user"));
 /*
  * All groups
  */
@@ -125,7 +125,6 @@ export const createGroup = async (token, creatorId, { title, courseCode, descrip
 export const getUpcomingSessions = async (userId) => {
   const res = await api.get("planit/events", {
     headers: {
-      "Content-Type": "application/json",
       "user_id": userId,
     },
   });

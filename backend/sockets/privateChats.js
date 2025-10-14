@@ -170,7 +170,11 @@ module.exports = function attachPrivateChatHandlers(nsp) {
     });
 
     socket.on('disconnect', () => {
-      // No-op for now
+      socket.emit('private:user:left', {
+        userId: connectedUserId,
+        chatId,
+        timestamp: new Date().toISOString()
+      });
     });
   });
 };

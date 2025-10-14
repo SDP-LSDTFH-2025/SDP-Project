@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import "./Profiles.css";
 import { MapPin, Calendar, CircleDot, Circle } from "lucide-react";
 
@@ -61,12 +62,23 @@ const Profiles = ({ user }) => {
             >
               {isFriend ? "Unfriend" : "Add Friend"}
             </button>
-            <button
-              className={`friend-btn ${isFriend ? "unfriend" : "add"}`}
-              onClick={handleFriendToggle}
+            <Link
+              to="/messages"
+              state={{
+                chat: {
+                  id: user.id,
+                  username: user.username,
+                  is_active: user.is_active,
+                  course: user.course || "",
+                  name: user.username.replaceAll("_", " "),
+                },
+              }}
+              style={{ textDecoration: "none", color: "inherit" }} // removes underline + keeps styles
             >
-              {isFriend ? "Send Message" : "Send Message"}
-            </button>
+              <button className="sending">
+                Send Message
+              </button>
+            </Link>
 
           </div>
         </div>

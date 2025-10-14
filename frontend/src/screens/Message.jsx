@@ -1,10 +1,13 @@
 import React, { useState } from "react";
+import { useLocation } from "react-router-dom";
 import ChatList from "./ChatList";
 import ChatWindow from "./ChatWindow";
 import "./Message.css";
 
 export default function Message() {
-  const [selectedChat, setSelectedChat] = useState(null);
+  const location = useLocation();
+  const initialChat = location.state?.chat||null;
+  const [selectedChat, setSelectedChat] = useState(initialChat);
 
   return (
     <div className="messages-container">
@@ -14,7 +17,7 @@ export default function Message() {
 
       <div className={`chat-window ${!selectedChat ? "hide-on-mobile" : ""}`}>
         {selectedChat ? (
-          <ChatWindow chat={selectedChat} onBack={() => setSelectedChat(null)} />
+          <ChatWindow key={selectedChat.id} chat={selectedChat} onBack={() => setSelectedChat(null)} />
         ) : (
           <div className="no-chat"></div>
         )}

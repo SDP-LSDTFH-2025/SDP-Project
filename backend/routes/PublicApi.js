@@ -4,7 +4,7 @@ const router = express.Router();
 const { public_resources } = require('../models');
 const { Op } = require('sequelize');
 const CloudinaryService = require('../services/cloudinaryService');
-const { uploadSingle, handleUploadError, uploadMultiple } = require('../middleware/upload');
+const { uploadSingle, handleUploadError, uploadMultiple, uploadPDF } = require('../middleware/upload');
 
 /**
  * @swagger
@@ -99,19 +99,35 @@ const { uploadSingle, handleUploadError, uploadMultiple } = require('../middlewa
  */
 router.get('/:event_id', async (req, res) => {
     const { event_id } = req.params;
-    try {
-      const exist = await public_resources.findOne({ where: { event_id: event_id } });
-      if (!exist) {
-        return res.status(404).json({ success: false, error: 'resource not found' });
-      }
-        const publicResource = await public_resources.findOne({ where: { event_id: event_id } });
-        res.json({ success: true, data: publicResource });
-    } catch (error) {
-        console.error('Error retrieving public resource:', error);
-        res.status(500).json({ success: false, error: 'Internal server error' });
+    
+    // Validate event_id parameter
+    if (!event_id || event_id.trim() === '') {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Event ID is required' 
+      });
     }
     
-   
+    try {
+      const publicResource = await public_resources.findOne({ 
+        where: { event_id: event_id.trim() } 
+      });
+      
+      if (!publicResource) {
+        return res.status(404).json({ 
+          success: false, 
+          error: 'Resource not found' 
+        });
+      }
+      
+      res.json({ success: true, data: publicResource });
+    } catch (error) {
+        console.error('Error retrieving public resource:', error);
+        res.status(500).json({ 
+          success: false, 
+          error: 'Internal server error' 
+        });
+    }
 });
 
 /**
@@ -186,42 +202,83 @@ router.get('/:event_id', async (req, res) => {
  *     security: []
  */
 router.post('/pictures', uploadMultiple, handleUploadError, async (req, res) => {
-    const {event_id } = req.body;
-try{
-    if (!req.files) {
-      return res.status(400).json({
-        success: false,
-        error: 'No image file provided'
-      });
-    }
+    const { event_id } = req.body;
     
-
-    const uploadResult = await CloudinaryService.uploadImage(req.files.map(file => file.buffer), {
-        folder: `sdp-project/public/${event_id}`,
-      resource_type: 'image',
-      allowed_formats: ['jpg', 'jpeg', 'png', 'gif', 'webp'],
-      transformation: [
-        { quality: 'auto' },
-        { fetch_format: 'auto' }
-      ],
-      ...req.files.map(file => ({
-        picture_url: file.secure_url,
-        public_id: file.public_id,
-        event_id: event_id,
-        created_at: new Date()
-      })),
-    });
-    await public_resources.create({
-       picture_url: uploadResult.secure_url,
-        public_id: uploadResult.public_id,
-         event_id: event_id,
-         created_at: new Date()
+    try {
+        // Validate event_id parameter
+        if (!event_id || event_id.trim() === '') {
+            return res.status(400).json({
+                success: false,
+                error: 'Event ID is required'
+            });
+        }
+        
+        // Validate files
+        if (!req.files || req.files.length === 0) {
+            return res.status(400).json({
+                success: false,
+                error: 'No image files provided'
+            });
+        }
+        
+        // Validate file count (max 10 files)
+        if (req.files.length > 10) {
+            return res.status(400).json({
+                success: false,
+                error: 'Too many files. Maximum 10 files allowed'
+            });
+        }
+        
+        // Validate file types
+        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+        const invalidFiles = req.files.filter(file => !allowedTypes.includes(file.mimetype));
+        if (invalidFiles.length > 0) {
+            return res.status(400).json({
+                success: false,
+                error: 'Invalid file type. Only JPG, PNG, GIF, and WebP images are allowed'
+            });
+        }
+        
+        // Upload files to Cloudinary
+        const uploadPromises = req.files.map(file => 
+            CloudinaryService.uploadImage(file.buffer, {
+                folder: `sdp-project/public/${event_id.trim()}`,
+                resource_type: 'image',
+                allowed_formats: ['jpg', 'jpeg', 'png', 'gif', 'webp'],
+                transformation: [
+                    { quality: 'auto' },
+                    { fetch_format: 'auto' }
+                ]
+            })
+        );
+        
+        const uploadResults = await Promise.all(uploadPromises);
+        
+        // Create database records for each uploaded file
+        const createPromises = uploadResults.map(result => 
+            public_resources.create({
+                picture_url: result.secure_url,
+                public_id: result.public_id,
+                event_id: event_id.trim(),
+                created_at: new Date()
+            })
+        );
+        
+        await Promise.all(createPromises);
+        
+        res.json({ 
+            success: true, 
+            message: `${uploadResults.length} picture(s) uploaded successfully`,
+            uploaded_count: uploadResults.length
         });
-    res.json({ success: true, message: 'Pictures uploaded successfully' });
-} catch (error) {
-    console.error('Error uploading pictures:', error);
-    res.status(500).json({ success: false, error: 'Internal server error' });
-}
+        
+    } catch (error) {
+        console.error('Error uploading pictures:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: 'Internal server error' 
+        });
+    }
 });
 
 /**
@@ -291,30 +348,72 @@ try{
  *                   error: "Internal server error"
  *     security: []
  */
-router.post('/pdf', uploadSingle, handleUploadError, async (req, res) => {
-    const {event_id } = req.body;
-try{
-    if (!req.file) {
-      return res.status(400).json({
-        success: false,
-        error: 'No PDF file provided'
-      });
-    }
-
-    const uploadResult = await CloudinaryService.uploadPDF(req.file.buffer, {
-        folder: `sdp-project/public/${event_id}`,
-      });
-    await public_resources.create({
-       file_url: uploadResult.secure_url,
-        public_id: uploadResult.public_id,
-         event_id: event_id,
-         created_at: new Date()
+router.post('/pdf', uploadPDF, handleUploadError, async (req, res) => {
+    const { event_id } = req.body;
+    
+    try {
+        // Validate event_id parameter
+        if (!event_id || event_id.trim() === '') {
+            return res.status(400).json({
+                success: false,
+                error: 'Event ID is required'
+            });
+        }
+        
+        // Validate file
+        if (!req.file) {
+            return res.status(400).json({
+                success: false,
+                error: 'No PDF file provided'
+            });
+        }
+        
+        // Validate file type
+        if (req.file.mimetype !== 'application/pdf') {
+            return res.status(400).json({
+                success: false,
+                error: 'Invalid file type. Only PDF files are allowed'
+            });
+        }
+        
+        // Check if a PDF already exists for this event
+        const existingResource = await public_resources.findOne({
+            where: { 
+                event_id: event_id.trim(),
+                file_url: { [Op.ne]: null } // Has a file_url (PDF)
+            }
         });
-    res.json({ success: true, message: 'PDF uploaded successfully' });
-} catch (error) {
-    console.error('Error uploading PDF:', error);
-    res.status(500).json({ success: false, error: 'Internal server error' });
-}
+        
+        if (existingResource) {
+            return res.status(400).json({
+                success: false,
+                error: 'A PDF already exists for this event. Please delete the existing PDF first.'
+            });
+        }
+
+        const uploadResult = await CloudinaryService.uploadPDF(req.file.buffer, {
+            folder: `sdp-project/public/${event_id.trim()}`
+        });
+        
+        await public_resources.create({
+            file_url: uploadResult.secure_url,
+            public_id: uploadResult.public_id,
+            event_id: event_id.trim(),
+            created_at: new Date()
+        });
+        
+        res.json({ 
+            success: true, 
+            message: 'PDF uploaded successfully' 
+        });
+        
+    } catch (error) {
+        console.error('Error uploading PDF:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: 'Internal server error' 
+        });
+    }
 });
 
 /**
@@ -366,21 +465,54 @@ try{
  *     security: []
  */
 router.delete('/pdf/:event_id', async (req, res) => {
-    const {event_id } = req.params;
-try{
-    const publicResource = await public_resources.findOne({ where: { event_id: event_id } });
-    if (!publicResource) {
-      return res.status(404).json({ success: false, error: 'Public resource not found' });
+    const { event_id } = req.params;
+    
+    try {
+        // Validate event_id parameter
+        if (!event_id || event_id.trim() === '') {
+            return res.status(400).json({
+                success: false,
+                error: 'Event ID is required'
+            });
+        }
+        
+        const publicResource = await public_resources.findOne({ 
+            where: { 
+                event_id: event_id.trim(),
+                file_url: { [Op.ne]: null } // Has a file_url (PDF)
+            }
+        });
+        
+        if (!publicResource) {
+            return res.status(404).json({ 
+                success: false, 
+                error: 'PDF resource not found for this event' 
+            });
+        }
+        
+        // Delete from Cloudinary if public_id exists
+        if (publicResource.public_id) {
+            try {
+                await CloudinaryService.deletePDF(publicResource.public_id);
+            } catch (cloudinaryError) {
+                console.error('Error deleting from Cloudinary:', cloudinaryError);
+                // Continue with database deletion even if Cloudinary fails
+            }
+        }
+        
+        await publicResource.destroy();
+        res.json({ 
+            success: true, 
+            message: 'PDF deleted successfully' 
+        });
+        
+    } catch (error) {
+        console.error('Error deleting PDF:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: 'Internal server error' 
+        });
     }
-    if (publicResource.public_id) {
-      await CloudinaryService.deletePDF(publicResource.public_id);
-    }
-    await publicResource.destroy();
-    res.json({ success: true, message: 'PDF deleted successfully' });
-} catch (error) {
-    console.error('Error deleting PDF:', error);
-    res.status(500).json({ success: false, error: 'Internal server error' });
-}
 });
 
 /**
@@ -432,21 +564,60 @@ try{
  *     security: []
  */
 router.delete('/pictures/:event_id', async (req, res) => {
-    const {event_id } = req.params;
-try{
-    const publicResource = await public_resources.findOne({ where: { event_id: event_id } });
-    if (!publicResource) {
-      return res.status(404).json({ success: false, error: 'Public resource not found' });
-    } 
-    if(publicResource.public_id) {
-      await CloudinaryService.deleteImage(publicResource.public_id);
+    const { event_id } = req.params;
+    
+    try {
+        // Validate event_id parameter
+        if (!event_id || event_id.trim() === '') {
+            return res.status(400).json({
+                success: false,
+                error: 'Event ID is required'
+            });
+        }
+        
+        // Find all picture resources for this event
+        const pictureResources = await public_resources.findAll({ 
+            where: { 
+                event_id: event_id.trim(),
+                picture_url: { [Op.ne]: null } // Has a picture_url
+            }
+        });
+        
+        if (pictureResources.length === 0) {
+            return res.status(404).json({ 
+                success: false, 
+                error: 'No picture resources found for this event' 
+            });
+        }
+        
+        // Delete from Cloudinary and database
+        const deletePromises = pictureResources.map(async (resource) => {
+            if (resource.public_id) {
+                try {
+                    await CloudinaryService.deleteImage(resource.public_id);
+                } catch (cloudinaryError) {
+                    console.error('Error deleting from Cloudinary:', cloudinaryError);
+                    // Continue with database deletion even if Cloudinary fails
+                }
+            }
+            return resource.destroy();
+        });
+        
+        await Promise.all(deletePromises);
+        
+        res.json({ 
+            success: true, 
+            message: `${pictureResources.length} picture(s) deleted successfully`,
+            deleted_count: pictureResources.length
+        });
+        
+    } catch (error) {
+        console.error('Error deleting pictures:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: 'Internal server error' 
+        });
     }
-    await publicResource.destroy();
-    res.json({ success: true, message: 'Pictures deleted successfully' });
-} catch (error) {
-    console.error('Error deleting pictures:', error);
-    res.status(500).json({ success: false, error: 'Internal server error' });
-}
 });
 
 

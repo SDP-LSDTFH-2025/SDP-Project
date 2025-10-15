@@ -72,8 +72,23 @@ const publicApiPath = `${apiPrefix}/public`;
 app.use(publicApiPath, cors({
   origin: true, // reflect request origin (allows any origin)
   credentials: false,
-  methods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'user_id', 'x-user-id']
+  methods: ['GET', 'POST', 'DELETE', 'OPTIONS', 'PATCH', 'PUT'],
+  allowedHeaders: [
+    'Content-Type',
+    'Authorization',
+    'user_id',
+    'x-user-id',
+    'x-requested-with',
+    'x-auth-token',
+    'x-csrf-token',
+    'x-xsrf-token',
+    'x-api-key',
+    'x-client-id',
+    'x-client-secret',
+    'x-client-token',
+    'x-client-refresh-token',
+    'x-client-access-token'
+  ]
 }));
 
 // 2) Restricted CORS for the rest of the app
@@ -99,8 +114,23 @@ const restrictedCors = cors({
     }
   },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'user_id', 'x-user-id']
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH', 'HEAD'],
+  allowedHeaders: [
+    'Content-Type',
+    'Authorization',
+    'user_id',
+    'x-user-id',
+    'x-requested-with',
+    'x-auth-token',
+    'x-csrf-token',
+    'x-xsrf-token',
+    'x-api-key',
+    'x-client-id',
+    'x-client-secret',
+    'x-client-token',
+    'x-client-refresh-token',
+    'x-client-access-token'
+  ]
 });
 
 // Apply restricted CORS except for public API path (already handled above)
@@ -153,7 +183,7 @@ async function startServer() {
   
 
 
-    console.log('✅ Database synchronized successfully.');
+ 
     // Start HTTP + Socket server
     const server = http.createServer(app);
     const allowedOrigins = [

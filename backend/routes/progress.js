@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const {Progress} = require('../models');
 const {verifyToken, errorClass} = require('../middleware/tools');
+const { optimizedAuth } = require('../middleware/optimizedAuth');
 
 /**
  * @swagger
@@ -67,7 +68,7 @@ const {verifyToken, errorClass} = require('../middleware/tools');
  */
 
 
-router.post('/update', async(req,res)=>{
+router.post('/update', optimizedAuth, async(req,res)=>{
     try{
         const {token,id,topic,section,hours_studied} = req.body;
 
@@ -163,7 +164,7 @@ router.post('/update', async(req,res)=>{
  */
 
 
-router.delete('/delete/:token/:id/:topic/:section', async (req, res) => {
+router.delete('/delete/:token/:id/:topic/:section', optimizedAuth, async (req, res) => {
     try {
         const {token, id, topic, section } = req.params;
 

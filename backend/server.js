@@ -23,6 +23,7 @@ const {
   securityHeaders, 
   requestSizeLimit 
 } = require('./middleware/security');
+const { optimizedAuth } = require('./middleware/optimizedAuth');
 
 const app = express();
 const PORT = process.env.PORT || 3000;

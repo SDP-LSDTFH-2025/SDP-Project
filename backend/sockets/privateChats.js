@@ -169,7 +169,7 @@ module.exports = function attachPrivateChatHandlers(nsp) {
       nsp.to(`user-${fromUserId}`).emit('private:read', { by: me });
     });
 
-    socket.on('disconnect', () => {
+    socket.on('disconnect', ({ chatId }) => {
       socket.emit('private:user:left', {
         userId: connectedUserId,
         chatId,

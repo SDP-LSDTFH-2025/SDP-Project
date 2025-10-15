@@ -28,6 +28,7 @@ export const getGroups = async () => {
         organizer: g.creator_name,
         participants: participants.length,
         joined: participants.some((p) => p.id === user?.id) || false,
+        Participants: participants.map((p) => ({ id: p.id, username: p.username })),
       };
     });
   } catch (err) {

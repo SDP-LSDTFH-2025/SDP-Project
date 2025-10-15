@@ -86,4 +86,7 @@ router.use('/public', publicApiRoutes);
 router.use('/planit', planitProxyRoutes);
 router.use('/private-chats', privateChatsRoutes);
 
+const groupChatsRoute = require("./GroupChats");
+router.use('/group-chats', groupChatsRoute);
+
 module.exports = router; 

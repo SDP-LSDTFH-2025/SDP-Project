@@ -1,7 +1,7 @@
 // src/api/resources.js
 import api from "./api";
 
-const token = JSON.parse(localStorage.getItem("user"));
+const token = localStorage.getItem("token");
 const user = JSON.parse(localStorage.getItem("user"));
 
 // Get all users once and cache
@@ -55,8 +55,6 @@ export const getAllResources = async () => {
 
 // Get all friends for current user
 export const getAllFriends = async () => {
-
-  if (!token || !user?.id) throw new Error("User not logged in");
 
   const res = await api.post("friends", {
     token,

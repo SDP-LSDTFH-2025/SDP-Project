@@ -1,14 +1,15 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { ArrowLeft, Send, Users, Plus } from "lucide-react";
 import "./GroupChat.css";
+import { Input } from "../components/ui/input";
+import { Button } from "../components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { getUpcomingSessions, joinSession, createSession } from "../api/groups";
+import { socket } from "../socket";
+import { getGroupChatHistory } from "../api/chat"; // Assume you have this
 
 export default function GroupChat({ group, onBack }) {
-  const [messages, setMessages] = useState([
-    { id: 1, sender: "Alice", text: "Hi everyone!", time: "10:00" },
-    { id: 2, sender: "Bob", text: "Ready to study calculus?", time: "10:05" },
-  ]);
+  const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [showSessions, setShowSessions] = useState(false);
@@ -27,10 +28,11 @@ export default function GroupChat({ group, onBack }) {
     endTime: "",
   });
 
-  const user = JSON.parse(localStorage.getItem("user")) || {};
+  const user = JSON.parse(localStorage.getItem("user"));
   const calendar_token = localStorage.getItem("calendar_token");
 
   const { data: upcomingData } = useQuery({
+    enabled: !!user?.id,
     queryKey: ["upcomingSessions", user.id],
     queryFn: () => getUpcomingSessions(user.id),
     staleTime: 20 * 60 * 1000,
@@ -182,6 +184,166 @@ export default function GroupChat({ group, onBack }) {
     }
   };
 
+  /*
+  * I will use this part below to init the sockets
+  */
+  const [isTyping, setIsTyping] = useState(false);
+
+  const lastTempIdSent = useRef(null);
+  const typingTimeout = useRef(null);
+  const messagesEndRef = useRef(null);
+
+   // Scroll to bottom when messages update
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  // Fetch initial chat history
+useEffect(() => {
+  async function fetchHistory() {
+    try {
+      const msgs = await getGroupChatHistory(group.id);
+
+      const participantsMap = {};
+      (group.Participants || []).forEach(p => {
+        participantsMap[p.id] = p.username;
+      });
+
+      setMessages(
+        msgs.map((msg) => ({
+          id: msg.id,
+          userId: msg.user_id,
+          text: msg.message,
+          time: new Date(msg.created_at).toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+          sender: msg.user_id === user.id ? "Me" : participantsMap[msg.user_id],
+          isOwnMessage: msg.user_id === user.id, 
+        }))
+      );
+    } catch (err) {
+      console.error("Failed to fetch group messages:", err);
+    }
+  }
+
+  fetchHistory();
+}, [group.id, user.id, group.Participants]);
+
+
+  // Socket setup
+  useEffect(() => {
+    if (!socket.connected) socket.connect();
+
+    // Join group room
+    socket.emit("group:join", { groupId: group.id }, (ack) => {
+      if (!ack.ok) console.error("Failed to join group:", ack.error);
+    });
+
+    // Incoming messages
+    const handleNewMessage = (msg) => {
+      if (msg.tempId && msg.tempId === lastTempIdSent.current) return;
+
+      if (msg.group_id === group.id) {
+        const participantsMap = {};
+        (group.Participants || []).forEach(p => {
+          participantsMap[p.id] = p.username;
+        });
+
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: msg.id,
+            userId: msg.user_id,
+            text: msg.message,
+            time: new Date(msg.created_at).toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
+            sender: msg.user_id === user.id ? "Me" : participantsMap[msg.user_id] || "Unknown",
+            isOwnMessage: msg.user_id === user.id,
+          },
+        ]);
+
+        socket.emit("group:read", { groupId: group.id, lastReadMessageId: msg.id });
+      }
+    };
+
+
+    const handleTyping = ({ userId: typingUserId, groupId: typingGroupId, isTyping }) => {
+      if (group.id === typingGroupId && typingUserId !== user.id) {
+        setIsTyping(isTyping);
+      }
+    };
+
+    socket.on("group:message:new", handleNewMessage);
+    socket.on("group:typing", handleTyping);
+
+    return () => {
+      socket.emit("group:leave", { groupId: group.id });
+      socket.off("group:message:new", handleNewMessage);
+      socket.off("group:typing", handleTyping);
+    };
+  }, [group.id, user.id, group.Participants]);
+
+  // Send message
+  const sendMessage = () => {
+    if (!newMessage.trim()) return;
+
+    const tempId = Date.now();
+    lastTempIdSent.current = tempId;
+
+    const localMsg = {
+      id: tempId,
+      userId: user.id,
+      text: newMessage,
+      time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      sender: "Me",
+      isOwnMessage: true,
+    };
+
+
+    setMessages((prev) => [...prev, localMsg]);
+
+    socket.emit(
+      "group:message",
+      { groupId: group.id, message: newMessage, tempId },
+      (ack) => {
+        if (!ack.ok) console.error("Message failed:", ack.error);
+      }
+    );
+
+    setNewMessage("");
+  };
+
+  // Typing indicator
+  const handleTypingChange = (e) => {
+    setNewMessage(e.target.value);
+
+    socket.emit("group:typing", { groupId: group.id, isTyping: true });
+
+    clearTimeout(typingTimeout.current);
+    typingTimeout.current = setTimeout(() => {
+      socket.emit("group:typing", { groupId: group.id, isTyping: false });
+    }, 1500);
+  };
+
+  // Listen for other users typing
+  useEffect(() => {
+    const handleTyping = ({ userId: typingUserId, groupId: typingGroupId, isTyping }) => {
+      if (group.id === typingGroupId && typingUserId !== user.id) {
+        setIsTyping(isTyping);
+      }
+    };
+
+    socket.on("group:typing", handleTyping);
+
+    return () => {
+      socket.off("group:typing", handleTyping);
+      clearTimeout(typingTimeout.current);
+    };
+  }, [group.id, user.id]);
+
   return (
     <div className="group-chat">
       {/* Header */}
@@ -206,7 +368,7 @@ export default function GroupChat({ group, onBack }) {
       {/* Messages */}
       <div className="messages">
         {messages.map((msg) => (
-          <div key={msg.id} className={`message ${msg.sender === "Me" ? "me" : "other"}`}>
+          <div key={msg.id} className={`message ${msg.isOwnMessage  ? "me" : "other"}`}>
             <div>
               {msg.sender !== "Me" && <h5 className="sender">{msg.sender}</h5>}
               <p className="text">{msg.text}</p>
@@ -214,6 +376,8 @@ export default function GroupChat({ group, onBack }) {
             </div>
           </div>
         ))}
+        {isTyping && <p style={{ fontStyle: "italic" }}>Someone is typing...</p>}
+        <div ref={messagesEndRef} />
       </div>
 
       {/* Input */}
@@ -222,10 +386,10 @@ export default function GroupChat({ group, onBack }) {
           type="text"
           placeholder="Type your message..."
           value={newMessage}
-          onChange={(e) => setNewMessage(e.target.value)}
+          onChange={handleTypingChange}
           onKeyDown={(e) => e.key === "Enter" && handleSend()}
         />
-        <button className="send-btn" onClick={handleSend}>
+        <button className="send-btn" onClick={sendMessage}>
           <Send size={18} />
         </button>
       </div>

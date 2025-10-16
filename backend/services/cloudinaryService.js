@@ -195,6 +195,7 @@ class CloudinaryService {
    * @param {string} publicId - Public ID of the PDF
    * @returns {Promise<Object>} Delete result
    */
+  
   static async deletePDF(publicId) {
     try {
       const result = await cloudinary.uploader.destroy(publicId, {

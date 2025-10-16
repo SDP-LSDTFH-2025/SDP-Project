@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const {Progress} = require('../models');
 const {verifyToken, errorClass} = require('../middleware/tools');
+const { optimizedAuth } = require('../middleware/optimizedAuth');
 
 /**
  * @swagger
@@ -106,7 +107,8 @@ const {verifyToken, errorClass} = require('../middleware/tools');
  *                   example: "Internal server error"
  */
 
-router.post('/update', async(req,res)=>{
+
+router.post('/update', optimizedAuth, async(req,res)=>{
     try{
         const {token,id,topic,section,hours_studied,progress} = req.body;
 
@@ -359,7 +361,7 @@ router.post('/create', async(req,res)=>{
  */
 
 
-router.delete('/delete/:token/:id/:topic', async (req, res) => {
+router.delete('/delete/:token/:id/:topic/:section', optimizedAuth, async (req, res) => {
     try {
         const {token, id, topic} = req.params;
 

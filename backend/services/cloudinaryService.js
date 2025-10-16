@@ -1,6 +1,59 @@
 const cloudinary = require('../config/cloudinary');
+const sharp = require('sharp');
+const zlib = require('zlib');
 
 class CloudinaryService {
+  /**
+   * Compress image before upload
+   * @param {Buffer} fileBuffer - File buffer
+   * @param {Object} options - Compression options
+   * @returns {Promise<Buffer>} Compressed buffer
+   */
+  static async compressImage(fileBuffer, options = {}) {
+    try {
+      const {
+        maxWidth = 1920,
+        maxHeight = 1080,
+        quality = 85,
+        format = 'jpeg'
+      } = options;
+
+      return await sharp(fileBuffer)
+        .resize(maxWidth, maxHeight, { 
+          fit: 'inside',
+          withoutEnlargement: true 
+        })
+        .jpeg({ quality })
+        .toBuffer();
+    } catch (error) {
+      console.error('Image compression error:', error);
+      return fileBuffer; // Return original if compression fails
+    }
+  }
+
+  /**
+   * Compress PDF before upload
+   * @param {Buffer} fileBuffer - File buffer
+   * @returns {Promise<Buffer>} Compressed buffer
+   */
+  static async compressPDF(fileBuffer) {
+    try {
+      return new Promise((resolve, reject) => {
+        zlib.gzip(fileBuffer, (err, compressed) => {
+          if (err) {
+            console.error('PDF compression error:', err);
+            resolve(fileBuffer); // Return original if compression fails
+          } else {
+            resolve(compressed);
+          }
+        });
+      });
+    } catch (error) {
+      console.error('PDF compression error:', error);
+      return fileBuffer;
+    }
+  }
+
   /**
    * Upload an image to Cloudinary
    * @param {Buffer|string} file - File buffer or base64 string
@@ -20,6 +73,9 @@ class CloudinaryService {
       let uploadResult;
       
       if (Buffer.isBuffer(file)) {
+        // Compress image before upload
+        const compressedFile = await this.compressImage(file, options.compression);
+        
         // Upload from buffer
         uploadResult = await new Promise((resolve, reject) => {
           const uploadStream = cloudinary.uploader.upload_stream(
@@ -30,7 +86,7 @@ class CloudinaryService {
             }
           );
           
-          uploadStream.end(file);
+          uploadStream.end(compressedFile);
         });
       } else if (typeof file === 'string') {
         // Upload from base64 or URL
@@ -75,6 +131,9 @@ class CloudinaryService {
       };
       let uploadResult;
       if (Buffer.isBuffer(file)) {
+        // Compress PDF before upload
+        const compressedFile = await this.compressPDF(file);
+        
         uploadResult = await new Promise((resolve, reject) => {
           const uploadStream = cloudinary.uploader.upload_stream(
             uploadOptions,
@@ -83,7 +142,7 @@ class CloudinaryService {
               else resolve(result);
             }
           );
-          uploadStream.end(file);
+          uploadStream.end(compressedFile);
         });
       } else if (typeof file === 'string') {
         uploadResult = await cloudinary.uploader.upload(file, uploadOptions);

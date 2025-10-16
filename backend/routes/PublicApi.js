@@ -60,17 +60,40 @@ const { uploadSingle, handleUploadError, uploadMultiple, uploadPDF } = require('
  *                     data:
  *                       $ref: '#/components/schemas/PublicResource'
  *             examples:
- *               success:
- *                 summary: Successful retrieval
+ *               success_with_pdf:
+ *                 summary: Successful retrieval with PDF
  *                 value:
  *                   success: true
  *                   data:
  *                     id: "550e8400-e29b-41d4-a716-446655440000"
  *                     file_url: "https://res.cloudinary.com/demo/image/upload/v1234567890/sdp-project/public/event123/document.pdf"
  *                     public_id: "sdp-project/public/event123/document"
- *                     picture_url: "https://res.cloudinary.com/demo/image/upload/v1234567890/sdp-project/public/event123/image.jpg"
- *                     event_id: "550e8400-e29b-41d4-a716-446655440001"
+ *                     picture_url: null
+ *                     event_id: "event-12345"
  *                     created_at: "2024-01-15T10:30:00Z"
+ *               success_with_pictures:
+ *                 summary: Successful retrieval with pictures
+ *                 value:
+ *                   success: true
+ *                   data:
+ *                     id: "550e8400-e29b-41d4-a716-446655440001"
+ *                     file_url: null
+ *                     public_id: "sdp-project/public/event123/image"
+ *                     picture_url: "https://res.cloudinary.com/demo/image/upload/v1234567890/sdp-project/public/event123/image.jpg"
+ *                     event_id: "event-12345"
+ *                     created_at: "2024-01-15T10:30:00Z"
+ *       400:
+ *         description: Bad request - Invalid event ID
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *             examples:
+ *               invalid_event_id:
+ *                 summary: Invalid event ID
+ *                 value:
+ *                   success: false
+ *                   error: "Event ID is required"
  *       404:
  *         description: Resource not found
  *         content:
@@ -82,7 +105,7 @@ const { uploadSingle, handleUploadError, uploadMultiple, uploadPDF } = require('
  *                 summary: Resource not found
  *                 value:
  *                   success: false
- *                   error: "resource not found"
+ *                   error: "Resource not found"
  *       500:
  *         description: Internal server error
  *         content:
@@ -96,6 +119,8 @@ const { uploadSingle, handleUploadError, uploadMultiple, uploadPDF } = require('
  *                   success: false
  *                   error: "Internal server error"
  *     security: []
+ *     example:
+ *       curl -X GET "http://localhost:3000/api/v1/public/event-12345" -H "Accept: application/json"
  */
 router.get('/:event_id', async (req, res) => {
     const { event_id } = req.params;
@@ -144,10 +169,10 @@ router.get('/:event_id', async (req, res) => {
  *           schema:
  *             type: object
  *             required:
- *               - files
+ *               - images
  *               - event_id
  *             properties:
- *               files:
+ *               images:
  *                 type: array
  *                 items:
  *                   type: string
@@ -160,7 +185,7 @@ router.get('/:event_id', async (req, res) => {
  *                 description: ID of the event to associate the pictures with (can be any string)
  *                 example: "event-12345"
  *           encoding:
- *             files:
+ *             images:
  *               contentType: image/*
  *     responses:
  *       200:
@@ -168,15 +193,29 @@ router.get('/:event_id', async (req, res) => {
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/UploadResponse'
+ *               allOf:
+ *                 - $ref: '#/components/schemas/ApiResponse'
+ *                 - type: object
+ *                   properties:
+ *                     uploaded_count:
+ *                       type: integer
+ *                       description: Number of files successfully uploaded
+ *                       example: 3
  *             examples:
- *               success:
- *                 summary: Upload successful
+ *               success_single:
+ *                 summary: Single file upload successful
  *                 value:
  *                   success: true
- *                   message: "Pictures uploaded successfully"
+ *                   message: "1 picture(s) uploaded successfully"
+ *                   uploaded_count: 1
+ *               success_multiple:
+ *                 summary: Multiple files upload successful
+ *                 value:
+ *                   success: true
+ *                   message: "3 picture(s) uploaded successfully"
+ *                   uploaded_count: 3
  *       400:
- *         description: Bad request - No image files provided
+ *         description: Bad request - Invalid request data
  *         content:
  *           application/json:
  *             schema:
@@ -187,6 +226,21 @@ router.get('/:event_id', async (req, res) => {
  *                 value:
  *                   success: false
  *                   error: "No image file provided"
+ *               no_event_id:
+ *                 summary: No event ID provided
+ *                 value:
+ *                   success: false
+ *                   error: "Event ID is required"
+ *               too_many_files:
+ *                 summary: Too many files
+ *                 value:
+ *                   success: false
+ *                   error: "Too many files. Maximum 10 files allowed"
+ *               invalid_file_type:
+ *                 summary: Invalid file type
+ *                 value:
+ *                   success: false
+ *                   error: "Invalid file type. Only JPG, PNG, GIF, and WebP images are allowed"
  *       500:
  *         description: Internal server error during upload
  *         content:
@@ -200,6 +254,8 @@ router.get('/:event_id', async (req, res) => {
  *                   success: false
  *                   error: "Internal server error"
  *     security: []
+ *     example:
+ *       curl -X POST "http://localhost:3000/api/v1/public/pictures" -F "images=@image1.jpg" -F "images=@image2.png" -F "event_id=event-12345" -H "Accept: application/json"
  */
 router.post('/pictures', uploadMultiple, handleUploadError, async (req, res) => {
     const { event_id } = req.body;
@@ -295,19 +351,19 @@ router.post('/pictures', uploadMultiple, handleUploadError, async (req, res) => 
  *           schema:
  *             type: object
  *             required:
- *               - file
+ *               - pdf
  *               - event_id
  *             properties:
- *               file:
+ *               pdf:
  *                 type: string
  *                 format: binary
- *                 description: PDF file to upload (max size and format restrictions apply)
+ *                 description: PDF file to upload (max 5MB, PDF format only)
  *               event_id:
  *                 type: string
  *                 description: ID of the event to associate the PDF with (can be any string)
  *                 example: "event-12345"
  *           encoding:
- *             file:
+ *             pdf:
  *               contentType: application/pdf
  *     responses:
  *       200:
@@ -323,7 +379,7 @@ router.post('/pictures', uploadMultiple, handleUploadError, async (req, res) => 
  *                   success: true
  *                   message: "PDF uploaded successfully"
  *       400:
- *         description: Bad request - No PDF file provided
+ *         description: Bad request - Invalid request data
  *         content:
  *           application/json:
  *             schema:
@@ -334,6 +390,21 @@ router.post('/pictures', uploadMultiple, handleUploadError, async (req, res) => 
  *                 value:
  *                   success: false
  *                   error: "No PDF file provided"
+ *               no_event_id:
+ *                 summary: No event ID provided
+ *                 value:
+ *                   success: false
+ *                   error: "Event ID is required"
+ *               invalid_file_type:
+ *                 summary: Invalid file type
+ *                 value:
+ *                   success: false
+ *                   error: "Invalid file type. Only PDF files are allowed"
+ *               pdf_exists:
+ *                 summary: PDF already exists for event
+ *                 value:
+ *                   success: false
+ *                   error: "A PDF already exists for this event. Please delete the existing PDF first."
  *       500:
  *         description: Internal server error during upload
  *         content:
@@ -347,6 +418,8 @@ router.post('/pictures', uploadMultiple, handleUploadError, async (req, res) => 
  *                   success: false
  *                   error: "Internal server error"
  *     security: []
+ *     example:
+ *       curl -X POST "http://localhost:3000/api/v1/public/pdf" -F "pdf=@document.pdf" -F "event_id=event-12345" -H "Accept: application/json"
  */
 router.post('/pdf', uploadPDF, handleUploadError, async (req, res) => {
     const { event_id } = req.body;
@@ -438,18 +511,30 @@ router.post('/pdf', uploadPDF, handleUploadError, async (req, res) => {
  *                 value:
  *                   success: true
  *                   message: "PDF deleted successfully"
+ *       400:
+ *         description: Bad request - Invalid event ID
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *             examples:
+ *               invalid_event_id:
+ *                 summary: Invalid event ID
+ *                 value:
+ *                   success: false
+ *                   error: "Event ID is required"
  *       404:
- *         description: Public resource not found
+ *         description: PDF resource not found
  *         content:
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  *             examples:
  *               not_found:
- *                 summary: Resource not found
+ *                 summary: PDF not found
  *                 value:
  *                   success: false
- *                   error: "Public resource not found"
+ *                   error: "PDF resource not found for this event"
  *       500:
  *         description: Internal server error during deletion
  *         content:
@@ -463,6 +548,8 @@ router.post('/pdf', uploadPDF, handleUploadError, async (req, res) => {
  *                   success: false
  *                   error: "Internal server error"
  *     security: []
+ *     example:
+ *       curl -X DELETE "http://localhost:3000/api/v1/public/pdf/event-12345" -H "Accept: application/json"
  */
 router.delete('/pdf/:event_id', async (req, res) => {
     const { event_id } = req.params;
@@ -530,25 +617,51 @@ router.delete('/pdf/:event_id', async (req, res) => {
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/UploadResponse'
+ *               allOf:
+ *                 - $ref: '#/components/schemas/ApiResponse'
+ *                 - type: object
+ *                   properties:
+ *                     deleted_count:
+ *                       type: integer
+ *                       description: Number of pictures successfully deleted
+ *                       example: 3
  *             examples:
- *               success:
- *                 summary: Deletion successful
+ *               success_single:
+ *                 summary: Single picture deleted
  *                 value:
  *                   success: true
- *                   message: "Pictures deleted successfully"
+ *                   message: "1 picture(s) deleted successfully"
+ *                   deleted_count: 1
+ *               success_multiple:
+ *                 summary: Multiple pictures deleted
+ *                 value:
+ *                   success: true
+ *                   message: "3 picture(s) deleted successfully"
+ *                   deleted_count: 3
+ *       400:
+ *         description: Bad request - Invalid event ID
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *             examples:
+ *               invalid_event_id:
+ *                 summary: Invalid event ID
+ *                 value:
+ *                   success: false
+ *                   error: "Event ID is required"
  *       404:
- *         description: Public resource not found
+ *         description: Picture resources not found
  *         content:
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  *             examples:
  *               not_found:
- *                 summary: Resource not found
+ *                 summary: No pictures found
  *                 value:
  *                   success: false
- *                   error: "Public resource not found"
+ *                   error: "No picture resources found for this event"
  *       500:
  *         description: Internal server error during deletion
  *         content:
@@ -562,6 +675,8 @@ router.delete('/pdf/:event_id', async (req, res) => {
  *                   success: false
  *                   error: "Internal server error"
  *     security: []
+ *     example:
+ *       curl -X DELETE "http://localhost:3000/api/v1/public/pictures/event-12345" -H "Accept: application/json"
  */
 router.delete('/pictures/:event_id', async (req, res) => {
     const { event_id } = req.params;

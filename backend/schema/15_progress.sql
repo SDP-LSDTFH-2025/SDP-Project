@@ -1,5 +1,4 @@
 CREATE TABLE progress (
-  id integer GENERATED ALWAYS AS IDENTITY,
   user_id VARCHAR,
   topic VARCHAR,
   section VARCHAR,

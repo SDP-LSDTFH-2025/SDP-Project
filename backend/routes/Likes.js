@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { User, Likes, Resources } = require('../models');
+const { optimizedAuth } = require('../middleware/optimizedAuth');
 
 /**
  * @swagger
@@ -191,7 +192,7 @@ router.get('/:id', async (req, res) => {
  *       409:
  *         description: User already liked resource
  */
-router.post('/:id', async (req, res) => {
+router.post('/:id', optimizedAuth, async (req, res) => {
   try {
     const resourceId = parseInt(req.params.id, 10);
     const { user_id } = req.body;
@@ -262,7 +263,7 @@ router.post('/:id', async (req, res) => {
  *       403:
  *         description: User has not liked this resource
  */
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', optimizedAuth, async (req, res) => {
   try {
     const resourceId = parseInt(req.params.id, 10);
     const { user_id } = req.body;

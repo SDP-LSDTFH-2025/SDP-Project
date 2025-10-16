@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { Resource_threads, User } = require('../models');
 const { Op } = require('sequelize');
+const { optimizedAuth } = require('../middleware/optimizedAuth');
 
 /**
  * @swagger
@@ -66,7 +67,7 @@ const { Op } = require('sequelize');
  *       500:
  *         description: Internal server error
  */
-router.post('/', async (req, res) => {
+router.post('/', optimizedAuth, async (req, res) => {
     const { user_id, resource_id, message, parent_id } = req.body;
 
     try {
@@ -212,7 +213,7 @@ router.get('/', async (req, res) => {
  *       500:
  *         description: Internal server error
  */
-router.put('/:id', async (req, res) => {
+router.put('/:id', optimizedAuth, async (req, res) => {
     const { message } = req.body;
 
     try {
@@ -256,7 +257,7 @@ router.put('/:id', async (req, res) => {
  *       500:
  *         description: Internal server error
  */
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', optimizedAuth, async (req, res) => {
     try {
         const resource_thread = await Resource_threads.findByPk(req.params.id);
         if (!resource_thread) {

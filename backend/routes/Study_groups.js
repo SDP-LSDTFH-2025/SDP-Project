@@ -5,6 +5,7 @@ const {verifyToken, errorClass, courseVariants} = require('../middleware/tools')
 const { sequelize } = require('../config/database');
 const { spliceStr } = require('sequelize/lib/utils');
 const { Op, where} = require("sequelize");
+const { optimizedAuth } = require('../middleware/optimizedAuth');
 
 /**
  * @swagger
@@ -73,7 +74,7 @@ const { Op, where} = require("sequelize");
  */
 
 
-router.post('/create',async(req,res)=>{
+router.post('/create', optimizedAuth, async(req,res)=>{
     try{
         const {token,id,title,course_code,description,participants} = req.body;
 
@@ -195,7 +196,7 @@ router.post('/create',async(req,res)=>{
  */
 
 
-router.post('/join',async(req,res)=>{
+router.post('/join', optimizedAuth, async(req,res)=>{
     try{
         const {token,id,groupID} = req.body;
 
@@ -302,7 +303,7 @@ router.post('/join',async(req,res)=>{
  */
 
 
-router.post('/leave',async(req,res)=>{
+router.post('/leave', optimizedAuth, async(req,res)=>{
     try{
         const {token,id,groupID} = req.body;
 

@@ -126,14 +126,15 @@ class CloudinaryService {
         folder: options.folder || 'sdp-project/pdfs',
         resource_type: 'raw',
         allowed_formats: ['pdf'],
-        access_mode: 'public', // Ensure public access
+        access_mode: 'public',
+        use_filename: true,
+        unique_filename: false,
         ...options
       };
+      
       let uploadResult;
       if (Buffer.isBuffer(file)) {
-        // Compress PDF before upload
-        const compressedFile = await this.compressPDF(file);
-        
+        // Upload PDF directly without compression
         uploadResult = await new Promise((resolve, reject) => {
           const uploadStream = cloudinary.uploader.upload_stream(
             uploadOptions,
@@ -142,13 +143,14 @@ class CloudinaryService {
               else resolve(result);
             }
           );
-          uploadStream.end(compressedFile);
+          uploadStream.end(file); // Use original file, not compressed
         });
       } else if (typeof file === 'string') {
         uploadResult = await cloudinary.uploader.upload(file, uploadOptions);
       } else {
         throw new Error('Invalid file format. Expected Buffer or string.');
       }
+      
       return {
         success: true,
         public_id: uploadResult.public_id,
@@ -181,6 +183,30 @@ class CloudinaryService {
       };
     } catch (error) {
       console.error('Cloudinary delete error:', error);
+      return {
+        success: false,
+        error: error.message
+      };
+    }
+  }
+
+  /**
+   * Delete a PDF from Cloudinary
+   * @param {string} publicId - Public ID of the PDF
+   * @returns {Promise<Object>} Delete result
+   */
+  static async deletePDF(publicId) {
+    try {
+      const result = await cloudinary.uploader.destroy(publicId, {
+        resource_type: 'raw'
+      });
+      
+      return {
+        success: result.result === 'ok',
+        message: result.result === 'ok' ? 'PDF deleted successfully' : 'Failed to delete PDF'
+      };
+    } catch (error) {
+      console.error('Cloudinary PDF delete error:', error);
       return {
         success: false,
         error: error.message

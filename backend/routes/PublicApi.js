@@ -467,6 +467,7 @@ router.post('/pdf', uploadPDF, handleUploadError, async (req, res) => {
         const uploadResult = await CloudinaryService.uploadPDF(req.file.buffer, {
             folder: `sdp-project/public/${event_id.trim()}`
         });
+        console.log(uploadResult);
         
         await public_resources.create({
             file_url: uploadResult.secure_url,

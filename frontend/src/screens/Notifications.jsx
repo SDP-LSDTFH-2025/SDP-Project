@@ -1,111 +1,65 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent } from "../components/ui/card";
 import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
 import { 
-  UserPlus, 
-  Users, 
-  BookOpen, 
-  BarChart3, 
-  Clock,
-  Filter,
-  CircleCheckBig,
-  Trash2,
-  Bell
+  UserPlus, Users, BookOpen, BarChart3, Clock,
+  Filter, CircleCheckBig, Trash2, Bell
 } from "lucide-react";
 import "./Notifications.css";
+import { getNotifications, markAllNotificationsAsRead  } from "../api/notifications";
 
 function Notifications({ user }) {
-  const initialNotifications = [
-    {
-      id: 1,
-      type: "friend request",
-      title: "New Friend Request",
-      description: "Sarah Johnson wants to connect with you",
-      time: "2 min ago",
-      icon: UserPlus,
-      color: "text-blue-500",
-      bgColor: "bg-blue-50",
-      action: true,
-      unread: true
-    },
-    {
-      id: 2,
-      type: "study group",
-      title: "Study Group Invite",
-      description: "You've been invited to 'Biology Final Prep' group",
-      time: "1 hour ago",
-      icon: Users,
-      color: "text-green-500",
-      bgColor: "bg-green-50",
-      action: true,
-      unread: true
-    },
-    {
-      id: 3,
-      type: "resource",
-      title: "New Resource Shared",
-      description: "Alex shared 'Calculus Notes Chapter 5'",
-      time: "3 hours ago",
-      icon: BookOpen,
-      color: "text-purple-500",
-      bgColor: "bg-purple-50",
-      unread: true
-    },
-    {
-      id: 4,
-      type: "general",
-      title: "Weekly Summary",
-      description: "Your study progress report is ready to view",
-      time: "1 day ago",
-      icon: BarChart3,
-      color: "text-gray-500",
-      bgColor: "bg-gray-50",
-      unread: false
-    },
-    {
-      id: 5,
-      type: "reminder",
-      title: "Study Session Reminder",
-      description: "Chemistry group meeting starts in 30 minutes",
-      time: "Just now",
-      icon: Clock,
-      color: "text-orange-500",
-      bgColor: "bg-orange-50",
-      unread: true
-    }
-  ];
-
-  const [notifications, setNotifications] = useState(initialNotifications);
+  const [notifications, setNotifications] = useState([]);
   const [showUnreadOnly, setShowUnreadOnly] = useState(false);
 
-  // Mark all as read
-  const handleMarkAllAsRead = () => {
-    const updated = notifications.map(n => ({ ...n, unread: false }));
-    setNotifications(updated);
+  if (!user){
+    user = JSON.parse(localStorage.getItem("user"));
+  }
+
+  useEffect(() => {
+    fetchNotifications();
+  }, []);
+
+  const fetchNotifications = async () => {
+    try {
+      const data = await getNotifications(user.id);
+      if (data.success && Array.isArray(data.data)) {
+        // Map API data to your UI format
+        const formatted = data.data.map(n => ({
+          id: n.id,
+          title: n.title,
+          description: n.message,
+          time: new Date(n.created_at).toLocaleString(),
+          unread: !n.read
+        }));
+        setNotifications(formatted);
+      }
+    } catch (err) {
+      console.error("Failed to load notifications:", err);
+    }
+  }; 
+
+  const handleMarkAllAsRead = async () => {
+    try {
+      const response = await markAllNotificationsAsRead(user.id);
+      if (response.success) {
+        // Update the local state
+        setNotifications(prev => prev.map(n => ({ ...n, unread: false })));
+      }
+    } catch (err) {
+      console.error("Failed to mark all as read:", err);
+    }
   };
 
-  // Toggle show unread
   const handleToggleShowUnread = () => {
     setShowUnreadOnly(prev => !prev);
   };
 
-  // Filter notifications based on showUnreadOnly
   const filteredNotifications = showUnreadOnly
     ? notifications.filter(n => n.unread)
     : notifications;
 
-  const getTypeBadge = (type) => {
-    const typeConfig = {
-      "friend request": { label: "Friend Request", variant: "default" },
-      "study group": { label: "Study Group", variant: "secondary" },
-      "resource": { label: "Resource", variant: "outline" },
-      "general": { label: "General", variant: "outline" },
-      "reminder": { label: "Reminder", variant: "default" }
-    };
-    const config = typeConfig[type] || { label: type, variant: "outline" };
-    return <Badge variant={config.variant}>{config.label}</Badge>;
-  };
 
   return (
     <div className="notifications-page">
@@ -131,11 +85,11 @@ function Notifications({ user }) {
       </nav>
 
       <main className="notifications-container">
-        {filteredNotifications.length === 0 && showUnreadOnly ? (
+        {filteredNotifications.length === 0 ? (
           <div className="no-unread-notifications">
             <Bell size={70}/>
-            <h3>No unread notifications</h3>
-            <p>You're all caught up! No new notifications to review.</p>
+            <h3>No notifications</h3>
+            <p>You're all caught up!</p>
             <Button className="outline" onClick={() => setShowUnreadOnly(false)}>
               Show all notifications
             </Button>
@@ -146,20 +100,13 @@ function Notifications({ user }) {
               key={notification.id} 
               className={`notification-card ${notification.unread ? 'unread' : ''}`}
             >
-              <CardContent className="notification-content">
-                <div className="notification-icon">
-                  <div className={`icon-container ${notification.bgColor}`}>
-                    <notification.icon className={notification.color} />
-                  </div>
-                </div>
-                
+              <CardContent className="notification-content">                
                 <div className="notification-details">
                   <div className="notification-header">
                     <h3 className="notification-title">{notification.title}</h3>
                     <span className="notification-time">{notification.time}</span>
                   </div>
                   <p className="notification-description">{notification.description}</p>
-                  {getTypeBadge(notification.type)}
                 </div>
               </CardContent>
             </Card>

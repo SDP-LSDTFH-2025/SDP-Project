@@ -2,10 +2,7 @@ import React, { useState, useEffect } from "react";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import "./Progress.css";
 
-const SERVER =
-  import.meta.env.MODE === "development"
-    ? import.meta.env.VITE_DEV_SERVER || "http://localhost:3000"
-    : import.meta.env.VITE_PROD_SERVER;
+import { addTopic, getProgress, logStudyHours, toggleTopic } from "../api/track";
 
 const Progress = () => {
   const [expandedCourse, setExpandedCourse] = useState(null);
@@ -16,7 +13,7 @@ const Progress = () => {
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
 
-  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const user = JSON.parse(localStorage.getItem("user"));
 
   // Dummy sessions
   const dummySessions = [
@@ -56,8 +53,7 @@ const Progress = () => {
   async function fetchProgress() {
     try {
       setLoading(true);
-      const res = await fetch(`${SERVER}/api/v1/track/${user.id}`);
-      const data = await res.json();
+      const data = await getProgress(user.id);
       if (data.success) {
         // Merge academic_interests
         const userCourses = (user.academic_interests || "")
@@ -103,11 +99,7 @@ const Progress = () => {
 
       if (diffHours > 0) {
         try {
-          await fetch(`${SERVER}/api/v1/track/study-log`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ userId: user.id, hours: diffHours }),
-          });
+          await logStudyHours(user.id, diffHours);
           // update last timestamp
           localStorage.setItem("studyLastTimestamp", now.toISOString());
           fetchProgress();
@@ -141,16 +133,8 @@ const Progress = () => {
     if (!newTopic.trim()) return;
     setAdding(true);
     try {
-      const res = await fetch(`${SERVER}/api/v1/track/topic`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userId: user.id,
-          course,
-          title: newTopic,
-        }),
-      });
-      const data = await res.json();
+      const data = await addTopic(user.id, course, newTopic);
+
       if (data.success) {
         setNewTopic("");
         await fetchProgress();
@@ -164,12 +148,7 @@ const Progress = () => {
 
   async function toggleTopicCompletion(topicId) {
     try {
-      const res = await fetch(`${SERVER}/api/v1/track/topic/toggle`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ topicId }),
-      });
-      const data = await res.json();
+      const data = await toggleTopic(topicId);
       if (data.success) await fetchProgress();
     } catch (err) {
       console.error("Toggle topic error:", err);

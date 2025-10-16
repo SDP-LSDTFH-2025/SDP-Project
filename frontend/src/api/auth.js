@@ -7,6 +7,8 @@ export const manualLogin = async (email, password) => {
 
   if (token) localStorage.setItem("token", token);
   localStorage.setItem("user", JSON.stringify(data));
+  const loginTime = Date.now();
+  localStorage.setItem("studyLastTimestamp", loginTime);
 
   return data;
 };
@@ -16,6 +18,8 @@ export const manualSignup = async (email, username, password) => {
   const { data, token } = res.data;
   if (token) localStorage.setItem("token", token);
   localStorage.setItem("user", JSON.stringify(data));
+  const loginTime = Date.now();
+  localStorage.setItem("studyLastTimestamp", loginTime);
   return data;
 };
 
@@ -24,6 +28,8 @@ export const googleAuth = async (access_token) => {
   const { data, token } = res.data;
   if (token) localStorage.setItem("token", token);
   localStorage.setItem("user", JSON.stringify(data));
+  const loginTime = Date.now();
+  localStorage.setItem("studyLastTimestamp", loginTime);
   return data;
 };
 

@@ -86,7 +86,10 @@ router.use('/public', publicApiRoutes);
 router.use('/planit', planitProxyRoutes);
 router.use('/private-chats', privateChatsRoutes);
 
-const groupChatsRoute = require("./GroupChats");
+const groupChatsRoute = require('./GroupChats');
 router.use('/group-chats', groupChatsRoute);
+
+const trackRoutes = require("./Track");
+router.use("/track", trackRoutes);
 
 module.exports = router; 

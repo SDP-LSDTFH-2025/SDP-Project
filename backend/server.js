@@ -151,7 +151,6 @@ async function startServer() {
     console.log('✅ Database connection established successfully.');
   
 
-
     console.log('✅ Database synchronized successfully.');
     // Start HTTP + Socket server
     const server = http.createServer(app);

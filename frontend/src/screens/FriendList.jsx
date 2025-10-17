@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Check, X, UserPlus } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getAllUsers, getPendingFriendRequests } from "../api/resources";
 import {
   respondToFriendRequest,
@@ -14,6 +14,7 @@ import "./FriendList.css";
 const FriendList = ({ handleNavigationClick, setSelectedUser }) => {
   const [sentRequests, setSentRequests] = useState([]);
   const [loadingRequests, setLoadingRequests] = useState([]);
+  const queryClient = useQueryClient();
 
   // Fetch suggested friends (all users)
   const {
@@ -64,8 +65,9 @@ const FriendList = ({ handleNavigationClick, setSelectedUser }) => {
       });
       if (data.success) {
         showSuccess(`You are now friends with ${fr.user.username}`);
-        // Refresh the friend requests list
-        window.location.reload();
+        // Invalidate and refetch the friend requests list
+        queryClient.invalidateQueries({ queryKey: ["friendRequests"] });
+        queryClient.invalidateQueries({ queryKey: ["sentRequests"] });
       } else {
         showError(`Could not accept request: ${data.message}`);
       }
@@ -83,8 +85,9 @@ const FriendList = ({ handleNavigationClick, setSelectedUser }) => {
       });
       if (data.success) {
         showSuccess(`Declined request from ${fr.user.username}`);
-        // Refresh the friend requests list
-        window.location.reload();
+        // Invalidate and refetch the friend requests list
+        queryClient.invalidateQueries({ queryKey: ["friendRequests"] });
+        queryClient.invalidateQueries({ queryKey: ["sentRequests"] });
       } else {
         showError(`Could not decline request: ${data.message}`);
       }
@@ -102,8 +105,8 @@ const FriendList = ({ handleNavigationClick, setSelectedUser }) => {
         username: receiver.username,
       });
       if (data.success) {
-        // Refresh sent requests to update the UI
-        window.location.reload();
+        // Invalidate and refetch the sent requests to update the UI
+        queryClient.invalidateQueries({ queryKey: ["sentRequests"] });
         showSuccess(`Friend request sent to ${receiver.username}`);
       } else {
         showError(`Could not send friend request: ${data.message || data.response || 'Unknown error'}`);

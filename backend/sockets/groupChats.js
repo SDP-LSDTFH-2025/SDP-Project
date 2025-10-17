@@ -132,7 +132,7 @@ const { Study_groups, Group_members } = require('../models');
  *       - `group:read` with body `GroupReadRequest`
  *
  *       Example (client):
- *       ```js
+ *       ```js 
  *       const socket = io('http://localhost:3000/sockets/group-chats', { auth: { userId: '123' } });
  *       socket.emit('group:join', { groupId: 123 });
  *       socket.emit('group:message', { groupId: 123, message: 'Hello!' });

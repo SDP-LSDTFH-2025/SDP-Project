@@ -15,6 +15,17 @@ export const socket = io(`${SERVER}/api/v1/sockets`, {
   autoConnect: false,
 });
 
+export const groupSocket = io(`${SERVER}/api/v1/sockets`, {
+  transports: ['websocket'], // Allow fallback to polling
+  auth: { token, userId: user?.id },
+  extraHeaders: { Authorization: `Bearer ${token}` },
+  autoConnect: false,
+});
+
 socket.onAny((event, ...args) => {
   console.log("[SOCKET EVENT]", event, args);
+});
+
+groupSocket.onAny((event, ...args) => {
+  console.log("[GROUP SOCKET EVENT]", event, args);
 });

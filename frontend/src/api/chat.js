@@ -29,3 +29,20 @@ export const getGroupChatHistory = async (groupId) => {
   }
 };
 
+/*
+*SEND GROUP CHAT MESSAGE
+*/
+export const sendGroupMessage = async (groupId, message) => {
+  try {
+    const response = await api.post(`group-chats`, {
+      groupId,
+      message,
+    });
+
+    return response.data;
+  } catch (err) {
+    console.error("Failed to send group message:", err);
+    throw err;
+  }
+};
+

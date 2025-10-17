@@ -180,4 +180,22 @@ CREATE TABLE study_sessions (
   end_time TIMESTAMP,
   reminder_sent BOOLEAN,
   FOREIGN KEY (user_id) REFERENCES users (google_id)
-); 
+);
+
+-- 17. Events table for Planit integration
+CREATE TABLE "Events" (
+  id SERIAL PRIMARY KEY,
+  event_planner UUID NOT NULL,
+  event_id VARCHAR(255) NOT NULL,
+  guest_id UUID,
+  venue_id VARCHAR(255),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (event_planner) REFERENCES users (id) ON DELETE CASCADE
+);
+
+-- Create indexes for better performance
+CREATE INDEX idx_events_event_planner ON "Events"(event_planner);
+CREATE INDEX idx_events_event_id ON "Events"(event_id);
+CREATE INDEX idx_events_guest_id ON "Events"(guest_id);
+CREATE INDEX idx_events_venue_id ON "Events"(venue_id); 

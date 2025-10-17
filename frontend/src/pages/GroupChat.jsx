@@ -5,7 +5,7 @@ import { Input } from "../components/ui/input";
 import { Button } from "../components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { getUpcomingSessions, joinSession, createSession } from "../api/groups";
-import { getGroupChatHistory } from "../api/chat"; // Assume you have
+import { getGroupChatHistory, sendGroupMessage } from "../api/chat";
 import { showSuccess, showError } from "../utils/toast"; 
 
 import { 
@@ -92,20 +92,6 @@ export default function GroupChat({ group, onBack }) {
     }
   };
 
-  const handleSend = () => {
-    if (!newMessage.trim()) return;
-    const msg = {
-      id: messages.length + 1,
-      sender: "Me",
-      text: newMessage,
-      time: new Date().toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
-    };
-    setMessages([...messages, msg]);
-    setNewMessage("");
-  };
 
   const handleCreateSession = async (e) => {
     e.preventDefault();
@@ -290,22 +276,64 @@ useEffect(() => {
 
 
   // Send a message
-  const sendMessage = () => {
+  const sendMessage = async () => {
     if (!newMessage.trim()) return;
 
+    const messageText = newMessage.trim();
     const tempId = Date.now();
     lastTempIdSent.current = tempId;
 
+    // Add message to UI immediately
     setMessages(prev => [
       ...prev,
-      { id: tempId, userId: user.id, text: newMessage, sender: "Me", isOwnMessage: true, time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) }
+      { id: tempId, userId: user.id, text: messageText, sender: "Me", isOwnMessage: true, time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) }
     ]);
 
-    emitSafe("group:message", { groupId: group.id, message: newMessage, tempId }, (ack) => {
-      if (!ack.ok) console.error("Message failed:", ack.error);
-    });
-
     setNewMessage("");
+
+    // Try socket first, fallback to HTTP API
+    try {
+      emitSafe("group:message", { groupId: group.id, message: messageText, tempId }, (ack) => {
+        if (!ack.ok) {
+          console.error("Socket message failed:", ack.error);
+          // Fallback to HTTP API
+          sendMessageViaAPI(messageText, tempId);
+        }
+      });
+    } catch (error) {
+      console.error("Socket error, falling back to HTTP API:", error);
+      // Fallback to HTTP API
+      sendMessageViaAPI(messageText, tempId);
+    }
+  };
+
+  // Fallback method to send message via HTTP API
+  const sendMessageViaAPI = async (messageText, tempId) => {
+    try {
+      const response = await sendGroupMessage(group.id, messageText);
+      
+      if (response.success) {
+        // Update the temporary message with the real server response
+        setMessages(prev => prev.map(msg => 
+          msg.id === tempId 
+            ? { 
+                ...msg, 
+                id: response.data.id,
+                time: new Date(response.data.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+              }
+            : msg
+        ));
+        console.log("Message sent via HTTP API successfully");
+      } else {
+        throw new Error(response.error || "Failed to send message");
+      }
+    } catch (error) {
+      console.error("HTTP API message failed:", error);
+      showError("Failed to send message. Please try again.");
+      
+      // Remove the temporary message from UI
+      setMessages(prev => prev.filter(msg => msg.id !== tempId));
+    }
   };
 
   // Typing event
@@ -357,7 +385,7 @@ useEffect(() => {
           placeholder="Type your message..."
           value={newMessage}
           onChange={handleTypingChange}
-          onKeyDown={(e) => e.key === "Enter" && handleSend()}
+          onKeyDown={(e) => e.key === "Enter" && sendMessage()}
         />
         <button className="send-btn" onClick={sendMessage}>
           <Send size={18} />

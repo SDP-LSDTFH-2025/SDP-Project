@@ -55,7 +55,15 @@ const optimizedAuth = async (req, res, next) => {
   try {
     const token = req.header('Authorization')?.replace('Bearer ', '');
     
+    console.log('optimizedAuth middleware:', { 
+      hasToken: !!token, 
+      path: req.path, 
+      method: req.method,
+      authHeader: req.header('Authorization')
+    });
+    
     if (!token) {
+      console.log('No token provided');
       return res.status(401).json({
         success: false,
         error: 'Access denied. No token provided.'
@@ -72,6 +80,7 @@ const optimizedAuth = async (req, res, next) => {
 
     // Verify JWT token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    console.log('Token decoded:', { userId: decoded.id, username: decoded.username });
     
     // Try to get user from cache first
     let user = getUserFromCache(decoded.id);
@@ -85,10 +94,16 @@ const optimizedAuth = async (req, res, next) => {
       if (user) {
         // Cache the user data
         setUserInCache(decoded.id, user);
+        console.log('User fetched from database:', { id: user.id, username: user.username, is_active: user.is_active });
+      } else {
+        console.log('User not found in database:', decoded.id);
       }
+    } else {
+      console.log('User found in cache:', { id: user.id, username: user.username, is_active: user.is_active });
     }
 
     if (!user || !user.is_active) {
+      console.log('User validation failed:', { user: !!user, is_active: user?.is_active });
       return res.status(401).json({
         success: false,
         error: 'Invalid token or user account disabled.'
@@ -98,6 +113,7 @@ const optimizedAuth = async (req, res, next) => {
     // Attach user and token to request
     req.user = user;
     req.token = token;
+    console.log('User attached to request:', { id: req.user.id, username: req.user.username });
     next();
   } catch (error) {
     console.error('Auth middleware error:', error);

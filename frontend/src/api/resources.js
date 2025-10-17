@@ -78,10 +78,7 @@ export const getAllFriends = async () => {
     throw new Error("User not authenticated");
   }
 
-  const res = await api.post("friends", {
-    token,
-    id: user.id,
-  });
+  const res = await api.post("friends", {});
 
   const json = res.data;
 
@@ -98,10 +95,7 @@ export const getPendingFriendRequests = async () => {
   
   if (!token || !user?.id) throw new Error("User not logged in");
 
-  const res = await api.post("friends/request/pending/users", {
-    token,
-    id: user.id,
-  });
+  const res = await api.post("friends/request/pending/users", {});
 
   const json = res.data;
   if (!json.success || !Array.isArray(json.followers)) {

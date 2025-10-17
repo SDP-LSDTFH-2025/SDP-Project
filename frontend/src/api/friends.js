@@ -1,24 +1,57 @@
 import api from "./api";
 
-export const respondToFriendRequest = async ({ token, id, requestID, response }) => {
+// Helper functions to get current auth data
+const getToken = () => localStorage.getItem("token");
+const getUser = () => {
+  const userStr = localStorage.getItem("user");
+  return userStr ? JSON.parse(userStr) : null;
+};
+
+export const respondToFriendRequest = async ({ requestID, response }) => {
+  const token = getToken();
+  const user = getUser();
+  
+  if (!token || !user) {
+    throw new Error("User not authenticated");
+  }
+  
   const res = await api.post("friends/request/response", {
-    token,
-    id,
     requestID,
     response,
   });
   return res.data;
 };
 
-export const sendFriendRequest = async ({ token, id, username }) => {
+export const sendFriendRequest = async ({ username }) => {
+  const token = getToken();
+  const user = getUser();
+  
+  console.log("Sending friend request:", { token: !!token, userId: user?.id, username });
+  
+  if (!token || !user) {
+    throw new Error("User not authenticated");
+  }
+  
   const res = await api.post("friends/request", {
-    token,
-    id,
     username,
   });
   return res.data;
 };
 
-export const declineFriendRequest = async ({ token, id, requestID }) => {
-  return respondToFriendRequest({ token, id, requestID, response: "decline" });
+export const declineFriendRequest = async ({ requestID }) => {
+  return respondToFriendRequest({ requestID, response: "decline" });
+};
+
+// Get sent friend requests
+export const getSentFriendRequests = async () => {
+  const token = getToken();
+  const user = getUser();
+  
+  if (!token || !user) {
+    throw new Error("User not authenticated");
+  }
+  
+  const res = await api.post("friends/request/sent", {});
+  console.log("Sent requests response:", res.data);
+  return res.data;
 };

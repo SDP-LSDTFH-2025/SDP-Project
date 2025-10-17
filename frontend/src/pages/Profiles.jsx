@@ -1,18 +1,47 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import "./Profiles.css";
 import { MapPin, Calendar, CircleDot, Circle } from "lucide-react";
+import { sendFriendRequest, getSentFriendRequests } from "../api/friends";
 
 const Profiles = ({ user }) => {
   
   const [isFriend, setIsFriend] = useState(false);
 
+  // Check if friend request has been sent
+  const {
+    data: sentRequestsData = { followers: [] },
+    isLoading: loadingSentRequests,
+  } = useQuery({
+    queryKey: ["sentRequests"],
+    queryFn: getSentFriendRequests,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const sentRequestUserIds = Array.isArray(sentRequestsData.followers) 
+    ? sentRequestsData.followers.map(sr => sr.user.id)
+    : [];
+  const hasSentRequest = sentRequestUserIds.includes(user?.id);
+
   if (!user) return <p>No profile data found.</p>;
 
-  const handleFriendToggle = () => {
-    setIsFriend((prev) => !prev);
-    // 🔹 TODO: Here you’d also call your backend API
-    // fetch(`/api/friends/toggle/${user.id}`, { method: "POST" })
+  const handleFriendToggle = async () => {
+    try {
+      const data = await sendFriendRequest({
+        username: user.username,
+      });
+      if (data.success) {
+        setIsFriend(true);
+        alert(`Friend request sent to ${user.username}`);
+      } else {
+        alert(`Could not send friend request: ${data.message || data.response || 'Unknown error'}`);
+      }
+    } catch (err) {
+      console.error("Error sending friend request:", err);
+      const errorMessage = err.response?.data?.response || err.response?.data?.message || err.message || "Unknown error";
+      alert(`Error sending friend request: ${errorMessage}`);
+    }
   };
   
   return (
@@ -57,10 +86,11 @@ const Profiles = ({ user }) => {
           {/* 🔹 Friend button row */}
           <div className="friend-action">
             <button
-              className={`friend-btn ${isFriend ? "unfriend" : "add"}`}
-              onClick={handleFriendToggle}
+              className={`friend-btn ${hasSentRequest ? "sent" : isFriend ? "unfriend" : "add"}`}
+              onClick={hasSentRequest ? undefined : handleFriendToggle}
+              disabled={hasSentRequest}
             >
-              {isFriend ? "Unfriend" : "Add Friend"}
+              {hasSentRequest ? "Sent" : isFriend ? "Unfriend" : "Add Friend"}
             </button>
             <Link
               to="/messages"

@@ -6,6 +6,7 @@ import {
   respondToFriendRequest,
   sendFriendRequest,
   declineFriendRequest,
+  getSentFriendRequests,
 } from "../api/friends";
 import "./FriendList.css";
 
@@ -36,43 +37,59 @@ const FriendList = ({ handleNavigationClick, setSelectedUser }) => {
     staleTime: 5 * 60 * 1000, // more dynamic
   });
 
+  // Fetch sent friend requests
+  const {
+    data: sentRequestsData = { followers: [] },
+    isLoading: loadingSentRequests,
+    error: sentRequestsError,
+  } = useQuery({
+    queryKey: ["sentRequests"],
+    queryFn: getSentFriendRequests,
+    staleTime: 5 * 60 * 1000, // more dynamic
+  });
+
+  // Extract sent request user IDs
+  const sentRequestUserIds = Array.isArray(sentRequestsData.followers) 
+    ? sentRequestsData.followers.map(sr => sr.user.id)
+    : [];
+
   // --- Action handlers ---
   const handleAccept = async (fr, e) => {
     e.stopPropagation();
     try {
-      const user = JSON.parse(localStorage.getItem("user"));
       const data = await respondToFriendRequest({
-        token: user,
-        id: user.id,
         requestID: fr.request.id,
         response: "accept",
       });
       if (data.success) {
         alert(`You are now friends with ${fr.user.username}`);
+        // Refresh the friend requests list
+        window.location.reload();
       } else {
         alert(`Could not accept request: ${data.message}`);
       }
     } catch (err) {
       console.error("Error accepting request:", err);
+      alert("Error accepting friend request. Please try again.");
     }
   };
 
   const handleDecline = async (fr, e) => {
     e.stopPropagation();
     try {
-      const user = JSON.parse(localStorage.getItem("user"));
       const data = await declineFriendRequest({
-        token: user,
-        id: user.id,
         requestID: fr.request.id,
       });
       if (data.success) {
         alert(`Declined request from ${fr.user.username}`);
+        // Refresh the friend requests list
+        window.location.reload();
       } else {
         alert(`Could not decline request: ${data.message}`);
       }
     } catch (err) {
       console.error("Error declining request:", err);
+      alert("Error declining friend request. Please try again.");
     }
   };
 
@@ -80,17 +97,20 @@ const FriendList = ({ handleNavigationClick, setSelectedUser }) => {
     e.stopPropagation();
     try {
       setLoadingRequests((prev) => [...prev, receiver.id]);
-      const user = JSON.parse(localStorage.getItem("user"));
       const data = await sendFriendRequest({
-        token: user,
-        id: user.id,
         username: receiver.username,
       });
       if (data.success) {
-        setSentRequests((prev) => [...prev, receiver.id]);
+        // Refresh sent requests to update the UI
+        window.location.reload();
+        alert(`Friend request sent to ${receiver.username}`);
+      } else {
+        alert(`Could not send friend request: ${data.message || data.response || 'Unknown error'}`);
       }
     } catch (err) {
       console.error("Error sending friend request", err);
+      const errorMessage = err.response?.data?.response || err.response?.data?.message || err.message || "Unknown error";
+      alert(`Error sending friend request: ${errorMessage}`);
     } finally {
       setLoadingRequests((prev) => prev.filter((id) => id !== receiver.id));
     }
@@ -102,8 +122,8 @@ const FriendList = ({ handleNavigationClick, setSelectedUser }) => {
   };
 
   // --- Loading/Error states ---
-  if (loadingUsers || loadingRequestsQuery) return <p>Loading friends...</p>;
-  if (usersError || requestsError) return <p>Error loading friends data</p>;
+  if (loadingUsers || loadingRequestsQuery || loadingSentRequests) return <p>Loading friends...</p>;
+  if (usersError || requestsError || sentRequestsError) return <p>Error loading friends data</p>;
 
   return (
     <div className="friend-list-container">
@@ -190,7 +210,7 @@ const FriendList = ({ handleNavigationClick, setSelectedUser }) => {
                     </p>
                   </div>
                 </div>
-                {sentRequests.includes(friend.id) ? (
+                {sentRequestUserIds.includes(friend.id) ? (
                   <button className="sent-btn" disabled>Sent</button>
                 ) : loadingRequests.includes(friend.id) ? (
                   <button className="sent-btn" disabled>Sending...</button>

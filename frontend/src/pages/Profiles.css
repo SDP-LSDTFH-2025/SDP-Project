@@ -125,6 +125,13 @@ body {
   background: #dc2626;
 }
 
+.friend-btn.sent {
+  background: #9ca3af;
+  color: white;
+  cursor: not-allowed;
+  opacity: 0.8;
+}
+
 .friend-status {
   font-size: 14px;
   color: #4b5563;

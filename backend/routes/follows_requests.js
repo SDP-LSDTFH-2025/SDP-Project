@@ -93,35 +93,66 @@ const { optimizedAuth } = require('../middleware/optimizedAuth');
 //friend requests
 router.post('/request', optimizedAuth, async(req,res)=>{
     try{
-        const {token,id,username} = req.body;
+        const {username} = req.body;
+        const {id: userId} = req.user; // Get user ID from middleware
+        
+        console.log('Friend request received:', { userId, username, user: req.user });
 
-        if (!token||!id||!username){
+        if (!username){
+            console.log('Missing username');
             return errorClass.insufficientInfo(res);
         }
-        // if (!verifyToken.fireBaseToken(token,id)){
-        //     return errorClass.errorRes('Invalid Token',res,401);
-        // }
-        
 
-        const friend =await User.findOne({where:{username:username}})
+        if (!userId){
+            console.log('Missing userId from middleware');
+            return errorClass.errorRes('User not authenticated', res, 401);
+        }
+
+        const friend = await User.findOne({where:{username:username}})
         if (!friend){
-            console.log(friend);
+            console.log('Friend not found:', username);
             return errorClass.errorRes('User does not exist',res,404);
         }
-        const existance = await Follows_requests.findOne({where:{follower_id:id,followee_id:friend.id}});
+        
+        console.log('Friend found:', { id: friend.id, username: friend.username });
+        
+        // Test database connection
+        try {
+            const testQuery = await Follows_requests.count();
+            console.log('Database connection test - Follows_requests count:', testQuery);
+        } catch (dbError) {
+            console.error('Database error:', dbError);
+            return errorClass.errorRes('Database error', res, 500);
+        }
+        
+        // Check if request already exists
+        const existance = await Follows_requests.findOne({where:{follower_id:userId,followee_id:friend.id}});
+        console.log('Checking existing request:', { exists: !!existance, follower_id: userId, followee_id: friend.id });
         if (existance){
+            console.log('Friend request already exists');
             return errorClass.errorRes('Friend request already sent',res,403);
         }
+        
+        // Check if they're already friends
+        const alreadyFriends = await Follows.findOne({where:{follower_id:userId,followee_id:friend.id}});
+        console.log('Checking existing friendship:', { exists: !!alreadyFriends, follower_id: userId, followee_id: friend.id });
+        if (alreadyFriends){
+            console.log('Already friends');
+            return errorClass.errorRes('You are already friends',res,403);
+        }
+        
         await Follows_requests.create({
-            follower_id:id,
+            follower_id:userId,
             followee_id:friend.id,
             created_at:new Date()
         })
+        
+        console.log('Friend request created successfully');
         res.status(200).json({message:"friend request sent successfully",success:true});
     }
     catch(error){
+        console.error('Friend request error:', error);
         errorClass.serverError(res);
-        console.log(error);
     }
 })
 
@@ -208,23 +239,26 @@ router.post('/request', optimizedAuth, async(req,res)=>{
 
 router.post('/request/response', optimizedAuth, async (req, res) => {
     try {
-        const { token, id, requestID, response } = req.body;
+        const { requestID, response } = req.body;
+        const {id: userId} = req.user; // Get user ID from middleware
 
-        if (!token||!id||!requestID||!response){
+        if (!requestID||!response){
             return errorClass.insufficientInfo(res);
         }
-        // if (!verifyToken.fireBaseToken(token, id)) {
-        //     return errorClass.errorRes('Invalid Token', res,401);
-        // }
         
         const request = await Follows_requests.findOne({ where: { id: requestID } });
         if (!request) {
             return errorClass.errorRes('Friend request does not exist', res,404);
         }
 
+        // Verify the request belongs to the current user
+        if (request.followee_id !== userId) {
+            return errorClass.errorRes('Unauthorized to respond to this request', res,403);
+        }
+
         if (response !== 'accept') {
             await Follows_requests.destroy({where:{ id: requestID }});
-            return res.status(200).json({ message: "Friendship rejected" });
+            return res.status(200).json({ message: "Friendship rejected", success: true });
         }
 
         await sequelize.transaction(async (t) => {
@@ -303,16 +337,9 @@ router.post('/request/response', optimizedAuth, async (req, res) => {
 //retrieves all my followers
 router.post('/', optimizedAuth, async (req, res) => {
     try {
-        const { token, id} = req.body;
-
-        if (!token||!id){
-            return errorClass.insufficientInfo(res);
-        }
-        // if (!verifyToken.fireBaseToken(token, id)) {
-        //     return errorClass.errorRes('Invalid Token', res,401);
-        // }
+        const {id: userId} = req.user; // Get user ID from middleware
         
-        const followers =await Follows.findAll({where:{followee_id:id}})
+        const followers =await Follows.findAll({where:{followee_id:userId}})
         let followers_users=[];
         
         for (let element of followers){
@@ -478,18 +505,37 @@ router.post('/request/pending', optimizedAuth, async (req, res) => {
  *                   example: "Internal server error"
  */
 
+// Get sent friend requests
+router.post('/request/sent', optimizedAuth, async (req, res) => {
+    try {
+        const {id: userId} = req.user; // Get user ID from middleware
+        
+        const requests = await Follows_requests.findAll({where:{follower_id:userId}})
+        let sentRequests = [];
+        
+        for (let element of requests){
+            const {followee_id} = element;
+            const user = await User.findOne({where:{id:followee_id}});
+            if (user) {
+                sentRequests.push({
+                    request: element,
+                    user: user
+                });
+            }
+        }
+        
+        res.status(200).json({success: true, followers: sentRequests});
+    } catch (error) {
+        console.error('Get sent requests error:', error);
+        errorClass.serverError(res);
+    }
+});
+
 router.post('/request/pending/users', optimizedAuth, async (req, res) => {
     try {
-        const { token, id} = req.body;
-
-        if (!token||!id){
-            return errorClass.insufficientInfo(res);
-        }
-        // if (!verifyToken.fireBaseToken(token, id)) {
-        //     return errorClass.errorRes('Invalid Token', res,401);
-        // }
+        const {id: userId} = req.user; // Get user ID from middleware
         
-        const requests =await Follows_requests.findAll({where:{followee_id:id}})
+        const requests =await Follows_requests.findAll({where:{followee_id:userId}})
         let followers=[];
         console.log('loading...\n\n')
         

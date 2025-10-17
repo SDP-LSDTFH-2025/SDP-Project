@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query"; 
-import { getAllFriends } from "../api/resources"; 
+import { getAllFriends } from "../api/resources";
+import { showSuccess, showError } from "../utils/toast"; 
 
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import { Button } from "../components/ui/button";
@@ -168,7 +169,7 @@ function Home({ user }) {
         setPdfFile(null);
         setPictureFile(null);
         setActiveView("feed");
-        alert("Resource uploaded successfully!");
+        showSuccess("Resource uploaded successfully!");
       } else {
         const errorMessage =
           data.message || `Upload failed with status ${response.status}`;

@@ -5,7 +5,8 @@ import { Input } from "../components/ui/input";
 import { Button } from "../components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { getUpcomingSessions, joinSession, createSession } from "../api/groups";
-import { getGroupChatHistory } from "../api/chat"; // Assume you have 
+import { getGroupChatHistory } from "../api/chat"; // Assume you have
+import { showSuccess, showError } from "../utils/toast"; 
 
 import { 
   connectSocketSafe, 
@@ -81,11 +82,11 @@ export default function GroupChat({ group, onBack }) {
       const data = await joinSession({ userId: user.id, eventId: session.id });
       if (!data.success) throw new Error(data.message || "Failed to join session");
 
-      alert("You joined the session successfully!");
+      showSuccess("You joined the session successfully!");
       setSelectedSession(null);
     } catch (err) {
       console.error(err);
-      alert("Error joining session: " + err.message);
+      showError("Error joining session: " + err.message);
     } finally {
       setJoining(false);
     }
@@ -114,7 +115,7 @@ export default function GroupChat({ group, onBack }) {
     const end = new Date(`${sessionData.endDate}T${sessionData.endTime}`);
 
     if (end < start) {
-      alert("End date/time cannot be earlier than start date/time.");
+      showError("End date/time cannot be earlier than start date/time.");
       setCreatingSession(false);
       return;
     }
@@ -139,7 +140,7 @@ export default function GroupChat({ group, onBack }) {
       if (!data.success) throw new Error(data.message || "Failed to create session");
 
       console.log("Session created:", data);
-      alert("Session Created!");
+      showSuccess("Session Created!");
       setShowModal(false);
 
       // Add to Google Calendar
@@ -170,7 +171,7 @@ export default function GroupChat({ group, onBack }) {
       );
 
       if (resCal.ok) {
-        alert("Added to Google Calendar");
+        showSuccess("Added to Google Calendar");
       }
 
       setSessionData({
@@ -185,7 +186,7 @@ export default function GroupChat({ group, onBack }) {
       });
     } catch (err) {
       console.error("Error creating session:", err);
-      alert(err.message);
+      showError(err.message);
     } finally {
       setCreatingSession(false);
     }

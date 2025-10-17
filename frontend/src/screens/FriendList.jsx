@@ -8,6 +8,7 @@ import {
   declineFriendRequest,
   getSentFriendRequests,
 } from "../api/friends";
+import { showSuccess, showError } from "../utils/toast";
 import "./FriendList.css";
 
 const FriendList = ({ handleNavigationClick, setSelectedUser }) => {
@@ -62,15 +63,15 @@ const FriendList = ({ handleNavigationClick, setSelectedUser }) => {
         response: "accept",
       });
       if (data.success) {
-        alert(`You are now friends with ${fr.user.username}`);
+        showSuccess(`You are now friends with ${fr.user.username}`);
         // Refresh the friend requests list
         window.location.reload();
       } else {
-        alert(`Could not accept request: ${data.message}`);
+        showError(`Could not accept request: ${data.message}`);
       }
     } catch (err) {
       console.error("Error accepting request:", err);
-      alert("Error accepting friend request. Please try again.");
+      showError("Error accepting friend request. Please try again.");
     }
   };
 
@@ -81,15 +82,15 @@ const FriendList = ({ handleNavigationClick, setSelectedUser }) => {
         requestID: fr.request.id,
       });
       if (data.success) {
-        alert(`Declined request from ${fr.user.username}`);
+        showSuccess(`Declined request from ${fr.user.username}`);
         // Refresh the friend requests list
         window.location.reload();
       } else {
-        alert(`Could not decline request: ${data.message}`);
+        showError(`Could not decline request: ${data.message}`);
       }
     } catch (err) {
       console.error("Error declining request:", err);
-      alert("Error declining friend request. Please try again.");
+      showError("Error declining friend request. Please try again.");
     }
   };
 
@@ -103,14 +104,14 @@ const FriendList = ({ handleNavigationClick, setSelectedUser }) => {
       if (data.success) {
         // Refresh sent requests to update the UI
         window.location.reload();
-        alert(`Friend request sent to ${receiver.username}`);
+        showSuccess(`Friend request sent to ${receiver.username}`);
       } else {
-        alert(`Could not send friend request: ${data.message || data.response || 'Unknown error'}`);
+        showError(`Could not send friend request: ${data.message || data.response || 'Unknown error'}`);
       }
     } catch (err) {
       console.error("Error sending friend request", err);
       const errorMessage = err.response?.data?.response || err.response?.data?.message || err.message || "Unknown error";
-      alert(`Error sending friend request: ${errorMessage}`);
+      showError(`Error sending friend request: ${errorMessage}`);
     } finally {
       setLoadingRequests((prev) => prev.filter((id) => id !== receiver.id));
     }

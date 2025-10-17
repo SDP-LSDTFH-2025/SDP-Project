@@ -180,35 +180,88 @@ export const getUpcomingSessions = async (userId) => {
     },
   });
 
-  if (!res.data.success) {
-    console.error("Failed to fetch sessions:", res.data.message);
-    throw new Error(res.data.message || "Failed to fetch sessions");
+  if (!res.data.status === 200) {
+    console.error("Failed to fetch sessions:", res.data.error);
+    throw new Error(res.data.error || "Failed to fetch sessions");
   }
 
-  return {
-    events: res.data.data.events || [],
-    guests: res.data.data.guests || [],
-  };
+  return res.data.data;
 };
 
 /*
  * Join a session
 */
-export const joinSession = async ({ userId, eventId }) => {
-  const res = await api.post(`planit/guests/event/${userId}`, {
-    eventId,
+export const joinSession = async ({ userId, eventId, userData }) => {
+  // Get user data from localStorage if not provided
+  const user = userData || JSON.parse(localStorage.getItem("user") || "{}");
+  
+  console.log('User data for guest creation:', user);
+  
+  const guestData = {
+    name: (user.username && user.username !== 'undefined') ? user.username : 
+          (user.name && user.name !== 'undefined') ? user.name : 
+          "Guest User",
+    email: (user.email && user.email !== 'undefined') ? user.email : "guest@example.com",
+    phone: (user.phone && user.phone !== 'undefined') ? user.phone : "",
+    rsvpStatus: "Pending",
+    dietaryPreferences: ""
+  };
+  
+  console.log('Guest data being sent:', guestData);
+  
+  try {
+    const res = await api.post(`planit/guests/event/${eventId}`, guestData, {
+    headers: {
+      "user_id": userId,
+      "content-type": "application/json",
+    },
   });
-  return res.data;
+  console.log("joinSession response:", res.data);
+  // Return success object for consistency
+  return { success: true, data: res.data };
+  } catch (err) {
+    console.error("joinSession error:", err);
+    throw new Error(err.response?.data?.error || "Failed to join session");
+  }
 };
 
 /*
  * Create a new session
 */
 export const createSession = async ({ userId, payload }) => {
+  try {
   const res = await api.post("planit/events", payload, {
     headers: {
       "user_id": userId, 
     },
   });
-  return res.data;
+  console.log("createSession response:", res.data);
+  // The backend returns the data directly, not wrapped in a status object
+  if (res.status === 201) {
+    return { success: true, data: res.data };
+  } else {
+    throw new Error(res.data?.error || "Failed to create session");
+    }
+  } catch (err) {
+    console.error("createSession error:", err);
+    throw new Error(err.response?.data?.error || "Failed to create session");
+  }
+};
+
+/*
+ * Delete a session/event
+*/
+export const deleteSession = async ({ userId, eventId }) => {
+  try {
+    const res = await api.delete(`planit/events/${eventId}`, {
+      headers: {
+        "user_id": userId,
+      },
+    });
+    console.log("deleteSession response:", res.data);
+    return { success: true, data: res.data };
+  } catch (err) {
+    console.error("deleteSession error:", err);
+    throw new Error(err.response?.data?.error || "Failed to delete session");
+  }
 };

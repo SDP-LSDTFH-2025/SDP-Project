@@ -67,7 +67,13 @@ function forwardToPlanit(method, pathname, req, bodyObj) {
             parsed = raw ? JSON.parse(raw) : null;
           } catch (e) {
             console.error('Failed to parse response JSON:', e);
-            parsed = raw;
+            console.error('Raw response:', raw);
+            // If it's a plain text error, wrap it in a proper error object
+            parsed = {
+              success: false,
+              error: raw || 'Unknown error',
+              message: raw || 'Unknown error'
+            };
           }
           
           // Log response details for debugging
@@ -309,7 +315,7 @@ router.post('/events', async (req, res) => {
     console.log("Planit create event response:", response);
     
     // Check if the response is successful
-    if (response.status >= 200 && response.status < 300) {
+    if (response.status === 201) {
       console.log("Planit API returned success status:", response.status);
       console.log("Response data structure:", JSON.stringify(response.data, null, 2));
       
@@ -535,16 +541,14 @@ router.post('/guests/event/:eventId', async (req, res) => {
       const guestId = response.data?.id || response.data?._id;
       if (guestId) {
         try {
-          const event = await Events.create({
-            event_id: eventId,
-            guest_id: guestId,
-            eventPlanner: userId
-          });
-          console.log("Successfully created local guest record:", event);
+          // For now, just log the guest creation - the Events table design only supports one guest per event
+          // In a proper implementation, we'd have a separate Guests table
+          console.log("Guest created in Planit with ID:", guestId);
+          console.log("Note: Current Events table design only supports one guest per event");
         } catch (dbError) {
-          console.error("Failed to create local guest record:", dbError);
-          // Don't fail the entire request if local DB save fails
-          console.warn("Guest created in Planit but failed to save locally");
+          console.error("Failed to process guest creation:", dbError);
+          // Don't fail the entire request if local processing fails
+          console.warn("Guest created in Planit but local processing failed");
         }
       } else {
         console.warn("Planit API returned success but no guest ID found in response");
@@ -556,9 +560,20 @@ router.post('/guests/event/:eventId', async (req, res) => {
     } else {
       console.error("Planit API returned error status:", response.status);
       console.error("Error response data:", response.data);
+      
+      // Handle different types of error responses
+      let errorMessage = 'Failed to create guest';
+      if (typeof response.data === 'string') {
+        errorMessage = response.data;
+      } else if (response.data?.message) {
+        errorMessage = response.data.message;
+      } else if (response.data?.error) {
+        errorMessage = response.data.error;
+      }
+      
       res.status(response.status || 500).json({
         success: false,
-        error: response.data?.message || `Planit API error: ${response.status}`,
+        error: errorMessage,
         details: response.data
       });
     }

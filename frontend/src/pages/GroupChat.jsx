@@ -1,11 +1,11 @@
 // GroupChat.jsx
 import React, { useState, useEffect, useRef } from "react";
-import { ArrowLeft, Send, Users, Plus } from "lucide-react";
+import { ArrowLeft, Send, Users, Plus, Trash2 } from "lucide-react";
 import "./GroupChat.css";
 import { Input } from "../components/ui/input";
 import { Button } from "../components/ui/button";
-import { useQuery } from "@tanstack/react-query";
-import { getUpcomingSessions, joinSession, createSession } from "../api/groups";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { getUpcomingSessions, joinSession, createSession, deleteSession } from "../api/groups";
 import { getGroupChatHistory, sendGroupMessage } from "../api/chat";
 import { showSuccess, showError } from "../utils/toast"; 
 
@@ -16,7 +16,7 @@ import {
   sendTyping, 
   emitSafe 
 } from "../groupSocketHelpers";
-import { getGroupChatHistory } from "../api/chat";
+
 import { groupSocket } from "../socket";
 
 export default function GroupChat({ group, onBack }) {
@@ -27,6 +27,9 @@ export default function GroupChat({ group, onBack }) {
   const [selectedSession, setSelectedSession] = useState(null);
   const [joining, setJoining] = useState(false);
   const [creatingSession, setCreatingSession] = useState(false);
+  const [deletingSession, setDeletingSession] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [sessionToDelete, setSessionToDelete] = useState(null);
 
   const [sessionData, setSessionData] = useState({
     title: "",
@@ -41,6 +44,7 @@ export default function GroupChat({ group, onBack }) {
 
   const user = JSON.parse(localStorage.getItem("user"));
   const calendar_token = localStorage.getItem("calendar_token");
+  const queryClient = useQueryClient();
 
   const { data: upcomingData } = useQuery({
     enabled: !!user?.id,
@@ -82,7 +86,14 @@ export default function GroupChat({ group, onBack }) {
   const handleJoinSession = async (session) => {
     setJoining(true);
     try {
-      const data = await joinSession({ userId: user.id, eventId: session.id });
+      const sessionId = session.id || session._id;
+      console.log('Joining session:', session, 'with ID:', sessionId);
+      
+      if (!sessionId) {
+        throw new Error("Session ID not found");
+      }
+      
+      const data = await joinSession({ userId: user.id, eventId: sessionId });
       if (!data.success) throw new Error(data.message || "Failed to join session");
 
       showSuccess("You joined the session successfully!");
@@ -180,6 +191,46 @@ export default function GroupChat({ group, onBack }) {
     } finally {
       setCreatingSession(false);
     }
+  };
+
+  const handleDeleteSession = async (session) => {
+    setSessionToDelete(session);
+    setShowDeleteConfirm(true);
+  };
+
+  const confirmDeleteSession = async () => {
+    if (!sessionToDelete) return;
+    
+    setDeletingSession(true);
+    try {
+      const sessionId = sessionToDelete.id || sessionToDelete._id;
+      console.log('Deleting session:', sessionToDelete, 'with ID:', sessionId);
+      
+      if (!sessionId) {
+        throw new Error("Session ID not found");
+      }
+      
+      const data = await deleteSession({ userId: user.id, eventId: sessionId });
+      if (!data.success) throw new Error(data.message || "Failed to delete session");
+
+      showSuccess("Session deleted successfully!");
+      setShowDeleteConfirm(false);
+      setSessionToDelete(null);
+      setSelectedSession(null);
+      
+      // Refresh the sessions list
+      queryClient.invalidateQueries({ queryKey: ["upcomingSessions"] });
+    } catch (err) {
+      console.error(err);
+      showError("Error deleting session: " + err.message);
+    } finally {
+      setDeletingSession(false);
+    }
+  };
+
+  const cancelDeleteSession = () => {
+    setShowDeleteConfirm(false);
+    setSessionToDelete(null);
   };
 
   /* ------------------- SOCKET LOGIC ------------------- */
@@ -445,16 +496,33 @@ export default function GroupChat({ group, onBack }) {
             <div className="card-header"><h3>Upcoming Sessions</h3></div>
             {upcomingSessions.length > 0 ? (
               <div className="sessions-list">
-                {upcomingSessions.map((session) => (
-                  <div key={session.id} className="session-item" onClick={() => setSelectedSession(session)}>
-                    <div className="session-dot"></div>
-                    <div className="session-info">
-                      <span className="session-title">{session.title}</span>
-                      <span className="session-date">{session.date}</span>
+                {upcomingSessions.map((session) => {
+                  const sessionId = session.id || session._id;
+                  return (
+                    <div key={sessionId} className="session-item">
+                      <div className="session-content" onClick={() => setSelectedSession(session)}>
+                        <div className="session-dot"></div>
+                        <div className="session-info">
+                          <span className="session-title">{session.title}</span>
+                          <span className="session-date">{session.date}</span>
+                        </div>
+                      </div>
+                      <div className="session-actions">
+                        <button className="join-btn">View</button>
+                        <button 
+                          className="delete-btn"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteSession(session);
+                          }}
+                          title="Delete session"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
                     </div>
-                    <button className="join-btn">View</button>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
               <div className="empty-state">No upcoming sessions. Schedule your next study session!</div>
@@ -481,6 +549,43 @@ export default function GroupChat({ group, onBack }) {
             <div className="modal-actions">
               <button className="outline-btn" onClick={() => setSelectedSession(null)}>Cancel</button>
               <button className="blue-btn" onClick={() => handleJoinSession(selectedSession)} disabled={joining}>{joining ? "Joining..." : "Join"}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="modal-overlay">
+          <div className="progress-card">
+            <div className="card-header">
+              <h3>Delete Session</h3>
+            </div>
+            <div className="modal-content">
+              <p>Are you sure you want to delete this session?</p>
+              {sessionToDelete && (
+                <div className="session-preview">
+                  <strong>{sessionToDelete.title}</strong>
+                  <span>{sessionToDelete.date} at {sessionToDelete.startTime}</span>
+                </div>
+              )}
+              <p className="warning-text">This action cannot be undone.</p>
+            </div>
+            <div className="modal-actions">
+              <button 
+                className="outline-btn" 
+                onClick={cancelDeleteSession}
+                disabled={deletingSession}
+              >
+                Cancel
+              </button>
+              <button 
+                className="delete-btn-confirm" 
+                onClick={confirmDeleteSession}
+                disabled={deletingSession}
+              >
+                {deletingSession ? "Deleting..." : "Delete Session"}
+              </button>
             </div>
           </div>
         </div>

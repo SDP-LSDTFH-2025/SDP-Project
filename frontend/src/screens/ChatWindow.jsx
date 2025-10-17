@@ -66,7 +66,6 @@ export default function ChatWindow({ chat, onBack }) {
     }
 
     socket.emit("private:join", { chatId });
-    console.log("Joined chat room:", chatId);
 
     // Incoming messages
     const handleNewMessage = (msg) => {

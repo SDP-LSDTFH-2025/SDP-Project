@@ -1,3 +1,4 @@
+// GroupChat.jsx
 import React, { useState, useEffect, useRef } from "react";
 import { ArrowLeft, Send, Users, Plus } from "lucide-react";
 import "./GroupChat.css";
@@ -15,6 +16,8 @@ import {
   sendTyping, 
   emitSafe 
 } from "../groupSocketHelpers";
+import { getGroupChatHistory } from "../api/chat";
+import { groupSocket } from "../socket";
 
 export default function GroupChat({ group, onBack }) {
   const [messages, setMessages] = useState([]);
@@ -125,8 +128,9 @@ export default function GroupChat({ group, onBack }) {
       const data = await createSession({ userId: user.id, payload });
       if (!data.success) throw new Error(data.message || "Failed to create session");
 
-      console.log("Session created:", data);
+
       showSuccess("Session Created!");
+ 
       setShowModal(false);
 
       // Add to Google Calendar
@@ -178,30 +182,25 @@ export default function GroupChat({ group, onBack }) {
     }
   };
 
-  /*
-  * I will use this part below to init the sockets
-  */
+  /* ------------------- SOCKET LOGIC ------------------- */
   const [isTyping, setIsTyping] = useState(false);
-
   const lastTempIdSent = useRef(null);
   const typingTimeout = useRef(null);
   const messagesEndRef = useRef(null);
+  const hasJoinedGroupRef = useRef(false);
 
-   // Scroll to bottom when messages update
+  // Scroll to bottom on new messages
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Fetch initial chat history
+  // Fetch initial group chat messages
   useEffect(() => {
     async function fetchHistory() {
       try {
         const msgs = await getGroupChatHistory(group.id);
-
         const participantsMap = {};
-        (group.Participants || []).forEach(p => {
-          participantsMap[p.id] = p.username;
-        });
+        (group.Participants || []).forEach(p => participantsMap[p.id] = p.username);
 
         setMessages(
           msgs.map((msg) => ({
@@ -213,97 +212,125 @@ export default function GroupChat({ group, onBack }) {
               minute: "2-digit",
             }),
             sender: msg.user_id === user.id ? "Me" : participantsMap[msg.user_id],
-            isOwnMessage: msg.user_id === user.id, 
+            isOwnMessage: msg.user_id === user.id,
           }))
         );
       } catch (err) {
         console.error("Failed to fetch group messages:", err);
       }
     }
-
     fetchHistory();
   }, [group.id, user.id, group.Participants]);
 
-  // Socket setup
-  const hasJoinedGroupRef = useRef(false);
-useEffect(() => {
-  connectSocketSafe();
-  if (!hasJoinedGroupRef.current) {
-    emitSafe("group:join", { groupId: group.id }, (ack) => {
-      if (!ack.ok) console.error("Failed to join group:", ack.error);
-    });
-    hasJoinedGroupRef.current = true;
-  }
+  // Safe emit
+  const emitSafe = (socket, event, data, callback) => {
+    if (!data.userId) data.userId = user.id;
+    if (socket.connected) socket.emit(event, data, callback);
+    else if (callback) callback({ ok: false, error: "Socket not connected" });
+  };
 
-  // Import socket dynamically without await
-  import("../socket").then(({ socket }) => {
+  // Leave group
+  const leaveGroup = (socket, groupId) => {
+    emitSafe(socket, "group:leave", { groupId });
+  };
+
+  // Typing
+  const sendTyping = (socket, groupId, isTyping) => {
+    emitSafe(socket, "group:typing", { groupId, isTyping });
+  };
+
+  // Connect socket on mount
+  useEffect(() => {
+    if (!groupSocket.connected) groupSocket.connect();
+
+    const handleConnect = () => {
+      if (!hasJoinedGroupRef.current) {
+        emitSafe(groupSocket, "group:join", { groupId: group.id });
+        hasJoinedGroupRef.current = true;
+      }
+    };
+
     const handleNewMessage = (msg) => {
       if (msg.tempId && msg.tempId === lastTempIdSent.current) return;
       if (msg.group_id === group.id) {
         const participantsMap = {};
-        (group.Participants || []).forEach(p => participantsMap[p.id] = p.username);
-
-        setMessages(prev => [
+        (group.Participants || []).forEach((p) => participantsMap[p.id] = p.username);
+        setMessages((prev) => [
           ...prev,
           {
             id: msg.id,
             userId: msg.user_id,
             text: msg.message,
-            time: new Date(msg.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+            time: new Date(msg.created_at).toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
             sender: msg.user_id === user.id ? "Me" : participantsMap[msg.user_id] || "Unknown",
-            isOwnMessage: msg.user_id === user.id
-          }
+            isOwnMessage: msg.user_id === user.id,
+          },
         ]);
-
-        emitSafe("group:read", { groupId: group.id, lastReadMessageId: msg.id });
+        emitSafe(groupSocket, "group:read", { groupId: group.id, lastReadMessageId: msg.id });
       }
     };
 
     const handleTyping = ({ userId: typingUserId, groupId: typingGroupId, isTyping }) => {
-      if (group.id === typingGroupId && typingUserId !== user.id) setIsTyping(isTyping);
+      if (group.id === typingGroupId && typingUserId !== user.id) {
+        setIsTyping(isTyping);
+      }
     };
 
-    socket.on("group:message:new", handleNewMessage);
-    socket.on("group:typing", handleTyping);
+    groupSocket.on("connect", handleConnect);
+    groupSocket.on("group:message:new", handleNewMessage);
+    groupSocket.on("group:typing", handleTyping);
+    groupSocket.on("group:user:joined", ({ userId }) => console.log(`User ${userId} joined group ${group.id}`));
+    groupSocket.on("group:user:left", ({ userId }) => console.log(`User ${userId} left group ${group.id}`));
+    groupSocket.on("connect_error", (err) => console.error("Group socket connection error:", err.message));
 
     return () => {
-      leaveGroup(group.id);
-      socket.off("group:message:new", handleNewMessage);
-      socket.off("group:typing", handleTyping);
+      leaveGroup(groupSocket, group.id);
+      groupSocket.off("connect", handleConnect);
+      groupSocket.off("group:message:new", handleNewMessage);
+      groupSocket.off("group:typing", handleTyping);
+      groupSocket.off("group:user:joined");
+      groupSocket.off("group:user:left");
+      groupSocket.off("connect_error");
     };
-  });
-}, []);
-
+  }, [group.id, user.id, group.Participants]);
 
   // Send a message
   const sendMessage = async () => {
     if (!newMessage.trim()) return;
-
-    const messageText = newMessage.trim();
     const tempId = Date.now();
     lastTempIdSent.current = tempId;
 
-    // Add message to UI immediately
-    setMessages(prev => [
+    setMessages((prev) => [
       ...prev,
-      { id: tempId, userId: user.id, text: messageText, sender: "Me", isOwnMessage: true, time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) }
+      {
+        id: tempId,
+        userId: user.id,
+        text: newMessage,
+        sender: "Me",
+        isOwnMessage: true,
+        time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      },
     ]);
 
+    emitSafe(groupSocket, "group:message", { groupId: group.id, message: newMessage, tempId, userId: user.id });
     setNewMessage("");
 
     // Try socket first, fallback to HTTP API
     try {
-      emitSafe("group:message", { groupId: group.id, message: messageText, tempId }, (ack) => {
+      emitSafe(groupSocket, "group:message", { groupId: group.id, message: newMessage, tempId, userId: user.id }, (ack) => {
         if (!ack.ok) {
           console.error("Socket message failed:", ack.error);
           // Fallback to HTTP API
-          sendMessageViaAPI(messageText, tempId);
+          sendMessageViaAPI(newMessage, tempId);
         }
       });
     } catch (error) {
       console.error("Socket error, falling back to HTTP API:", error);
       // Fallback to HTTP API
-      sendMessageViaAPI(messageText, tempId);
+      sendMessageViaAPI(newMessage, tempId);
     }
   };
 
@@ -336,37 +363,35 @@ useEffect(() => {
     }
   };
 
-  // Typing event
   const handleTypingChange = (e) => {
     setNewMessage(e.target.value);
-    sendTyping(group.id, true);
+    if (typingTimeout.current) clearTimeout(typingTimeout.current);
+
+    if (e.target.value.length > 0) {
+      sendTyping(groupSocket, group.id, true);
+      typingTimeout.current = setTimeout(() => sendTyping(groupSocket, group.id, false), 2000);
+    } else {
+      sendTyping(groupSocket, group.id, false);
+    }
   };
 
   return (
     <div className="group-chat">
       {/* Header */}
       <div className="chat-header">
-        <button onClick={onBack}>
-          <ArrowLeft size={20} />
-        </button>
+        <button onClick={onBack}><ArrowLeft size={20} /></button>
         <div className="chat-info">
           <h3>{group.title}</h3>
-          <p>
-            <Users size={14} /> {group.participants} members
-          </p>
+          <p><Users size={14} /> {group.participants} members</p>
         </div>
-        <button className="create-session-btn" onClick={() => setShowSessions(true)}>
-          Sessions
-        </button>
-        <button className="create-session-btn" onClick={() => setShowModal(true)}>
-          <Plus size={18} /> Create Session
-        </button>
+        <button className="create-session-btn" onClick={() => setShowSessions(true)}>Sessions</button>
+        <button className="create-session-btn" onClick={() => setShowModal(true)}><Plus size={18} /> Create Session</button>
       </div>
 
       {/* Messages */}
       <div className="messages">
         {messages.map((msg) => (
-          <div key={msg.id} className={`message ${msg.isOwnMessage  ? "me" : "other"}`}>
+          <div key={msg.id} className={`message ${msg.isOwnMessage ? "me" : "other"}`}>
             <div>
               {msg.sender !== "Me" && <h5 className="sender">{msg.sender}</h5>}
               <p className="text">{msg.text}</p>
@@ -387,9 +412,7 @@ useEffect(() => {
           onChange={handleTypingChange}
           onKeyDown={(e) => e.key === "Enter" && sendMessage()}
         />
-        <button className="send-btn" onClick={sendMessage}>
-          <Send size={18} />
-        </button>
+        <button className="send-btn" onClick={sendMessage}><Send size={18} /></button>
       </div>
 
       {/* Create Session Modal */}
@@ -398,113 +421,28 @@ useEffect(() => {
           <div className="modal-content">
             <h3>Create New Session</h3>
             <form onSubmit={handleCreateSession}>
-              <label>
-                Title
-                <input
-                  type="text"
-                  value={sessionData.title}
-                  onChange={(e) =>
-                    setSessionData({ ...sessionData, title: e.target.value })
-                  }
-                />
-              </label>
-              <label>
-                Subject
-                <input
-                  type="text"
-                  value={sessionData.subject}
-                  onChange={(e) =>
-                    setSessionData({ ...sessionData, subject: e.target.value })
-                  }
-                />
-              </label>
-              <label>
-                Description
-                <textarea
-                  value={sessionData.description}
-                  onChange={(e) =>
-                    setSessionData({
-                      ...sessionData,
-                      description: e.target.value,
-                    })
-                  }
-                />
-              </label>
-              <label>
-                Location
-                <input
-                  type="text"
-                  value={sessionData.location || ""}
-                  onChange={(e) =>
-                    setSessionData({ ...sessionData, location: e.target.value })
-                  }
-                />
-              </label>
-              <label>
-                Start Date
-                <input
-                  type="date"
-                  value={sessionData.date}
-                  onChange={(e) =>
-                    setSessionData({ ...sessionData, date: e.target.value })
-                  }
-                />
-              </label>
-              <label>
-                Start Time
-                <input
-                  type="time"
-                  value={sessionData.time}
-                  onChange={(e) =>
-                    setSessionData({ ...sessionData, time: e.target.value })
-                  }
-                />
-              </label>
-              <label>
-                End Date
-                <input
-                  type="date"
-                  value={sessionData.endDate || ""}
-                  onChange={(e) =>
-                    setSessionData({ ...sessionData, endDate: e.target.value })
-                  }
-                />
-              </label>
-              <label>
-                End Time
-                <input
-                  type="time"
-                  value={sessionData.endTime || ""}
-                  onChange={(e) =>
-                    setSessionData({ ...sessionData, endTime: e.target.value })
-                  }
-                />
-              </label>
-
+              <label>Title<input type="text" value={sessionData.title} onChange={(e) => setSessionData({ ...sessionData, title: e.target.value })} /></label>
+              <label>Subject<input type="text" value={sessionData.subject} onChange={(e) => setSessionData({ ...sessionData, subject: e.target.value })} /></label>
+              <label>Description<textarea value={sessionData.description} onChange={(e) => setSessionData({ ...sessionData, description: e.target.value })} /></label>
+              <label>Location<input type="text" value={sessionData.location} onChange={(e) => setSessionData({ ...sessionData, location: e.target.value })} /></label>
+              <label>Start Date<input type="date" value={sessionData.date} onChange={(e) => setSessionData({ ...sessionData, date: e.target.value })} /></label>
+              <label>Start Time<input type="time" value={sessionData.time} onChange={(e) => setSessionData({ ...sessionData, time: e.target.value })} /></label>
+              <label>End Date<input type="date" value={sessionData.endDate} onChange={(e) => setSessionData({ ...sessionData, endDate: e.target.value })} /></label>
+              <label>End Time<input type="time" value={sessionData.endTime} onChange={(e) => setSessionData({ ...sessionData, endTime: e.target.value })} /></label>
               <div className="modal-actions">
-                <button
-                  type="button"
-                  className="outline-btn"
-                  onClick={() => setShowModal(false)}
-                >
-                  Cancel
-                </button>
-                <button type="submit" className="blue-btn">
-                  {creatingSession ? "Creating..." : "Create"}
-                </button>
+                <button type="button" className="outline-btn" onClick={() => setShowModal(false)}>Cancel</button>
+                <button type="submit" className="blue-btn">{creatingSession ? "Creating..." : "Create"}</button>
               </div>
             </form>
           </div>
         </div>
       )}
 
-      {/* Show Sessions Modal */}
+      {/* Upcoming Sessions */}
       {showSessions && (
         <div className="modal-overlay">
           <div className="progress-card full-width">
-            <div className="card-header">
-              <h3>Upcoming Sessions</h3>
-            </div>
+            <div className="card-header"><h3>Upcoming Sessions</h3></div>
             {upcomingSessions.length > 0 ? (
               <div className="sessions-list">
                 {upcomingSessions.map((session) => (
@@ -521,16 +459,12 @@ useEffect(() => {
             ) : (
               <div className="empty-state">No upcoming sessions. Schedule your next study session!</div>
             )}
-            <div className="modal-actions">
-              <button className="outline-btn" onClick={() => setShowSessions(false)}>
-                Close
-              </button>
-            </div>
+            <div className="modal-actions"><button className="outline-btn" onClick={() => setShowSessions(false)}>Close</button></div>
           </div>
         </div>
       )}
 
-      {/* Session Modal */}
+      {/* Session Details */}
       {selectedSession && (
         <div className="modal-overlay">
           <div className="modal-content">
@@ -544,14 +478,9 @@ useEffect(() => {
             <p><strong>Organizer:</strong> {selectedSession.eventPlanner}</p>
             <p><strong>Capacity:</strong> {selectedSession.capacity} participants</p>
             <p><strong>Theme:</strong> {selectedSession.theme}</p>
-
             <div className="modal-actions">
-              <button className="outline-btn" onClick={() => setSelectedSession(null)}>
-                Cancel
-              </button>
-              <button className="blue-btn" onClick={() => handleJoinSession(selectedSession)} disabled={joining}>
-                {joining ? "Joining..." : "Join"}
-              </button>
+              <button className="outline-btn" onClick={() => setSelectedSession(null)}>Cancel</button>
+              <button className="blue-btn" onClick={() => handleJoinSession(selectedSession)} disabled={joining}>{joining ? "Joining..." : "Join"}</button>
             </div>
           </div>
         </div>

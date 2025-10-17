@@ -1,14 +1,25 @@
 // src/api/groups.js
 import api from "./api";
 
-const user = JSON.parse(localStorage.getItem("user"));
-const token = JSON.parse(localStorage.getItem("user"));
+// Helper function to get current user data
+const getCurrentUser = () => {
+  try {
+    const userStr = localStorage.getItem("user");
+    return userStr ? JSON.parse(userStr) : null;
+  } catch (error) {
+    console.error("Error parsing user data:", error);
+    return null;
+  }
+};
+
+const token = localStorage.getItem("token");
 /*
  * All groups
  */
 export const getGroups = async () => {
   try {
     const res = await api.get("study_groups");
+    const user = getCurrentUser(); // Get user data dynamically
 
     const data = res.data; 
     console.log("res.data:", res.data);
@@ -19,6 +30,10 @@ export const getGroups = async () => {
 
     return data.groups.map((g) => {
       const participants = Array.isArray(g.participants) ? g.participants : [];
+      // Ensure both IDs are strings for comparison to avoid type mismatch issues
+      const currentUserId = String(user?.id || '');
+      const isJoined = participants.some((p) => String(p.id) === currentUserId);
+      
       return {
         id: g.id,
         title: g.name,
@@ -27,7 +42,7 @@ export const getGroups = async () => {
         date: g.created_at,
         organizer: g.creator_name,
         participants: participants.length,
-        joined: participants.some((p) => p.id === user?.id) || false,
+        joined: isJoined,
         Participants: participants.map((p) => ({ id: p.id, username: p.username })),
       };
     });
@@ -50,11 +65,23 @@ export const joinGroup = async (token, creatorId, groupID) => {
 
     const { data } = await api.post("study_groups/join", payload);
 
-    if (!data.success) throw new Error(data.message || "Failed to join group");
+    // Check if the response contains an error (backend returns {response: "error message"} for errors)
+    if (data.response) {
+      throw new Error(data.response);
+    }
 
+    // If we get here, the join was successful (backend returns {message: "Successfully joined the group"})
     return data;
   } catch (err) {
     console.error("joinGroup error:", err);
+    
+    // Handle AxiosError with status codes
+    if (err.response) {
+      const errorMessage = err.response.data?.response || err.response.data?.message || `Request failed with status ${err.response.status}`;
+      throw new Error(errorMessage);
+    }
+    
+    // Handle network errors or other issues
     throw err;
   }
 };
@@ -72,11 +99,23 @@ export const leaveGroup = async (token, creatorId, groupID) => {
 
     const { data } = await api.post("study_groups/leave", payload);
 
-    if (!data.success) throw new Error(data.message || "Failed to leave group");
+    // Check if the response contains an error (backend returns {response: "error message"} for errors)
+    if (data.response) {
+      throw new Error(data.response);
+    }
 
+    // If we get here, the leave was successful (backend returns {message: "Successfully left the group"})
     return data;
   } catch (err) {
     console.error("leaveGroup error:", err);
+    
+    // Handle AxiosError with status codes
+    if (err.response) {
+      const errorMessage = err.response.data?.response || err.response.data?.message || `Request failed with status ${err.response.status}`;
+      throw new Error(errorMessage);
+    }
+    
+    // Handle network errors or other issues
     throw err;
   }
 };
@@ -99,7 +138,10 @@ export const createGroup = async (token, creatorId, { title, courseCode, descrip
 
     const { data } = await api.post("study_groups/create", payload);
 
-    if (!data.success) throw new Error(data.message || "Failed to create group");
+    // Check if the response contains an error (backend returns {response: "error message"} for errors)
+    if (data.response) {
+      throw new Error(data.response);
+    }
 
     return {
       ...data,
@@ -116,6 +158,14 @@ export const createGroup = async (token, creatorId, { title, courseCode, descrip
     };
   } catch (err) {
     console.error("createGroup error:", err);
+    
+    // Handle AxiosError with status codes
+    if (err.response) {
+      const errorMessage = err.response.data?.response || err.response.data?.message || `Request failed with status ${err.response.status}`;
+      throw new Error(errorMessage);
+    }
+    
+    // Handle network errors or other issues
     throw err;
   }
 };

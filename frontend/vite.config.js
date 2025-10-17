@@ -14,6 +14,15 @@ export default defineConfig({
     }),
   ],
   base: '/',
+  server: {
+    port: 5174,
+    host: true,
+    cors: true,
+    headers: {
+      'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',
+      'Cross-Origin-Embedder-Policy': 'unsafe-none'
+    }
+  },
   build: {
     outDir: 'dist',
     sourcemap: true, // Required for accurate coverage

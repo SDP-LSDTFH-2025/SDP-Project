@@ -22,8 +22,12 @@ function Login({ setUser }) {
     try {
       setLoading(true);
       const data = await manualLogin(formData.email, formData.password);
+      console.log("Manual login successful, setting user:", data);
       setUser(data);
-      navigate("/home");
+      // Small delay to ensure state is updated before navigation
+      setTimeout(() => {
+        navigate("/home");
+      }, 100);
     } catch (error) {
       console.error("Sign In error:", error);
       alert("Authentication failed. Please try again.");
@@ -37,6 +41,7 @@ function Login({ setUser }) {
     try {
       setLoading(true);
       const data = await googleAuth(credentialResponse.credential);
+      console.log("Google login successful, setting user:", data);
       setUser(data);
 
       // Request Google Calendar token
@@ -52,7 +57,10 @@ function Login({ setUser }) {
       });
       client.requestAccessToken();
 
-      navigate("/home");
+      // Small delay to ensure state is updated before navigation
+      setTimeout(() => {
+        navigate("/home");
+      }, 100);
     } catch (error) {
       console.error("Google login error:", error);
       alert("Google login failed. Please try again.");

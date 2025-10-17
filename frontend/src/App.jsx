@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { Home, Login, Signup ,Forgot,Message,Notifications} from "./screens";
 import { Welcome } from "./components/Welcome.jsx";
 import { Registration } from "./components/Registration.jsx";
@@ -15,6 +16,7 @@ function ProtectedRoute({ user, children }) {
 export default function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
 
   // Restore user from localStorage on app mount
   useEffect(() => {
@@ -24,6 +26,19 @@ export default function App() {
     }
     setLoading(false);
   }, []);
+
+  // Invalidate queries when user changes (login/logout)
+  useEffect(() => {
+    if (user) {
+      // User logged in - invalidate and refetch data
+      queryClient.invalidateQueries({ queryKey: ["resources"] });
+      queryClient.invalidateQueries({ queryKey: ["friends"] });
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+    } else {
+      // User logged out - clear all caches
+      queryClient.clear();
+    }
+  }, [user, queryClient]);
 
   if (loading) return <p>Loading...</p>; // Prevent route rendering before state restoration
 

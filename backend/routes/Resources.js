@@ -338,6 +338,9 @@ router.post('/friends', optimizedAuth, async (req, res) => {
             return res.status(400).json({ success: false, error: 'Token and user ID are required' });
         }
 
+        // Add cache headers for better performance
+        res.setHeader('Cache-Control', 'private, max-age=300'); // 5 minutes cache
+
         // Get all friends (both followers and followees - mutual friends)
         const followers = await Follows.findAll({ where: { followee_id: id } });
         const followees = await Follows.findAll({ where: { follower_id: id } });
@@ -364,7 +367,9 @@ router.post('/friends', optimizedAuth, async (req, res) => {
                 attributes: ['id', 'username', 'institution', 'school']
             }],
             order: [['created_at', 'DESC']],
-            limit: 50 // Add pagination
+            limit: 50, // Add pagination
+            // Add index hint for better performance
+            raw: false // Ensure we get full objects for includes
         });
 
         res.json({ success: true, data: resources });

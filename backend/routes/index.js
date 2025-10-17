@@ -18,6 +18,9 @@ const planitProxyRoutes = require('./PlanitProxy');
 const privateChatsRoutes = require('./PrivateChats');
 const progressRoute = require('./progress');
 
+const trackRoutes = require("./Track");
+const groupChatsRoute = require('./GroupChats');
+
 const BACKEND_URL = process.env.BACKEND_URL;
 
 // API Documentation
@@ -87,10 +90,7 @@ router.use('/public', publicApiRoutes);
 router.use('/planit', planitProxyRoutes);
 router.use('/private-chats', privateChatsRoutes);
 
-const groupChatsRoute = require('./GroupChats');
 router.use('/group-chats', groupChatsRoute);
-
-const trackRoutes = require("./Track");
 router.use("/track", trackRoutes);
 
 router.use('/progress',progressRoute);

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query"; // ✅ for cached queries
-import { getAllFriends } from "../api/resources"; // ✅ central function
+import { useQuery } from "@tanstack/react-query"; 
+import { getAllFriends } from "../api/resources"; 
 
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import { Button } from "../components/ui/button";
@@ -60,12 +60,12 @@ function Home({ user }) {
 
   const calendar_token = localStorage.getItem("calendar_token");
 
-  // ✅ React Query fetch for friends (cached 20 min)
   const {
     data: rawFriends = [],
     isLoading: friendsLoading,
     error: friendsError,
   } = useQuery({
+  enabled: !!user?.id,
   queryKey: ["friends"],
   queryFn: getAllFriends,
   staleTime: 20 * 60 * 1000,
@@ -92,7 +92,6 @@ function Home({ user }) {
     setIsFormValid(isValid);
   }, [title, courseId, description, pdfFile, pictureFile]);
 
-  // ✅ Google Calendar events
   useEffect(() => {
     async function fetchEvents() {
       if (!calendar_token) return;
@@ -149,10 +148,7 @@ function Home({ user }) {
     }
 
     try {
-      const SERVER =
-        import.meta.env.VITE_PROD_SERVER ||
-        import.meta.env.VITE_DEV_SERVER ||
-        "http://localhost:3000";
+      const SERVER = import.meta.env.MODE === "development" ? import.meta.env.VITE_DEV_SERVER || "http://localhost:3000" : import.meta.env.VITE_PROD_SERVER;
 
       const url = pdfFile
         ? `${SERVER}/api/v1/upload/pdf`

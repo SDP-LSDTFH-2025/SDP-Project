@@ -338,7 +338,7 @@ module.exports = function attachGroupChatHandlers(nsp) {
       }
     });
 
-    socket.on('disconnect', () => {
+    socket.on('disconnect', ({groupId}) => {
       // No-op for now
       socket.emit('group:user:left', {
         userId: connectedUserId,

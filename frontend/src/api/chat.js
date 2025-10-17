@@ -1,15 +1,31 @@
 import api from "./api";
-
+/*
+*GET PRIVATE CHATS
+*/
 export const getPrivateChatHistory = async (senderId, receiverId) => {
-  const [sentRes, receivedRes] = await Promise.all([
-    api.get(`private-chats`, { params: { sender_id: senderId, receiver_id: receiverId } }),
-    api.get(`private-chats`, { params: { sender_id: receiverId, receiver_id: senderId } }),
-  ]);
+  const res = await api.get(`private-chats`, { params: { sender_id: senderId, receiver_id: receiverId } });
+  const json = res.data;
 
-  const sentMsgs = sentRes.data;
-  const receivedMsgs = receivedRes.data;
+  if (!json.success) throw new Error("Failed to fetch chat history");
 
-  return [...sentMsgs, ...receivedMsgs].sort(
+  return json.data.sort(
     (a, b) => new Date(a.created_at) - new Date(b.created_at)
   );
 };
+
+/*
+*GET GROUP CHATS
+*/
+export const getGroupChatHistory = async (groupId) => {
+  try {
+    const response = await api.get(`group-chats`, {
+      params: { groupId },
+    });
+
+    return response.data.data || [];
+  } catch (err) {
+    console.error("Failed to fetch group chat history:", err);
+    throw err;
+  }
+};
+

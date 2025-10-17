@@ -274,7 +274,7 @@ router.get('/all', async (req, res) => {
  */
   router.put('/mark-all-as-read', optimizedAuth, async (req, res) => {
   try {
-    const { user_id } = req.query;
+    const { user_id } = req.body;
     const notifications = await Notifications.update({ read: true }, { where: { user_id:user_id, read: false } });
     res.json({ success: true, data: notifications });
   } catch (error) {

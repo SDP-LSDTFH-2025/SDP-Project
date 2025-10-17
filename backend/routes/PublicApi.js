@@ -134,18 +134,25 @@ router.get('/:event_id', async (req, res) => {
     }
     
     try {
-      const publicResource = await public_resources.findOne({ 
+      const publicResource = await public_resources.findAll({ 
         where: { event_id: event_id.trim() } 
       });
       
-      if (!publicResource) {
+      if (publicResource.length === 0) {
         return res.status(404).json({ 
           success: false, 
-          error: 'Resource not found' 
+          error: 'No resources found for this event' 
         });
       }
-      
-      res.json({ success: true, data: publicResource });
+      const resources = publicResource.map(resource => ({
+        id: resource.id,
+        file_url: resource.file_url,
+        public_id: resource.public_id,
+        picture_url: resource.picture_url,
+        event_id: resource.event_id,
+        created_at: resource.created_at
+      }));
+      res.json({ success: true, data: resources });
     } catch (error) {
         console.error('Error retrieving public resource:', error);
         res.status(500).json({ 
@@ -467,6 +474,7 @@ router.post('/pdf', uploadPDF, handleUploadError, async (req, res) => {
         const uploadResult = await CloudinaryService.uploadPDF(req.file.buffer, {
             folder: `sdp-project/public/${event_id.trim()}`
         });
+        console.log(uploadResult);
         
         await public_resources.create({
             file_url: uploadResult.secure_url,

@@ -6,6 +6,7 @@ const { validate: isUUID } = require('uuid');
 const CloudinaryService = require('../services/cloudinaryService');
 const { Resources, User, Likes, Follows } = require('../models');
 const { Op } = require('sequelize');
+const { optimizedAuth } = require('../middleware/optimizedAuth');
 
 // Configure multer for file uploads
 const storage = multer.memoryStorage();
@@ -159,7 +160,7 @@ const upload = multer({
  *                 error:
  *                   type: string
  */
-router.post('/', upload.fields([{ name: 'file', maxCount: 1 }, { name: 'picture', maxCount: 1 }]), async (req, res) => {
+router.post('/', optimizedAuth, upload.fields([{ name: 'file', maxCount: 1 }, { name: 'picture', maxCount: 1 }]), async (req, res) => {
     const { user_id, course_id, title, description } = req.body;
     const file = req.files?.file?.[0];
     const picture = req.files?.picture?.[0];
@@ -268,7 +269,18 @@ router.post('/', upload.fields([{ name: 'file', maxCount: 1 }, { name: 'picture'
  */
 router.get('/all', async (req, res) => {
     try{
-    const resources = await Resources.findAll();
+    const { limit = 50, offset = 0 } = req.query;
+    
+    const resources = await Resources.findAll({
+        include: [{
+            model: User,
+            attributes: ['id', 'username', 'institution', 'school']
+        }],
+        limit: parseInt(limit),
+        offset: parseInt(offset),
+        order: [['created_at', 'DESC']]
+    });
+    
     res.json({ success: true, data: resources });
     } catch (error) {
         console.error('Get all resources error:', error);
@@ -318,7 +330,7 @@ router.get('/all', async (req, res) => {
  *       500:
  *         description: Internal server error
  */
-router.post('/friends', async (req, res) => {
+router.post('/friends', optimizedAuth, async (req, res) => {
     try {
         const { token, id } = req.body;
 
@@ -344,10 +356,15 @@ router.post('/friends', async (req, res) => {
             return res.json({ success: true, data: [] });
         }
 
-        // Get resources from friends only
+        // Get resources from friends only with user data
         const resources = await Resources.findAll({
             where: { user_id: { [Op.in]: uniqueFriendIds } },
-            order: [['created_at', 'DESC']]
+            include: [{
+                model: User,
+                attributes: ['id', 'username', 'institution', 'school']
+            }],
+            order: [['created_at', 'DESC']],
+            limit: 50 // Add pagination
         });
 
         res.json({ success: true, data: resources });
@@ -508,8 +525,13 @@ router.get('/', async (req, res) => {
         const where = title ? { title: { [Op.iLike]: `%${title}%` } } : {};
         const resources = await Resources.findAll({
             where,
+            include: [{
+                model: User,
+                attributes: ['id', 'username', 'institution', 'school']
+            }],
             limit: parseInt(limit),
             offset: parseInt(offset),
+            order: [['created_at', 'DESC']]
         });
         res.json({ success: true, data: resources });
     } catch (error) {
@@ -596,8 +618,13 @@ router.get('/course/:id', async (req, res) => {
         }
         const resources = await Resources.findAll({
             where: { course_id: courseId },
+            include: [{
+                model: User,
+                attributes: ['id', 'username', 'institution', 'school']
+            }],
             limit: parseInt(limit),
             offset: parseInt(offset),
+            order: [['created_at', 'DESC']]
         });
         res.json({ success: true, data: resources });
     } catch (error) {
@@ -700,8 +727,13 @@ router.get('/user/:id', async (req, res) => {
         }
         const resources = await Resources.findAll({
             where: { user_id: userId },
+            include: [{
+                model: User,
+                attributes: ['id', 'username', 'institution', 'school']
+            }],
             limit: parseInt(limit),
             offset: parseInt(offset),
+            order: [['created_at', 'DESC']]
         });
         res.json({ success: true, data: resources });
     } catch (error) {
@@ -760,7 +792,7 @@ router.get('/user/:id', async (req, res) => {
  *       500:
  *         description: Internal server error
  */
-router.put('/:id', async (req, res) => {
+router.put('/:id', optimizedAuth, async (req, res) => {
   try {
     const resourceId = parseInt(req.params.id, 10);
     const { title, description, incrementLikes } = req.body;
@@ -861,7 +893,7 @@ router.put('/:id', async (req, res) => {
  *                 error:
  *                   type: string
  */
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', optimizedAuth, async (req, res) => {
     try {
         const resourceId = parseInt(req.params.id);
         if (isNaN(resourceId)) {

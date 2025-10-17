@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { Notifications, User } = require('../models');
 const { Op } = require('sequelize');
+const { optimizedAuth } = require('../middleware/optimizedAuth');
 /**
  * @swagger
  * tags:
@@ -43,7 +44,7 @@ const { Op } = require('sequelize');
  *         description: Internal server error
  */
 
-router.post('/create', async (req, res) => {
+router.post('/create', optimizedAuth, async (req, res) => {
   const {user_id,title,message } = req.body;
   try{
 
@@ -94,7 +95,7 @@ router.post('/create', async (req, res) => {
  *       500:
  *         description: Internal server error
  */
-router.get('/user', async (req, res) => {
+router.get('/user', optimizedAuth, async (req, res) => {
     try{
       const { user_id } = req.query;
   const notifications = await Notifications.findAll({
@@ -147,7 +148,7 @@ router.get('/user', async (req, res) => {
  *       500:
  *         description: Internal server error
  */
-router.put('/update', async (req, res) => {
+router.put('/update', optimizedAuth, async (req, res) => {
   try {
     const { read} = req.body;
     const { notification_id } = req.query;
@@ -188,7 +189,7 @@ router.put('/update', async (req, res) => {
  *       500:
  *         description: Internal server error
  */
-router.delete('/delete', async (req, res) => {
+router.delete('/delete', optimizedAuth, async (req, res) => {
   try {
     const { notification_id } = req.query;
     const notification = await Notifications.destroy({ where: { id: notification_id } });
@@ -271,7 +272,7 @@ router.get('/all', async (req, res) => {
  *       500:
  *         description: Internal server error
  */
-  router.put('/mark-all-as-read', async (req, res) => {
+  router.put('/mark-all-as-read', optimizedAuth, async (req, res) => {
   try {
     const { user_id } = req.body;
     const notifications = await Notifications.update({ read: true }, { where: { user_id:user_id, read: false } });
@@ -315,7 +316,7 @@ router.get('/all', async (req, res) => {
  *       500:
  *         description: Internal server error
  */
-router.get('/unread-count', async (req, res) => {
+router.get('/unread-count', optimizedAuth, async (req, res) => {
   try {
     const { user_id } = req.query;
     const count = await Notifications.count({ where: { user_id:user_id, read: false } });
@@ -360,7 +361,7 @@ router.get('/unread-count', async (req, res) => {
  *       500:
  *         description: Internal server error
  */
-router.put('/clear-all-as-read', async (req, res) => {
+router.put('/clear-all-as-read', optimizedAuth, async (req, res) => {
   try{
     const { user_id } = req.query;
     const notifications = await Notifications.update({ read: true }, { where: {user_id:user_id, read: false } });
@@ -417,7 +418,7 @@ router.put('/clear-all-as-read', async (req, res) => {
  *       500:
  *         description: Internal server error
  */
-  router.get('/date-range', async (req, res) => {
+  router.get('/date-range', optimizedAuth, async (req, res) => {
     try{
   const { user_id } = req.query;
   const notifications = await Notifications.findAll({ where: { user_id:user_id, created_at: { [Op.between]: [req.query.start_date, req.query.end_date] } } });

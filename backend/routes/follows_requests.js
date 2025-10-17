@@ -4,6 +4,7 @@ const {Follows_requests} = require('../models');
 const {verifyToken, errorClass,recommendUsers} = require('../middleware/tools');
 const { User, Follows } = require('../models');
 const { sequelize } = require('../config/database');
+const { optimizedAuth } = require('../middleware/optimizedAuth');
 
 /**
  * @swagger
@@ -90,7 +91,7 @@ const { sequelize } = require('../config/database');
  */
 
 //friend requests
-router.post('/request',async(req,res)=>{
+router.post('/request', optimizedAuth, async(req,res)=>{
     try{
         const {token,id,username} = req.body;
 
@@ -205,7 +206,7 @@ router.post('/request',async(req,res)=>{
  */
 
 
-router.post('/request/response', async (req, res) => {
+router.post('/request/response', optimizedAuth, async (req, res) => {
     try {
         const { token, id, requestID, response } = req.body;
 
@@ -300,7 +301,7 @@ router.post('/request/response', async (req, res) => {
  */
 
 //retrieves all my followers
-router.post('/', async (req, res) => {
+router.post('/', optimizedAuth, async (req, res) => {
     try {
         const { token, id} = req.body;
 
@@ -380,7 +381,7 @@ router.post('/', async (req, res) => {
  *         description: Internal server error.
  */
 
-router.post('/request/pending', async (req, res) => {
+router.post('/request/pending', optimizedAuth, async (req, res) => {
     try {
         const { token, id} = req.body;
 
@@ -477,7 +478,7 @@ router.post('/request/pending', async (req, res) => {
  *                   example: "Internal server error"
  */
 
-router.post('/request/pending/users', async (req, res) => {
+router.post('/request/pending/users', optimizedAuth, async (req, res) => {
     try {
         const { token, id} = req.body;
 
@@ -555,7 +556,7 @@ router.post('/request/pending/users', async (req, res) => {
  */
 
 
-router.get('/recommend/:token/:id',async (req,res)=>{
+router.get('/recommend/:token/:id', optimizedAuth, async (req,res)=>{
     try{
         let {token,id} = req.params;
         if (!token||!id) {
@@ -654,7 +655,7 @@ router.get('/recommend/:token/:id',async (req,res)=>{
  *         description: Internal server error.
  */
 
-router.get('/recommend/:token/:id/:index/:threshold',async (req,res)=>{
+router.get('/recommend/:token/:id/:index/:threshold', optimizedAuth, async (req,res)=>{
     try{
         let {token,id,index,threshold} = req.params;
         if (!token||!id) {

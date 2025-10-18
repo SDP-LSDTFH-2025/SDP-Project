@@ -93,23 +93,28 @@ const Profiles = ({ user }) => {
             >
               {hasSentRequest ? "Sent" : isFriend ? "Unfriend" : "Add Friend"}
             </button>
-            <Link
-              to="/messages"
-              state={{
-                chat: {
-                  id: user.id,
-                  username: user.username,
-                  is_active: user.is_active,
-                  course: user.course || "",
-                  name: user.username.replaceAll("_", " "),
-                },
+            <button 
+              className="sending"
+              onClick={() => {
+                // Navigate to messages and store the selected chat
+                window.location.href = '/home';
+                setTimeout(() => {
+                  // Store the selected chat in localStorage for the Message component to use
+                  localStorage.setItem("selectedChat", JSON.stringify({
+                    id: user.id,
+                    username: user.username,
+                    is_active: user.is_active,
+                    course: user.course || "",
+                    name: user.username.replaceAll("_", " "),
+                  }));
+                  // Trigger navigation to messages
+                  const event = new CustomEvent('navigateToMessages');
+                  window.dispatchEvent(event);
+                }, 100);
               }}
-              style={{ textDecoration: "none", color: "inherit" }} // removes underline + keeps styles
             >
-              <button className="sending">
-                Send Message
-              </button>
-            </Link>
+              Send Message
+            </button>
 
           </div>
         </div>

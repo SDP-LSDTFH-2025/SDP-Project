@@ -56,6 +56,9 @@
     align-items: center;
     gap: 0.6rem;
     margin-bottom: 2rem;
+    overflow-y: auto;
+    max-height: calc(100vh - 200px);
+    padding-right: 8px;
   }
   .no-unread-notifications{
     display: flex;

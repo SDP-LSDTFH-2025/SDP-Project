@@ -55,3 +55,36 @@ export const getSentFriendRequests = async () => {
   console.log("Sent requests response:", res.data);
   return res.data;
 };
+
+// Unfriend a user
+export const unfriendUser = async ({ friend_id }) => {
+  const token = getToken();
+  const user = getUser();
+  
+  if (!token || !user) {
+    throw new Error("User not authenticated");
+  }
+  
+  const res = await api.delete("friends/unfriend", {
+    data: { friend_id }
+  });
+  return res.data;
+};
+
+// Check if two users are friends
+export const checkFriendship = async ({ friend_id }) => {
+  const token = getToken();
+  const user = getUser();
+  
+  if (!token || !user) {
+    throw new Error("User not authenticated");
+  }
+  
+  const res = await api.get("friends/check", {
+    params: { 
+      user_id: user.id, 
+      friend_id 
+    }
+  });
+  return res.data;
+};

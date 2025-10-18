@@ -314,6 +314,143 @@ router.post('/request/response', optimizedAuth, async (req, res) => {
 
 /**
  * @swagger
+ * /api/v1/friends/unfriend:
+ *   delete:
+ *     summary: Unfriend a user
+ *     tags: [Friends]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - friend_id
+ *             properties:
+ *               friend_id:
+ *                 type: string
+ *                 format: uuid
+ *                 description: ID of the user to unfriend
+ *     responses:
+ *       200:
+ *         description: Successfully unfriended
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                   example: Successfully unfriended
+ *       400:
+ *         description: Missing required information
+ *       404:
+ *         description: Friendship not found
+ *       500:
+ *         description: Server error
+ */
+router.delete('/unfriend', optimizedAuth, async (req, res) => {
+    try {
+        const { friend_id } = req.body;
+        const {id: userId} = req.user;
+
+        if (!friend_id) {
+            return errorClass.insufficientInfo(res);
+        }
+
+        // Remove both directions of the friendship
+        await sequelize.transaction(async (t) => {
+            await Follows.destroy({
+                where: { 
+                    follower_id: userId, 
+                    followee_id: friend_id 
+                },
+                transaction: t
+            });
+            await Follows.destroy({
+                where: { 
+                    follower_id: friend_id, 
+                    followee_id: userId 
+                },
+                transaction: t
+            });
+        });
+
+        res.status(200).json({ message: "Successfully unfriended", success: true });
+    } catch (error) {
+        errorClass.serverError(res);
+        console.log(error);
+    }
+});
+
+/**
+ * @swagger
+ * /api/v1/friends/check:
+ *   get:
+ *     summary: Check if two users are friends
+ *     tags: [Friends]
+ *     parameters:
+ *       - name: user_id
+ *         in: query
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Current user ID
+ *       - name: friend_id
+ *         in: query
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Friend user ID to check
+ *     responses:
+ *       200:
+ *         description: Friendship status
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 are_friends:
+ *                   type: boolean
+ *       400:
+ *         description: Missing required parameters
+ *       500:
+ *         description: Server error
+ */
+router.get('/check', optimizedAuth, async (req, res) => {
+    try {
+        const { user_id, friend_id } = req.query;
+
+        if (!user_id || !friend_id) {
+            return errorClass.insufficientInfo(res);
+        }
+
+        // Check if they are friends (either direction)
+        const friendship = await Follows.findOne({
+            where: { 
+                follower_id: user_id, 
+                followee_id: friend_id 
+            }
+        });
+
+        res.status(200).json({ 
+            success: true, 
+            are_friends: !!friendship 
+        });
+    } catch (error) {
+        errorClass.serverError(res);
+        console.log(error);
+    }
+});
+
+/**
+ * @swagger
  * /api/v1/friends:
  *   post:
  *     summary: Retrieve all followers of a given user

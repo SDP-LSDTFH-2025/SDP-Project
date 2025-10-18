@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import "./ProfilePage.css";
-import { Edit, MapPin, Calendar, CircleDot, Circle } from "lucide-react";
+import { Edit, MapPin, Calendar, CircleDot, Circle, MessageCircle } from "lucide-react";
 
 const ProfilePage = () => {
   const [user, setUser] = useState(null);
@@ -148,10 +149,27 @@ const ProfilePage = () => {
               </button>
             </>
           ) : (
-            <button className="edit-button" onClick={handleEdit}>
-              <Edit size={16} className="icon" />
-              Edit
-            </button>
+            <>
+              <button className="edit-button" onClick={handleEdit}>
+                <Edit size={16} className="icon" />
+                Edit
+              </button>
+              <button 
+                className="messages-button"
+                onClick={() => {
+                  // Navigate to messages
+                  window.location.href = '/home';
+                  setTimeout(() => {
+                    // Trigger navigation to messages
+                    const event = new CustomEvent('navigateToMessages');
+                    window.dispatchEvent(event);
+                  }, 100);
+                }}
+              >
+                <MessageCircle size={16} className="icon" />
+                Messages
+              </button>
+            </>
           )}
         </div>
       </div>

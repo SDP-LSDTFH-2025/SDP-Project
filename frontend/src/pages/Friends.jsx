@@ -1,6 +1,5 @@
 // src/components/Friends.jsx
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
 import { MessageCircle, User, Users, Circle, CircleDot } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { getAllFriends } from "../api/resources";
@@ -96,23 +95,22 @@ export default function Friends({ setSelectedUser, handleNavigationClick }) {
             </div>
 
             <div className="actions">
-              <Link
-                to="/messages"
-                state={{
-                  chat: {
+              <button 
+                className="message-btn"
+                onClick={() => {
+                  handleNavigationClick("messages");
+                  // Store the selected chat in localStorage for the Message component to use
+                  localStorage.setItem("selectedChat", JSON.stringify({
                     id: friend.id,
                     username: friend.username,
                     is_active: friend.is_active,
                     course: friend.course || "",
                     name: friend.username.replaceAll("_", " "),
-                  },
+                  }));
                 }}
-                style={{ textDecoration: "none" }}
               >
-                <button className="message-btn">
-                  <MessageCircle size={13} /> Message
-                </button>
-              </Link>
+                <MessageCircle size={13} /> Message
+              </button>
               <button className="profile-btn" onClick={() => handleProfileClick(friend)}>
                 <User size={13} /> Profile
               </button>

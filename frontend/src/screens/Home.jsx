@@ -42,6 +42,8 @@ import ProfilePage from "../pages/ProfilePage.jsx";
 import Feed from "../pages/Feed.jsx";
 import PlanSessions from "../pages/Sessions.jsx";
 import Progress from "../pages/Progress.jsx";
+import Message from "./Message.jsx";
+import Notifications from "./Notifications.jsx";
 
 function Home({ user }) {
   const [activeView, setActiveView] = useState("feed");
@@ -205,16 +207,18 @@ function Home({ user }) {
         <h1 className="logo">StudyBuddy</h1>
 
         <div className="nav-actions">
-          <Link to="/messages">
-            <Button className="nav-button">
-              <MessageCircle className="pics" />
-            </Button>
-          </Link>
-          <Link to="/notifications">
-            <Button className="nav-button">
-              <Bell className="pics" />
-            </Button>
-          </Link>
+          <Button
+            className={`nav-button ${activeView === "messages" ? "active" : ""}`}
+            onClick={() => handleNavigationClick("messages")}
+          >
+            <MessageCircle className="pics" />
+          </Button>
+          <Button
+            className={`nav-button ${activeView === "notifications" ? "active" : ""}`}
+            onClick={() => handleNavigationClick("notifications")}
+          >
+            <Bell className="pics" />
+          </Button>
           <Button
             className={`nav-button ${activeView === "profile" ? "active" : ""}`}
             onClick={() => handleNavigationClick("profile")}
@@ -293,6 +297,32 @@ function Home({ user }) {
                 }}
               >
                 <Upload className="pics" /> Upload Resource
+              </Button>
+            </li>
+            <li>
+              <Button
+                className={`buttons ${
+                  activeView === "messages" ? "active" : ""
+                }`}
+                onClick={() => {
+                  handleNavigationClick("messages");
+                  toggleMenu();
+                }}
+              >
+                <MessageCircle className="pics" /> Messages
+              </Button>
+            </li>
+            <li>
+              <Button
+                className={`buttons ${
+                  activeView === "notifications" ? "active" : ""
+                }`}
+                onClick={() => {
+                  handleNavigationClick("notifications");
+                  toggleMenu();
+                }}
+              >
+                <Bell className="pics" /> Notifications
               </Button>
             </li>
             <li>
@@ -378,6 +408,26 @@ function Home({ user }) {
                   <Upload className="pics" />
                   Upload Resource
                 </Button>
+
+                <Button
+                  className={`buttons ${
+                    activeView === "messages" ? "active" : ""
+                  }`}
+                  onClick={() => handleNavigationClick("messages")}
+                >
+                  <MessageCircle className="pics" />
+                  Messages
+                </Button>
+
+                <Button
+                  className={`buttons ${
+                    activeView === "notifications" ? "active" : ""
+                  }`}
+                  onClick={() => handleNavigationClick("notifications")}
+                >
+                  <Bell className="pics" />
+                  Notifications
+                </Button>
               </CardContent>
             </Card>
           </div>
@@ -462,7 +512,7 @@ function Home({ user }) {
                   className="upload-btn"
                   onClick={() => setActiveView("upload")}
                 >
-                  <Share2 className="pics" /> Share
+                  <Share2 className="pics" /> Upload Resource
                 </Button>
 
                 <Feed />
@@ -544,6 +594,20 @@ function Home({ user }) {
             {activeView === "groups" && (
               <div className="share-card">
                 <PlanSessions />
+              </div>
+            )}
+
+            {activeView === "messages" && (
+              <div className="share-card">
+                <h2>Messages</h2>
+                <Message />
+              </div>
+            )}
+
+            {activeView === "notifications" && (
+              <div className="share-card">
+                <h2>Notifications</h2>
+                <Notifications user={user} />
               </div>
             )}
           </div>

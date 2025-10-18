@@ -9,6 +9,50 @@ export const ResourceCard = ({ resource }) => {
   const [liked, setLiked] = useState(false);
   const [showComments, setShowComments] = useState(false);
 
+  const handleShare = async () => {
+    const shareData = {
+      title: resource.title,
+      text: resource.preview,
+      url: window.location.href
+    };
+
+    if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
+      try {
+        await navigator.share(shareData);
+      } catch (err) {
+        console.log("Error sharing:", err);
+        fallbackShare();
+      }
+    } else {
+      fallbackShare();
+    }
+  };
+
+  const fallbackShare = () => {
+    const shareText = `${resource.title}\n\n${resource.preview}\n\nCourse: ${resource.course}\nAuthor: ${resource.author}`;
+    
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(shareText).then(() => {
+        alert("Resource details copied to clipboard!");
+      }).catch(() => {
+        showShareModal();
+      });
+    } else {
+      showShareModal();
+    }
+  };
+
+  const showShareModal = () => {
+    const shareText = `${resource.title}\n\n${resource.preview}\n\nCourse: ${resource.course}\nAuthor: ${resource.author}`;
+    const textArea = document.createElement("textarea");
+    textArea.value = shareText;
+    document.body.appendChild(textArea);
+    textArea.select();
+    document.execCommand("copy");
+    document.body.removeChild(textArea);
+    alert("Resource details copied to clipboard!");
+  };
+
   const mockComments = [
     { author: "Alex Kim", text: "This is really helpful! Thanks for sharing.", time: "1h ago" },
     { author: "Maria Garcia", text: "Could you explain the third section more?", time: "45m ago" }
@@ -75,7 +119,12 @@ export const ResourceCard = ({ resource }) => {
               <span>{resource.comments}</span>
             </Button>
             
-            <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-tertiary transition-colors">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={handleShare}
+              className="text-muted-foreground hover:text-tertiary transition-colors"
+            >
               <Share2 className="h-4 w-4" />
             </Button>
           </div>

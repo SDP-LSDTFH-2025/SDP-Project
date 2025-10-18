@@ -205,11 +205,24 @@ module.exports = function attachGroupChatHandlers(nsp) {
     // Send a group message
     socket.on('group:message', async (payload, ack) => {
       try {
-        const { groupId, message, tempId } = payload || {};
+        const { groupId, message, tempId, messageType, audioData, audioDuration } = payload || {};
         const effectiveUserId = connectedUserId || payload?.userId;
         
         if (!effectiveUserId || !groupId || !message) {
           return ack && ack({ ok: false, error: 'userId, groupId and message are required' });
+        }
+
+        // Validate message type and required fields
+        const validMessageTypes = ['text', 'voice_note', 'image', 'file'];
+        const messageTypeToUse = messageType || 'text';
+        
+        if (!validMessageTypes.includes(messageTypeToUse)) {
+          return ack && ack({ ok: false, error: 'Invalid message type' });
+        }
+
+        // For voice notes, validate required fields
+        if (messageTypeToUse === 'voice_note' && (!audioData || !audioDuration)) {
+          return ack && ack({ ok: false, error: 'audioData and audioDuration are required for voice notes' });
         }
 
         // Verify user is a member of the group
@@ -225,6 +238,9 @@ module.exports = function attachGroupChatHandlers(nsp) {
           group_id: groupId,
           user_id: effectiveUserId,
           message,
+          message_type: messageTypeToUse,
+          audio_data: audioData || null,
+          audio_duration: audioDuration || null,
           deleted: false,
           created_at: new Date()
         });
@@ -234,6 +250,9 @@ module.exports = function attachGroupChatHandlers(nsp) {
           group_id: record.group_id,
           user_id: record.user_id,
           message: record.message,
+          message_type: record.message_type,
+          audio_data: record.audio_data,
+          audio_duration: record.audio_duration,
           created_at: record.created_at,
           tempId
         };
@@ -260,10 +279,11 @@ module.exports = function attachGroupChatHandlers(nsp) {
             // Create notifications for all members except the sender
             for (const member of members) {
                 if (member.user_id !== effectiveUserId) {
+                    const messageTypeText = messageTypeToUse === 'voice_note' ? 'voice note' : 'message';
                     await Notifications.create({
                         user_id: member.user_id,
                         title: "New Group Message",
-                        message: `${sender.username.replaceAll("_", " ")} sent a message in "${group.name}" group.`,
+                        message: `${sender.username.replaceAll("_", " ")} sent a ${messageTypeText} in "${group.name}" group.`,
                         read: false,
                         created_at: new Date()
                     });

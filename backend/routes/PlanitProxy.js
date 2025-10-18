@@ -28,24 +28,12 @@ function forwardToPlanit(method, pathname, req, bodyObj) {
         'Content-Type': 'application/json'
       };
 
-      // Pass-through Authorization token if present
-      if (req.headers && req.headers.authorization) {
-        headers['Authorization'] = req.headers.authorization;
-      }
+      // Forward useful headers
+      if (req.headers?.authorization) headers['Authorization'] = req.headers.authorization;
+      if (req.headers?.user_id) headers['user_id'] = req.headers.user_id;
+      if (req.headers?.['x-user-id']) headers['x-user-id'] = req.headers['x-user-id'];
 
-      // Pass-through user_id header if present
-      if (req.headers && req.headers.user_id) {
-        headers['user_id'] = req.headers.user_id;
-      }
-
-      // Also check for x-user-id header
-      if (req.headers && req.headers['x-user-id']) {
-        headers['x-user-id'] = req.headers['x-user-id'];
-      }
-
-      if (payload) {
-        headers['Content-Length'] = Buffer.byteLength(payload);
-      }
+      if (payload) headers['Content-Length'] = Buffer.byteLength(payload);
 
       const options = {
         method,
@@ -62,26 +50,35 @@ function forwardToPlanit(method, pathname, req, bodyObj) {
         res.on('data', (d) => chunks.push(d));
         res.on('end', () => {
           const raw = Buffer.concat(chunks).toString('utf8');
+          console.log('Raw response from Planit:', raw);
+          console.log('Response status code:', res.statusCode);
+
           let parsed;
-          try {
-            parsed = raw ? JSON.parse(raw) : null;
-          } catch (e) {
-            console.error('Failed to parse response JSON:', e);
-            console.error('Raw response:', raw);
-            // If it's a plain text error, wrap it in a proper error object
+
+          // Try to parse JSON only if it looks like JSON
+          if (raw && (raw.trim().startsWith('{') || raw.trim().startsWith('['))) {
+            try {
+              parsed = JSON.parse(raw);
+              console.log('Successfully parsed JSON response');
+            } catch (e) {
+              console.error('Invalid JSON response:', e);
+              parsed = { success: false, error: 'Invalid JSON', raw };
+            }
+          } else {
+            // Handle plain text responses
             parsed = {
-              success: false,
-              error: raw || 'Unknown error',
-              message: raw || 'Unknown error'
+              success: res.statusCode < 400,
+              message: raw || 'No content',
+              error: res.statusCode >= 400 ? raw : null
             };
           }
-          
-          // Log response details for debugging
+
           console.log(`Planit API response: ${method} ${pathname} - Status: ${res.statusCode}`);
+
           if (res.statusCode >= 400) {
             console.error('Planit API error response:', parsed);
           }
-          
+
           resolve({ status: res.statusCode || 500, data: parsed });
         });
       });
@@ -90,7 +87,7 @@ function forwardToPlanit(method, pathname, req, bodyObj) {
         console.error('Planit request error:', err);
         reject(new Error(`Planit service error: ${err.message}`));
       });
-      
+
       if (payload) request.write(payload);
       request.end();
     } catch (error) {
@@ -472,6 +469,102 @@ router.delete('/events/:id', async (req, res) => {
 /**
  * @swagger
  * /api/v1/planit/guests/event/{eventId}:
+ *   get:
+ *     summary: Get Guests for Event (Planit proxy)
+ *     tags: [Planit]
+ *     parameters:
+ *       - in: header
+ *         name: user_id
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: path
+ *         name: eventId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Success
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: string
+ *                       name:
+ *                         type: string
+ *                       email:
+ *                         type: string
+ *                       phone:
+ *                         type: string
+ *                       rsvpStatus:
+ *                         type: string
+ *                       dietaryPreferences:
+ *                         type: string
+ */
+router.get('/guests/event/:eventId', async (req, res) => {
+  const userId = requireUserId(req, res);
+  if (!userId) return;
+  const { eventId } = req.params;
+  
+  try {
+    console.log('Fetching guests for event:', eventId, 'by user:', userId);
+    
+    const response = await forwardToPlanit('GET', `/api/guests/event/${encodeURIComponent(eventId)}`, req);
+    console.log("Planit get guests response:", response);
+    
+    // Check if the response is successful
+    if (response.status >= 200 && response.status < 300) {
+      console.log("Planit API returned success status:", response.status);
+      
+      // Return consistent response structure
+      res.status(response.status).json({
+        success: true,
+        data: response.data || []
+      });
+    } else {
+      console.error("Planit API returned error status:", response.status);
+      console.error("Error response data:", response.data);
+      
+      // Handle different types of error responses
+      let errorMessage = 'Failed to fetch guests';
+      if (typeof response.data === 'string') {
+        errorMessage = response.data;
+      } else if (response.data?.message) {
+        errorMessage = response.data.message;
+      } else if (response.data?.error) {
+        errorMessage = response.data.error;
+      }
+      
+      res.status(response.status || 500).json({
+        success: false,
+        error: errorMessage,
+        details: response.data
+      });
+    }
+    
+  } catch (e) {
+    console.error("Get guests error:", e);
+    res.status(500).json({ 
+      success: false, 
+      error: e.message || 'Failed to fetch guests',
+      details: process.env.NODE_ENV === 'development' ? e.stack : undefined
+    });
+  }
+});
+/**
+ * @swagger
+ * /api/v1/planit/guests/event/{eventId}:
  *   post:
  *     summary: Create Guest for Event (Planit proxy)
  *     tags: [Planit]
@@ -543,6 +636,19 @@ router.post('/guests/event/:eventId', async (req, res) => {
   
   try {
     console.log('Creating guest for event:', eventId, 'by user:', userId, 'with body:', req.body);
+    console.log('Event ID validation:', {
+      eventId: eventId,
+      eventIdType: typeof eventId,
+      eventIdLength: eventId?.length,
+      isValidObjectId: /^[0-9a-fA-F]{24}$/.test(eventId)
+    });
+    console.log('Guest data validation:', {
+      name: req.body?.name,
+      email: req.body?.email,
+      phone: req.body?.phone,
+      rsvpStatus: req.body?.rsvpStatus,
+      dietaryPreferences: req.body?.dietaryPreferences
+    });
     
     const response = await forwardToPlanit('POST', `/api/guests/event/${encodeURIComponent(eventId)}`, req, req.body || {});
     console.log("Planit create guest response:", response);
@@ -571,7 +677,11 @@ router.post('/guests/event/:eventId', async (req, res) => {
       }
       
       // Always return the Planit response for successful status codes
-      res.status(response.status).json(response.data);
+      // Ensure consistent response structure
+      res.status(response.status).json({
+        success: true,
+        data: response.data
+      });
     } else {
       console.error("Planit API returned error status:", response.status);
       console.error("Error response data:", response.data);
@@ -623,13 +733,45 @@ router.patch('/guests/event/:eventId/guest/:guestId', async (req, res) => {
   const userId = requireUserId(req, res);
   if (!userId) return;
   const { eventId, guestId } = req.params;
+  
   try {
+    console.log('Updating guest for event:', eventId, 'guest:', guestId, 'by user:', userId);
+    
     const response = await forwardToPlanit('PATCH', `/api/guests/event/${encodeURIComponent(eventId)}/guest/${encodeURIComponent(guestId)}`, req, req.body || {});
     console.log("update guest Response data:", response.data);
-    res.status(response.status).json(response.data);
+    
+    // Check if the response is successful
+    if (response.status >= 200 && response.status < 300) {
+      res.status(response.status).json({
+        success: true,
+        data: response.data
+      });
+    } else {
+      console.error("Planit API returned error status:", response.status);
+      console.error("Error response data:", response.data);
+      
+      let errorMessage = 'Failed to update guest';
+      if (typeof response.data === 'string') {
+        errorMessage = response.data;
+      } else if (response.data?.message) {
+        errorMessage = response.data.message;
+      } else if (response.data?.error) {
+        errorMessage = response.data.error;
+      }
+      
+      res.status(response.status || 500).json({
+        success: false,
+        error: errorMessage,
+        details: response.data
+      });
+    }
   } catch (e) {
-    console.log("update guest Error:", e);
-    res.status(500).json({ success: false, error: 'Upstream error' });
+    console.error("update guest Error:", e);
+    res.status(500).json({ 
+      success: false, 
+      error: e.message || 'Failed to update guest',
+      details: process.env.NODE_ENV === 'development' ? e.stack : undefined
+    });
   }
 });
 
@@ -653,16 +795,54 @@ router.delete('/guests/event/:eventId/guest/:guestId', async (req, res) => {
   const userId = requireUserId(req, res);
   if (!userId) return;
   const { eventId, guestId } = req.params;
+  
   try {
-   
+    console.log('Deleting guest for event:', eventId, 'guest:', guestId, 'by user:', userId);
+    
     const response = await forwardToPlanit('DELETE', `/api/guests/event/${encodeURIComponent(eventId)}/guest/${encodeURIComponent(guestId)}`, req);
-    // Remove guest_id from Events table for this event
-    await Events.destroy({ where: { event_id: eventId, guest_id: guestId } });
-    console.log("delete guest Response data:", response.data);
-    res.status(response.status).json(response.data);
+    
+    // Check if the response is successful
+    if (response.status >= 200 && response.status < 300) {
+      // Remove guest_id from Events table for this event
+      try {
+        await Events.destroy({ where: { event_id: eventId, guest_id: guestId } });
+        console.log("Guest removed from local Events table");
+      } catch (dbError) {
+        console.warn("Failed to remove guest from local Events table:", dbError);
+        // Don't fail the entire request if local cleanup fails
+      }
+      
+      console.log("delete guest Response data:", response.data);
+      res.status(response.status).json({
+        success: true,
+        data: response.data
+      });
+    } else {
+      console.error("Planit API returned error status:", response.status);
+      console.error("Error response data:", response.data);
+      
+      let errorMessage = 'Failed to delete guest';
+      if (typeof response.data === 'string') {
+        errorMessage = response.data;
+      } else if (response.data?.message) {
+        errorMessage = response.data.message;
+      } else if (response.data?.error) {
+        errorMessage = response.data.error;
+      }
+      
+      res.status(response.status || 500).json({
+        success: false,
+        error: errorMessage,
+        details: response.data
+      });
+    }
   } catch (e) {
-    console.log("delete guest Error:", e);
-    res.status(500).json({ success: false, error: 'Upstream error' });
+    console.error("delete guest Error:", e);
+    res.status(500).json({ 
+      success: false, 
+      error: e.message || 'Failed to delete guest',
+      details: process.env.NODE_ENV === 'development' ? e.stack : undefined
+    });
   }
 });
 
@@ -934,6 +1114,99 @@ router.get('/export/event/:eventId', async (req, res) => {
   } catch (e) {
     console.log("export event Error:", e);
       res.status(500).json({ success: false, error: 'Upstream error' });
+  }
+});
+
+/**
+ * @swagger
+ * /api/v1/planit/study-sessions:
+ *   get:
+ *     summary: Get user's study sessions for calendar
+ *     tags: [Study Sessions]
+ *     parameters:
+ *       - in: header
+ *         name: user_id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Study sessions retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 sessions:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: integer
+ *                       title:
+ *                         type: string
+ *                       start_time:
+ *                         type: string
+ *                         format: date-time
+ *                       end_time:
+ *                         type: string
+ *                         format: date-time
+ *                       venue_name:
+ *                         type: string
+ *       500:
+ *         description: Internal server error
+ */
+router.get('/study-sessions', async (req, res) => {
+  const userId = requireUserId(req, res);
+  if (!userId) return;
+
+  try {
+    // Fetch events from Planit service (same as getUpcomingSessions)
+    const response = await forwardToPlanit('GET', '/api/events', req);
+    
+    if (response.status === 200 && response.data) {
+      // Format events for FullCalendar
+      const formattedSessions = response.data.map(event => {
+        // Parse the date and time from the event
+        const startDateTime = new Date(`${event.date}T${event.startTime}`);
+        const endDateTime = new Date(`${event.endDate || event.date}T${event.endTime}`);
+        
+        return {
+          id: event.id || event._id,
+          title: event.title,
+          start: startDateTime.toISOString(),
+          end: endDateTime.toISOString(),
+          location: event.location,
+          color: '#3b82f6', // Blue color for study sessions
+          extendedProps: {
+            type: 'study_session',
+            venue: event.location,
+            description: event.description,
+            category: event.category,
+            theme: event.theme
+          }
+        };
+      });
+
+      res.json({
+        success: true,
+        sessions: formattedSessions
+      });
+    } else {
+      res.json({
+        success: true,
+        sessions: []
+      });
+    }
+  } catch (error) {
+    console.error('Error fetching study sessions:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch study sessions'
+    });
   }
 });
 

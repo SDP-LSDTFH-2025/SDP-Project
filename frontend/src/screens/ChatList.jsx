@@ -1,12 +1,21 @@
-import React from "react";
+import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { getAllFriends } from "../api/resources"; // same function we created earlier
+import { getAllFriends } from "../api/resources";
+import { getLastMessages } from "../api/chat";
+import { Search, MessageCircle } from "lucide-react";
+import { Input } from "../components/ui/input";
+import { Button } from "../components/ui/button";
+import DropdownMenu, { chatListMenuItems } from "../components/DropdownMenu";
 
 export default function ChatList({ onSelectChat }) {
+  const [searchQuery, setSearchQuery] = useState("");
+  const currentUser = JSON.parse(localStorage.getItem("user"));
+  const currentUserId = currentUser?.id;
+
   const {
     data: friends = [],
-    isLoading,
-    error,
+    isLoading: friendsLoading,
+    error: friendsError,
   } = useQuery({
     queryKey: ["friends"],
     queryFn: getAllFriends,
@@ -14,39 +23,157 @@ export default function ChatList({ onSelectChat }) {
     cacheTime: 25 * 60 * 1000,
   });
 
-  if (isLoading) return <p>Loading chats...</p>;
-  if (error) return <p>Failed to load chats.</p>;
+  const {
+    data: lastMessages = [],
+    isLoading: messagesLoading,
+  } = useQuery({
+    queryKey: ["lastMessages", currentUserId],
+    queryFn: () => getLastMessages(currentUserId),
+    enabled: !!currentUserId,
+    staleTime: 30 * 1000, // 30 seconds
+    cacheTime: 2 * 60 * 1000, // 2 minutes
+  });
+
+  // Create a map of last messages by friend ID
+  const lastMessagesMap = lastMessages.reduce((acc, msg) => {
+    const friendId = msg.sender_id === currentUserId ? msg.receiver_id : msg.sender_id;
+    acc[friendId] = {
+      message: msg.message,
+      time: new Date(msg.created_at).toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
+      unreadCount: 0 // You can implement unread count logic here
+    };
+    return acc;
+  }, {});
+
+  // Merge friends with their last messages
+  const friendsWithMessages = friends.map(friend => ({
+    ...friend,
+    lastMessage: lastMessagesMap[friend.id]?.message || null,
+    lastMessageTime: lastMessagesMap[friend.id]?.time || null,
+    unreadCount: lastMessagesMap[friend.id]?.unreadCount || 0
+  }));
+
+  // Filter friends based on search query
+  const filteredFriends = friendsWithMessages.filter(friend =>
+    friend.username.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const isLoading = friendsLoading || messagesLoading;
+  const error = friendsError;
+
+  if (isLoading) {
+    return (
+      <div className="chat-list-container">
+        <div className="chat-list-header">
+          <h2>Messages</h2>
+        </div>
+        <div className="loading-state">
+          <div className="loading-spinner"></div>
+          <p>Loading conversations...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="chat-list-container">
+        <div className="chat-list-header">
+          <h2>Messages</h2>
+        </div>
+        <div className="error-state">
+          <MessageCircle className="error-icon" />
+          <p>Failed to load conversations</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="chat-list-container">
-      {/* Header */}
-      <div className="chat-list-header">
-        <h2>Chats</h2>
+    <div className="whatsapp-chat-list">
+      {/* WhatsApp-style Header */}
+      <div className="whatsapp-header">
+        <div className="header-content">
+          <h1>Chats</h1>
+          <div className="header-actions">
+            <Button variant="ghost" size="sm" className="header-btn">
+              <Search size={20} />
+            </Button>
+            <DropdownMenu 
+              items={chatListMenuItems}
+              className="header-btn"
+            />
+          </div>
+        </div>
       </div>
 
-      {/* Chat Items */}
-      {friends.map((chat) => {
-        const initials = chat.username
-          .split("_")
-          .map((p) => p[0])
-          .join("")
-          .toUpperCase();
+      {/* WhatsApp-style Search */}
+      <div className="whatsapp-search">
+        <div className="search-container">
+          <Search className="search-icon" size={16} />
+          <Input
+            placeholder="Search or start new chat"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="whatsapp-search-input"
+          />
+        </div>
+      </div>
 
-        return (
-          <div
-            key={chat.id}
-            className="chat-item"
-            onClick={() => onSelectChat(chat)}
-          >
-            <div className="avatar">
-              <span>{initials}</span>
-            </div>
-            <div className="chat-info">
-              <h3>{chat.username.replaceAll("_", " ")}</h3>
-            </div>
+      {/* Chat Items - WhatsApp Style */}
+      <div className="whatsapp-chat-items">
+        {filteredFriends.length === 0 ? (
+          <div className="whatsapp-empty-state">
+            <div className="empty-icon">💬</div>
+            <h3>{searchQuery ? "No chats found" : "No chats yet"}</h3>
+            <p>Start a conversation with your friends!</p>
           </div>
-        );
-      })}
+        ) : (
+          filteredFriends.map((chat) => {
+            const initials = chat.username
+              .split("_")
+              .map((p) => p[0])
+              .join("")
+              .toUpperCase();
+
+            return (
+              <div
+                key={chat.id}
+                className="whatsapp-chat-item"
+                onClick={() => onSelectChat(chat)}
+              >
+                <div className="whatsapp-avatar-container">
+                  <div className="whatsapp-avatar">
+                    <span>{initials}</span>
+                  </div>
+                  <div className={`whatsapp-status ${chat.is_active ? 'online' : 'offline'}`}></div>
+                </div>
+                <div className="whatsapp-chat-content">
+                  <div className="whatsapp-chat-header">
+                    <h3>{chat.username.replaceAll("_", " ")}</h3>
+                    <span className="whatsapp-time">
+                      {chat.lastMessageTime || "now"}
+                    </span>
+                  </div>
+                  <div className="whatsapp-chat-preview">
+                    <p className="whatsapp-last-message">
+                      {chat.lastMessage || "Tap to start chatting"}
+                    </p>
+                    <div className="whatsapp-message-status">
+                      {chat.unreadCount > 0 && (
+                        <span className="unread-count">{chat.unreadCount}</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
     </div>
   );
 }

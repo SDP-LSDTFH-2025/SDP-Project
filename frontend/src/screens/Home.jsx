@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query"; 
 import { getAllFriends } from "../api/resources";
 import { showSuccess, showError } from "../utils/toast"; 
-import { getGroups } from "../api/groups";
+import { getGroups, getStudySessions } from "../api/groups";
 import { getUnreadNotificationCount } from "../api/notifications";
 
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
@@ -47,12 +47,34 @@ import Message from "./Message.jsx";
 import Notifications from "./Notifications.jsx";
 
 function Home({ user }) {
-  const [activeView, setActiveView] = useState("feed");
+  const location = useLocation();
+  const navigate = useNavigate();
+  
+  // Get the current view from URL hash or default to "feed"
+  const getCurrentView = () => {
+    const hash = location.hash.replace('#', '');
+    const validViews = ['feed', 'calendar', 'messages', 'friends', 'profile', 'sessions', 'progress', 'notifications', 'upload', 'requests', 'groups'];
+    return validViews.includes(hash) ? hash : 'feed';
+  };
+  
+  const [activeView, setActiveView] = useState(getCurrentView());
   const [title, setTitle] = useState("");
   const [courseId, setCourseId] = useState("");
   const [description, setDescription] = useState("");
   const [pdfFile, setPdfFile] = useState(null);
   const [pictureFile, setPictureFile] = useState(null);
+
+  // Sync URL with activeView state
+  useEffect(() => {
+    const currentView = getCurrentView();
+    setActiveView(currentView);
+  }, [location.hash]);
+
+  // Update URL when activeView changes
+  const updateActiveView = (view) => {
+    setActiveView(view);
+    navigate(`/home#${view}`, { replace: true });
+  };
   const [error, setError] = useState("");
   const [isFormValid, setIsFormValid] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
@@ -62,6 +84,7 @@ function Home({ user }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
   const [events, setEvents] = useState([]);
+  const [studySessions, setStudySessions] = useState([]);
   const [notificationCount, setNotificationCount] = useState(0);
 
   const calendar_token = localStorage.getItem("calendar_token");
@@ -99,6 +122,17 @@ function Home({ user }) {
     staleTime: 30 * 1000, // 30 seconds
     cacheTime: 60 * 1000, // 1 minute
     refetchInterval: 30 * 1000, // Refetch every 30 seconds
+  });
+
+  const {
+    data: studySessionsData,
+    isLoading: studySessionsLoading,
+  } = useQuery({
+    enabled: !!user?.id,
+    queryKey: ["studySessions", user.id],
+    queryFn: () => getStudySessions(user.id),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    cacheTime: 10 * 60 * 1000, // 10 minutes
   });
 
   const friends = rawFriends.slice(0, 4).map((u) => ({
@@ -152,6 +186,10 @@ function Home({ user }) {
             title: ev.summary,
             start: ev.start.dateTime || ev.start.date,
             end: ev.end.dateTime || ev.end.date,
+            color: '#10b981', // Green color for Google Calendar events
+            extendedProps: {
+              type: 'google_calendar'
+            }
           }))
         );
       }
@@ -159,6 +197,13 @@ function Home({ user }) {
 
     fetchEvents();
   }, [calendar_token]);
+
+  // Update study sessions when data changes
+  useEffect(() => {
+    if (studySessionsData?.success && studySessionsData.sessions) {
+      setStudySessions(studySessionsData.sessions);
+    }
+  }, [studySessionsData]);
 
   // Update notification count when data changes
   useEffect(() => {
@@ -174,7 +219,7 @@ function Home({ user }) {
   }
 
   function handleNavigationClick(view) {
-    setActiveView(view);
+    updateActiveView(view);
   }
 
   const handleUploadSubmit = async (e) => {
@@ -218,7 +263,7 @@ function Home({ user }) {
         setDescription("");
         setPdfFile(null);
         setPictureFile(null);
-        setActiveView("feed");
+        updateActiveView("feed");
         showSuccess("Resource uploaded successfully!");
       } else {
         const errorMessage =
@@ -565,26 +610,41 @@ function Home({ user }) {
                   eventContent={() => {
                     return { html: `<div class="event-dot"></div>` };
                   }}
-                  events={events}
+                  events={[...events, ...studySessions]}
                   eventClick={(info) => {
                     info.jsEvent.preventDefault();
+                    const eventType = info.event.extendedProps?.type || 'unknown';
                     setSelectedEvent({
                       title: info.event.title,
                       start: info.event.start,
                       end: info.event.end,
                       color: info.event.backgroundColor,
+                      type: eventType,
+                      location: info.event.extendedProps?.venue || info.event.extendedProps?.location,
+                      venue: info.event.extendedProps?.venue
                     });
                   }}
                 />
                 {selectedEvent && (
                   <div className="event-modal">
                     <div className="event-modal-content">
-                      <h3 style={{ color: "#0000ff" }}>
+                      <h3 style={{ color: selectedEvent.type === 'study_session' ? "#3b82f6" : "#10b981" }}>
                         {selectedEvent.title}
                       </h3>
                       <p>
-                        Date: {selectedEvent.start.toLocaleDateString()} <br />
-                        Time: {selectedEvent.start.toLocaleTimeString()} <br />
+                        <strong>Type:</strong> {selectedEvent.type === 'study_session' ? 'Study Session' : 'Google Calendar Event'} <br />
+                        <strong>Date:</strong> {selectedEvent.start.toLocaleDateString()} <br />
+                        <strong>Time:</strong> {selectedEvent.start.toLocaleTimeString()} - {selectedEvent.end.toLocaleTimeString()} <br />
+                        {selectedEvent.venue && (
+                          <>
+                            <strong>Venue:</strong> {selectedEvent.venue} <br />
+                          </>
+                        )}
+                        {selectedEvent.location && !selectedEvent.venue && (
+                          <>
+                            <strong>Location:</strong> {selectedEvent.location} <br />
+                          </>
+                        )}
                       </p>
                       <button
                         style={{
@@ -594,7 +654,7 @@ function Home({ user }) {
                           fontWeight: "600",
                           cursor: "pointer",
                           border: "none",
-                          background: "#6366f1",
+                          background: selectedEvent.type === 'study_session' ? "#3b82f6" : "#10b981",
                           color: "white",
                         }}
                         onClick={() => setSelectedEvent(null)}
@@ -617,7 +677,7 @@ function Home({ user }) {
                 <h2>Resources</h2>
                 <Button
                   className="upload-btn"
-                  onClick={() => setActiveView("upload")}
+                  onClick={() => updateActiveView("upload")}
                 >
                   <Share2 className="pics" /> Upload Resource
                 </Button>

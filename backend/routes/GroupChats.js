@@ -24,21 +24,34 @@ router.get("/", async (req, res) => {
   try {
     const { groupId } = req.query;
 
+    console.log("Group chat history request - groupId:", groupId, "type:", typeof groupId);
+
     if (!groupId) {
       return res
         .status(400)
         .json({ success: false, error: "Missing groupId parameter" });
     }
 
+    // Convert groupId to integer if it's a string
+    const groupIdInt = parseInt(groupId);
+    if (isNaN(groupIdInt)) {
+      return res
+        .status(400)
+        .json({ success: false, error: "Invalid groupId format" });
+    }
+
     // Fetch all messages for this group
     const messages = await Group_chats.findAll({
-      where: { group_id: groupId },
+      where: { group_id: groupIdInt },
       order: [["created_at", "ASC"]],
     });
 
+    console.log("Found messages:", messages.length);
     return res.status(200).json({ success: true, data: messages });
   } catch (error) {
     console.error("❌ Get group chats error:", error);
+    console.error("Error details:", error.message);
+    console.error("Stack trace:", error.stack);
     return res
       .status(500)
       .json({ success: false, error: "Internal server error" });
@@ -114,6 +127,8 @@ router.post("/", optimizedAuth, async (req, res) => {
     const { groupId, message } = req.body;
     const userId = req.user.id;
 
+    console.log("Send group message request - groupId:", groupId, "type:", typeof groupId, "userId:", userId);
+
     if (!groupId || !message) {
       return res.status(400).json({
         success: false,
@@ -121,9 +136,18 @@ router.post("/", optimizedAuth, async (req, res) => {
       });
     }
 
+    // Convert groupId to integer if it's a string
+    const groupIdInt = parseInt(groupId);
+    if (isNaN(groupIdInt)) {
+      return res.status(400).json({
+        success: false,
+        error: "Invalid groupId format"
+      });
+    }
+
     // Verify user is a member of the group
     const membership = await Group_members.findOne({
-      where: { group_id: groupId, user_id: userId }
+      where: { group_id: groupIdInt, user_id: userId }
     });
 
     if (!membership) {
@@ -135,7 +159,7 @@ router.post("/", optimizedAuth, async (req, res) => {
 
     // Create the message
     const record = await Group_chats.create({
-      group_id: groupId,
+      group_id: groupIdInt,
       user_id: userId,
       message,
       deleted: false,
@@ -150,12 +174,15 @@ router.post("/", optimizedAuth, async (req, res) => {
       created_at: record.created_at
     };
 
+    console.log("Message created successfully:", responseData);
     return res.status(200).json({
       success: true,
       data: responseData
     });
   } catch (error) {
     console.error("❌ Send group message error:", error);
+    console.error("Error details:", error.message);
+    console.error("Stack trace:", error.stack);
     return res.status(500).json({
       success: false,
       error: "Internal server error"

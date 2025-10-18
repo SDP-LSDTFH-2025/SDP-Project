@@ -19,6 +19,19 @@ const PrivateChats = sequelize.define('PrivateChats', {
         type: DataTypes.TEXT,
         allowNull: false
     },
+    message_type: {
+        type: DataTypes.ENUM('text', 'voice_note', 'image', 'file'),
+        allowNull: false,
+        defaultValue: 'text'
+    },
+    audio_data: {
+        type: DataTypes.TEXT,
+        allowNull: true
+    },
+    audio_duration: {
+        type: DataTypes.FLOAT,
+        allowNull: true
+    },
     deleted: {
         type: DataTypes.BOOLEAN,
         allowNull: false,

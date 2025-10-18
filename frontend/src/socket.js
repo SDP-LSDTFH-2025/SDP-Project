@@ -16,10 +16,11 @@ export const socket = io(`${SERVER}/api/v1/sockets`, {
 });
 
 export const groupSocket = io(`${SERVER}/api/v1/sockets`, {
-  transports: ['websocket'], // Allow fallback to polling
+  transports: ['websocket', 'polling'], // Allow fallback to polling
   auth: { token, userId: user?.id },
   extraHeaders: { Authorization: `Bearer ${token}` },
   autoConnect: false,
+  forceNew: true, // Force new connection
 });
 
 socket.onAny((event, ...args) => {

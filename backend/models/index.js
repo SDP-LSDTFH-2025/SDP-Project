@@ -9,9 +9,8 @@ const Likes = require('./Likes');
 
 //resources table 
 const Resources = require('./Resources');
-const Resource_tags = require('./Resource_tags');
 const Resource_threads = require('./Resource_threads');
-const Resource_reports = require('./Resource_reports');
+
 
 //Socialization
 const Follows = require('./Follows');
@@ -22,9 +21,6 @@ const Study_groups = require('./Study_groups');
 const Study_sessions = require('./Study_sessions');
 const Follows_requests = require('./follows_requests');
 const public_resources = require('./public_resources');
-
-//Events
-const Events = require('./Events');
 
 
 // Define associations
@@ -40,7 +36,7 @@ User.hasMany(Progress, { foreignKey: 'user_id', sourceKey: 'id' });
 User.hasMany(Study_sessions, { foreignKey: 'user_id', sourceKey: 'id' });
 User.hasMany(Resources, { foreignKey: 'user_id', sourceKey: 'id' });
 User.hasMany(Resource_threads, { foreignKey: 'user_id', sourceKey: 'id' });
-User.hasMany(Resource_reports, { foreignKey: 'user_id', sourceKey: 'id' });
+
 
 // Follow associations
 User.hasMany(Follows, { as: 'Followers', foreignKey: 'follower_id', sourceKey: 'id' });
@@ -55,9 +51,9 @@ Courses.hasMany(Study_groups, { foreignKey: 'course_id', sourceKey: 'id' });
 User.hasMany(Courses, { foreignKey: 'created_by', sourceKey: 'id' });
 
 // Resource associations
-Resources.hasMany(Resource_tags, { foreignKey: 'resource_id', sourceKey: 'id' });
+
 Resources.hasMany(Resource_threads, { foreignKey: 'resource_id', sourceKey: 'id' });
-Resources.hasMany(Resource_reports, { foreignKey: 'resource_id', sourceKey: 'id' });
+
 
 // Study Group associations
 Study_groups.hasMany(Group_members, { foreignKey: 'group_id', sourceKey: 'id' });
@@ -85,18 +81,13 @@ Progress.belongsTo(User, { foreignKey: 'user_id', targetKey: 'id' });
 Study_sessions.belongsTo(User, { foreignKey: 'user_id', targetKey: 'id' });
 Resources.belongsTo(User, { foreignKey: 'user_id', targetKey: 'id' });
 Resources.belongsTo(Courses, { foreignKey: 'course_id', targetKey: 'id' });
-Resource_tags.belongsTo(Resources, { foreignKey: 'resource_id', targetKey: 'id' });
 Resource_threads.belongsTo(Resources, { foreignKey: 'resource_id', targetKey: 'id' });
 Resource_threads.belongsTo(User, { foreignKey: 'user_id', targetKey: 'id' });
-Resource_reports.belongsTo(Resources, { foreignKey: 'resource_id', targetKey: 'id' });
-Resource_reports.belongsTo(User, { foreignKey: 'user_id', targetKey: 'id' });
 Follows.belongsTo(User, { as: 'Follower', foreignKey: 'follower_id', targetKey: 'id' });
 Follows.belongsTo(User, { as: 'Followee', foreignKey: 'followee_id', targetKey: 'id' });
 Follows_requests.belongsTo(User, { as: 'Follower_requesting', foreignKey: 'follower_id', targetKey: 'id' });
 Follows_requests.belongsTo(User, { as: 'Followee_requested', foreignKey: 'followee_id', targetKey: 'id' });
 Courses.belongsTo(User, { foreignKey: 'created_by', targetKey: 'id' });
-Events.belongsTo(User, { foreignKey: 'eventPlanner', targetKey: 'id' });
-Events.belongsTo(User, { foreignKey: 'guest_id', targetKey: 'id' });
 
 module.exports = {
   sequelize,
@@ -106,9 +97,7 @@ module.exports = {
   UserCourses,
   PrivateChats,
   Resources,
-  Resource_tags,
   Resource_threads,
-  Resource_reports,
   Follows,
   Follows_requests,
   Group_chats,
@@ -117,6 +106,5 @@ module.exports = {
   Study_groups,
   Study_sessions,
   Likes,
-  public_resources,
-  Events
+  public_resources
 };

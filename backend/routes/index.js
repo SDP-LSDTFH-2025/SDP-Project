@@ -14,9 +14,11 @@ const resourcesRoutes = require('./Resources')
 const resourcethreadsRoutes = require('./Resource_threads');
 const liked_Routes = require('./Likes');
 const publicApiRoutes = require('./PublicApi');
-const privateChatsRoutes = require('./PrivateChats');
 const planitProxyRoutes = require('./PlanitProxy');
+const privateChatsRoutes = require('./PrivateChats');
+const progressRoute = require('./progress');
 
+const BACKEND_URL = process.env.BACKEND_URL;
 
 // API Documentation
 /**
@@ -58,8 +60,13 @@ router.get('/', (req, res) => {
       resource_threads: '/resource_threads',
       likes: '/likes/:id',
       public: '/public',
-      private_chats: '/private-chats'
-
+      private_chats: '/private-chats',
+      planit: '/planit',
+      sockets: {
+        private_chats: `ws://${BACKEND_URL}/sockets/private-chats`,
+        group_chats: `ws://${BACKEND_URL}/sockets/group-chats`, 
+        notifications: `ws://${BACKEND_URL}/sockets/notifications`
+      }
     }
   });
 });
@@ -77,6 +84,14 @@ router.use('/resources', resourcesRoutes);
 router.use('/resource_threads', resourcethreadsRoutes);
 router.use('/likes', liked_Routes);
 router.use('/public', publicApiRoutes);
-router.use('/private-chats', privateChatsRoutes);
 router.use('/planit', planitProxyRoutes);
+router.use('/private-chats', privateChatsRoutes);
+
+const groupChatsRoute = require('./GroupChats');
+router.use('/group-chats', groupChatsRoute);
+
+const trackRoutes = require("./Track");
+router.use("/track", trackRoutes);
+
+router.use('/progress',progressRoute);
 module.exports = router; 

@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query"; // ✅ for cached queries
-import { getAllFriends } from "../api/resources"; // ✅ central function
+import { useQuery } from "@tanstack/react-query"; 
+import { getAllFriends } from "../api/resources";
+import { getGroups } from "../api/groups";
 
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import { Button } from "../components/ui/button";
@@ -60,17 +61,28 @@ function Home({ user }) {
 
   const calendar_token = localStorage.getItem("calendar_token");
 
-  // ✅ React Query fetch for friends (cached 20 min)
   const {
     data: rawFriends = [],
     isLoading: friendsLoading,
     error: friendsError,
   } = useQuery({
-  queryKey: ["friends"],
-  queryFn: getAllFriends,
-  staleTime: 20 * 60 * 1000,
-  cacheTime: 25 * 60 * 1000,
-});
+    enabled: !!user?.id,
+    queryKey: ["friends"],
+    queryFn: getAllFriends,
+    staleTime: 20 * 60 * 1000,
+    cacheTime: 25 * 60 * 1000,
+  });
+
+  const { data: rawGroups = [],
+    isLoading: groupsLoading,
+    error: groupsError, 
+  } = useQuery({
+    enabled: !!user?.id,
+    queryKey: ["groups"],
+    queryFn: getGroups,
+    staleTime: 15 * 60 * 1000,
+    cacheTime: 17 * 60 * 1000,
+  });
 
   const friends = rawFriends.slice(0, 4).map((u) => ({
     id: u.id,
@@ -81,7 +93,9 @@ function Home({ user }) {
     status: u.is_active ? "Active" : "Inactive",
   }));
 
-  const groups = groupList || user?.groups || [];
+  const groups = rawGroups
+  .filter((group) => group.joined) // only groups you joined
+  .slice(0, 4);
 
   useEffect(() => {
     const isValid =
@@ -92,7 +106,6 @@ function Home({ user }) {
     setIsFormValid(isValid);
   }, [title, courseId, description, pdfFile, pictureFile]);
 
-  // ✅ Google Calendar events
   useEffect(() => {
     async function fetchEvents() {
       if (!calendar_token) return;
@@ -149,10 +162,7 @@ function Home({ user }) {
     }
 
     try {
-      const SERVER =
-        import.meta.env.VITE_PROD_SERVER ||
-        import.meta.env.VITE_DEV_SERVER ||
-        "http://localhost:3000";
+      const SERVER = import.meta.env.MODE === "development" ? import.meta.env.VITE_DEV_SERVER || "http://localhost:3000" : import.meta.env.VITE_PROD_SERVER;
 
       const url = pdfFile
         ? `${SERVER}/api/v1/upload/pdf`
@@ -580,8 +590,29 @@ function Home({ user }) {
 
           {/* Active study groups */}
           <div className="study-groups">
-            <h3>Group Activities</h3>
-              <p className="empty-text">No groups yet.</p>
+            <h3> <Users className="pics" /> Group Studies</h3>
+            {groupsLoading && <p>Loading Groups...</p>}
+            {groupsError && <p >{groupsError.message}</p>}
+            {groups.length > 0 ? (
+              groups.map((f, i) => (
+                <div key={i} className="buddy-item">
+                  <div className="avatar" >
+                    {f.title
+                      ?.split(" ")
+                      .map((n) => n[0])
+                      .join("")
+                      .toUpperCase()}
+                  </div>
+
+                  <div className="buddy-info">
+                    <strong className="buddy-name">{f.title}</strong>
+                    <div className="buddy-course">{f.subject}</div>
+                  </div>
+                </div>
+              ))
+              ) : (
+                <p className="empty-text">No groups yet.</p>
+                )}
           </div>
         </aside>
       </main>

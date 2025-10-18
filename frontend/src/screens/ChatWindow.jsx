@@ -3,19 +3,20 @@ import { Input } from "../components/ui/input";
 import { Send } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { socket } from "../socket";
+import { getPrivateChatHistory } from "../api/chat";
 
 function makeChatId(userA, userB) {
-  return [userA, userB].sort().join("");
+  return [userA, userB].sort().join(""); // consistent ID for both directions
 }
 
 export default function ChatWindow({ chat, onBack }) {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
-  const [online, setOnline] = useState(chat.is_active || false);
 
   const lastTempIdSent = useRef(null);
   const typingTimeout = useRef(null);
+  const messagesEndRef = useRef(null);
 
   const currentUser = JSON.parse(localStorage.getItem("user"));
   const currentUserId = currentUser?.id;
@@ -27,23 +28,16 @@ export default function ChatWindow({ chat, onBack }) {
     .join("")
     .toUpperCase();
 
-  const SERVER = import.meta.env.VITE_PROD_SERVER || import.meta.env.VITE_DEV_SERVER || "http://localhost:3000";
+  // Scroll to bottom whenever messages change
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
+  // Fetch chat history
   useEffect(() => {
     async function fetchHistory() {
       try {
-        const [sentRes, receivedRes] = await Promise.all([
-          fetch(`${SERVER}/api/v1/private-chats?sender_id=${currentUserId}&receiver_id=${chat.id}`),
-          fetch(`${SERVER}/api/v1/private-chats?sender_id=${chat.id}&receiver_id=${currentUserId}`)
-        ]);
-
-        if (!sentRes.ok || !receivedRes.ok) throw new Error("Failed to fetch history");
-
-        const [sentMsgs, receivedMsgs] = await Promise.all([sentRes.json(), receivedRes.json()]);
-
-        const allMsgs = [...sentMsgs, ...receivedMsgs].sort(
-          (a, b) => new Date(a.created_at) - new Date(b.created_at)
-        );
+        const allMsgs = await getPrivateChatHistory(currentUserId, chat.id);
 
         const formatted = allMsgs.map((msg) => ({
           from: msg.sender_id === currentUserId ? "me" : "other",
@@ -55,20 +49,28 @@ export default function ChatWindow({ chat, onBack }) {
         }));
 
         setMessages(formatted);
+        console.log("Loaded messages:", formatted);
       } catch (err) {
         console.error("Failed to fetch messages:", err);
       }
     }
 
     fetchHistory();
-  }, [chat.id, currentUserId, SERVER]);
+  }, [chat.id, currentUserId]);
 
+  // Socket setup
   useEffect(() => {
-    if (!socket.connected) socket.connect();
+    if (!socket.connected) {
+      socket.connect();
+      console.log("Socket connecting...");
+    }
 
     socket.emit("private:join", { chatId });
 
-    socket.on("private:message:new", (msg) => {
+    // Incoming messages
+    const handleNewMessage = (msg) => {
+      console.log("Incoming socket message:", msg);
+
       if (msg.tempId && msg.tempId === lastTempIdSent.current) return;
 
       if (makeChatId(msg.sender_id, msg.receiver_id) === chatId) {
@@ -86,22 +88,24 @@ export default function ChatWindow({ chat, onBack }) {
 
         socket.emit("private:read", { fromUserId: msg.sender_id });
       }
-    });
+    };
 
-    socket.on("private:typing", ({ from, isTyping }) => {
+    const handleTyping = ({ from, isTyping }) => {
       if (from === chat.id) setIsTyping(isTyping);
-    });
+    };
 
-    socket.on("private:read", ({ by }) => {
-      if (by === chat.id) {
-        console.log("Message read by", chat.username);
-      }
-    });
+    const handleRead = ({ by }) => {
+      if (by === chat.id) console.log("Message read by", chat.username);
+    };
+
+    socket.on("private:message:new", handleNewMessage);
+    socket.on("private:typing", handleTyping);
+    socket.on("private:read", handleRead);
 
     return () => {
-      socket.off("private:message:new");
-      socket.off("private:typing");
-      socket.off("private:read");
+      socket.off("private:message:new", handleNewMessage);
+      socket.off("private:typing", handleTyping);
+      socket.off("private:read", handleRead);
     };
   }, [chatId, currentUserId, chat.id, chat.username]);
 
@@ -184,6 +188,7 @@ export default function ChatWindow({ chat, onBack }) {
             <span className="time">{msg.time}</span>
           </div>
         ))}
+        <div ref={messagesEndRef} />
       </div>
 
       <div className="input-area">

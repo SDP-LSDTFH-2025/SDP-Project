@@ -11,8 +11,8 @@ function createSocketServer(httpServer, corsOrigins) {
     }
   });
 
-  // Use a stable namespace without API prefix
-  const nsp = io.of('/sockets');
+  const apiPrefix = (process.env.API_PREFIX || '/api/v1').replace(/\/$/, '');
+  const nsp = io.of(`${apiPrefix}/sockets`);
 
   // No authorization required: optionally accept userId from handshake
   nsp.use((socket, next) => {
@@ -22,6 +22,8 @@ function createSocketServer(httpServer, corsOrigins) {
   });
 
   require('./privateChats')(nsp);
+  require('./groupChats')(nsp);
+  require('./notifications')(nsp);
 
   return io;
 }

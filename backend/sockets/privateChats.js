@@ -10,12 +10,12 @@ const PrivateChats = require('../models/PrivateChats');
 
 /**
  * @swagger
- * /sockets/private-chats:
+ * /sockets:
  *   get:
  *     summary: Socket.IO connection details
  *     tags: [Sockets]
  *     description: |
- *       Connect using Socket.IO client to `ws://<host>/sockets/private-chats` with JWT token.
+ *       Connect using Socket.IO client to `ws://<host>/v1` with JWT token.
  *       The token should be provided as `Authorization: Bearer <JWT>` header or `auth.token` in the handshake.
  *     responses:
  *       200:
@@ -34,27 +34,73 @@ const PrivateChats = require('../models/PrivateChats');
 
 /**
  * @swagger
- * /sockets/private-chats:
- *   get:
- *     summary: Private chat Socket.IO events (documentation only)
+ * /sockets/private-chats/join:
+ *   post:
+ *     summary: Join a specific private chat room
  *     tags: [PrivateChats]
- *     description: |
- *       This endpoint documents Socket.IO events for private chats. These are not HTTP routes.
- *       Connect to the namespace `/sockets/private-chats` and emit the following events:
- *
- *       - `private:join` with body `PrivateJoinRequest`
- *       - `private:message` with body `PrivateMessageRequest`
- *       - `private:typing` with body `PrivateTypingRequest`
- *       - `private:read` with body `PrivateReadRequest`
- *
- *       Example (client):
- *       ```js
- *       const socket = io('http://localhost:3000/sockets/private-chats', { auth: { userId: '123' } });
- *       socket.emit('private:join', { chatId: 'abc' });
- *       ```
+ *     security:
+ *       - socketBearer: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/PrivateJoinRequest'
  *     responses:
  *       200:
- *         description: Documentation stub
+ *         description: Client joins the chat room (Socket.IO event `private:join`)
+ *
+ * /sockets/private-chats/message:
+ *   post:
+ *     summary: Send a private message (Socket.IO event `private:message`)
+ *     tags: [PrivateChats]
+ *     security:
+ *       - socketBearer: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/PrivateMessageRequest'
+ *     responses:
+ *       200:
+ *         description: Ack response
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/SocketAckResponse'
+ *
+ * /sockets/private-chats/typing:
+ *   post:
+ *     summary: Send typing indicator (Socket.IO event `private:typing`)
+ *     tags: [PrivateChats]
+ *     security:
+ *       - socketBearer: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/PrivateTypingRequest'
+ *     responses:
+ *       200:
+ *         description: Emitted to receiver's user room
+ *
+ * /sockets/private-chats/read:
+ *   post:
+ *     summary: Mark messages as read (Socket.IO event `private:read`)
+ *     tags: [PrivateChats]
+ *     security:
+ *       - socketBearer: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/PrivateReadRequest'
+ *     responses:
+ *       200:
+ *         description: Read receipt emitted to sender
  */
 
 module.exports = function attachPrivateChatHandlers(nsp) {
@@ -123,8 +169,12 @@ module.exports = function attachPrivateChatHandlers(nsp) {
       nsp.to(`user-${fromUserId}`).emit('private:read', { by: me });
     });
 
-    socket.on('disconnect', () => {
-      // No-op for now
+    socket.on('disconnect', ({ chatId }) => {
+      socket.emit('private:user:left', {
+        userId: connectedUserId,
+        chatId,
+        timestamp: new Date().toISOString()
+      });
     });
   });
 };

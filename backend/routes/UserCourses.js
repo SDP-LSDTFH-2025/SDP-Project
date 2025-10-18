@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { UserCourses,Courses } = require('../models');
 const { Op } = require('sequelize');
+const { optimizedAuth } = require('../middleware/optimizedAuth');
 
 
 /**
@@ -76,7 +77,7 @@ const { Op } = require('sequelize');
  *       500:
  *         description: Internal server error
  */
-router.post('/enroll', async (req, res) => {
+router.post('/enroll', optimizedAuth, async (req, res) => {
   try {
     const { user_id, course_id, role = 'student' } = req.body;
     
@@ -172,7 +173,7 @@ router.post('/enroll', async (req, res) => {
  *       500:
  *         description: Internal server error
  */
-router.delete('/remove', async (req, res) => {
+router.delete('/remove', optimizedAuth, async (req, res) => {
   try {
     const { user_id, course_id } = req.body;
     
@@ -367,7 +368,7 @@ router.get('/user/:id', async (req, res) => {
  *       500:
  *         description: Internal server error
  */
-router.put('/update', async (req, res) => {
+router.put('/update', optimizedAuth, async (req, res) => {
   try {
     const { user_id, course_id, role } = req.body;
     

@@ -28,8 +28,8 @@ const createMainApiSwaggerConfig = (PORT) => {
           description: 'Production server'
         },
         {
-          url: `ws://localhost:${PORT}/sockets`,
-          description: 'WebSocket (Socket.IO namespace)'
+          url: `ws://localhost:${PORT}${(process.env.API_PREFIX||'/api/v1').replace(/\/$/, '')}/sockets`,
+          description: 'WebSocket (Socket.IO namespace with API prefix)'
         }
       ],
       components: {

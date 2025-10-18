@@ -1,18 +1,20 @@
-import React, { useState, useEffect } from "react";
+// GroupChat.jsx
+import React, { useState, useEffect, useRef } from "react";
 import { ArrowLeft, Send, Users, Plus } from "lucide-react";
 import "./GroupChat.css";
+import { Input } from "../components/ui/input";
+import { Button } from "../components/ui/button";
 import { useQuery } from "@tanstack/react-query";
-import { getUpcomingSessions } from "../api/groups";
+import { getUpcomingSessions, joinSession, createSession } from "../api/groups";
+import { getGroupChatHistory } from "../api/chat";
+import { groupSocket } from "../socket";
 
 export default function GroupChat({ group, onBack }) {
-  const [messages, setMessages] = useState([
-    { id: 1, sender: "Alice", text: "Hi everyone!", time: "10:00" },
-    { id: 2, sender: "Bob", text: "Ready to study calculus?", time: "10:05" },
-  ]);
+  const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [showSessions, setShowSessions] = useState(false);
-  const [selectedSession, setSelectedSession] = useState(null);  
+  const [selectedSession, setSelectedSession] = useState(null);
   const [joining, setJoining] = useState(false);
   const [creatingSession, setCreatingSession] = useState(false);
 
@@ -27,19 +29,15 @@ export default function GroupChat({ group, onBack }) {
     endTime: "",
   });
 
-  const user = JSON.parse(localStorage.getItem("user")) || {};
-  const token = localStorage.getItem("token");
+  const user = JSON.parse(localStorage.getItem("user"));
   const calendar_token = localStorage.getItem("calendar_token");
-  const SERVER =
-    import.meta.env.VITE_PROD_SERVER ||
-    import.meta.env.VITE_DEV_SERVER ||
-    "http://localhost:3000";
 
-  const { data: upcomingData, refetch } = useQuery({
-  queryKey: ["upcomingSessions", user.id],
-  queryFn: () => getUpcomingSessions(user.id),
-  staleTime: 20 * 60 * 1000
-});
+  const { data: upcomingData } = useQuery({
+    enabled: !!user?.id,
+    queryKey: ["upcomingSessions", user.id],
+    queryFn: () => getUpcomingSessions(user.id),
+    staleTime: 20 * 60 * 1000,
+  });
 
   const guests = upcomingData?.guests || [];
   const upcomingSessions = upcomingData?.events || [
@@ -74,21 +72,8 @@ export default function GroupChat({ group, onBack }) {
   const handleJoinSession = async (session) => {
     setJoining(true);
     try {
-      const res = await fetch(
-        `${SERVER}/api/v1/planit/guests/event/${user.id}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            eventId: session.id,
-          }),
-        }
-      );
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Failed to join session");
+      const data = await joinSession({ userId: user.id, eventId: session.id });
+      if (!data.success) throw new Error(data.message || "Failed to join session");
 
       alert("You joined the session successfully!");
       setSelectedSession(null);
@@ -100,23 +85,8 @@ export default function GroupChat({ group, onBack }) {
     }
   };
 
-  const handleSend = () => {
-    if (!newMessage.trim()) return;
-    const msg = {
-      id: messages.length + 1,
-      sender: "Me",
-      text: newMessage,
-      time: new Date().toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
-    };
-    setMessages([...messages, msg]);
-    setNewMessage("");
-  };
-
   const handleCreateSession = async (e) => {
-    e.preventDefault(); 
+    e.preventDefault();
     setCreatingSession(true);
 
     const start = new Date(`${sessionData.date}T${sessionData.time}`);
@@ -144,20 +114,10 @@ export default function GroupChat({ group, onBack }) {
     };
 
     try {
-      const res = await fetch(`${SERVER}/api/v1/planit/events`, {
-        method: "POST",
-        headers: { 
-          "Content-Type": "application/json",
-          "user_id": user.id
-        },
-        body: JSON.stringify(payload),
-      });
+      const data = await createSession({ userId: user.id, payload });
+      if (!data.success) throw new Error(data.message || "Failed to create session");
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Failed to create session");
-
-      console.log("Session created:", data);
-      alert(" Session Created!");
+      alert("Session Created!");
       setShowModal(false);
 
       // Add to Google Calendar
@@ -209,31 +169,172 @@ export default function GroupChat({ group, onBack }) {
     }
   };
 
+  /* ------------------- SOCKET LOGIC ------------------- */
+  const [isTyping, setIsTyping] = useState(false);
+  const lastTempIdSent = useRef(null);
+  const typingTimeout = useRef(null);
+  const messagesEndRef = useRef(null);
+  const hasJoinedGroupRef = useRef(false);
+
+  // Scroll to bottom on new messages
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  // Fetch initial group chat messages
+  useEffect(() => {
+    async function fetchHistory() {
+      try {
+        const msgs = await getGroupChatHistory(group.id);
+        const participantsMap = {};
+        (group.Participants || []).forEach(p => participantsMap[p.id] = p.username);
+
+        setMessages(
+          msgs.map((msg) => ({
+            id: msg.id,
+            userId: msg.user_id,
+            text: msg.message,
+            time: new Date(msg.created_at).toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
+            sender: msg.user_id === user.id ? "Me" : participantsMap[msg.user_id],
+            isOwnMessage: msg.user_id === user.id,
+          }))
+        );
+      } catch (err) {
+        console.error("Failed to fetch group messages:", err);
+      }
+    }
+    fetchHistory();
+  }, [group.id, user.id, group.Participants]);
+
+  // Safe emit
+  const emitSafe = (socket, event, data, callback) => {
+    if (!data.userId) data.userId = user.id;
+    if (socket.connected) socket.emit(event, data, callback);
+    else if (callback) callback({ ok: false, error: "Socket not connected" });
+  };
+
+  // Leave group
+  const leaveGroup = (socket, groupId) => {
+    emitSafe(socket, "group:leave", { groupId });
+  };
+
+  // Typing
+  const sendTyping = (socket, groupId, isTyping) => {
+    emitSafe(socket, "group:typing", { groupId, isTyping });
+  };
+
+  // Connect socket on mount
+  useEffect(() => {
+    if (!groupSocket.connected) groupSocket.connect();
+
+    const handleConnect = () => {
+      if (!hasJoinedGroupRef.current) {
+        emitSafe(groupSocket, "group:join", { groupId: group.id });
+        hasJoinedGroupRef.current = true;
+      }
+    };
+
+    const handleNewMessage = (msg) => {
+      if (msg.tempId && msg.tempId === lastTempIdSent.current) return;
+      if (msg.group_id === group.id) {
+        const participantsMap = {};
+        (group.Participants || []).forEach((p) => participantsMap[p.id] = p.username);
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: msg.id,
+            userId: msg.user_id,
+            text: msg.message,
+            time: new Date(msg.created_at).toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
+            sender: msg.user_id === user.id ? "Me" : participantsMap[msg.user_id] || "Unknown",
+            isOwnMessage: msg.user_id === user.id,
+          },
+        ]);
+        emitSafe(groupSocket, "group:read", { groupId: group.id, lastReadMessageId: msg.id });
+      }
+    };
+
+    const handleTyping = ({ userId: typingUserId, groupId: typingGroupId, isTyping }) => {
+      if (group.id === typingGroupId && typingUserId !== user.id) {
+        setIsTyping(isTyping);
+      }
+    };
+
+    groupSocket.on("connect", handleConnect);
+    groupSocket.on("group:message:new", handleNewMessage);
+    groupSocket.on("group:typing", handleTyping);
+    groupSocket.on("group:user:joined", ({ userId }) => console.log(`User ${userId} joined group ${group.id}`));
+    groupSocket.on("group:user:left", ({ userId }) => console.log(`User ${userId} left group ${group.id}`));
+    groupSocket.on("connect_error", (err) => console.error("Group socket connection error:", err.message));
+
+    return () => {
+      leaveGroup(groupSocket, group.id);
+      groupSocket.off("connect", handleConnect);
+      groupSocket.off("group:message:new", handleNewMessage);
+      groupSocket.off("group:typing", handleTyping);
+      groupSocket.off("group:user:joined");
+      groupSocket.off("group:user:left");
+      groupSocket.off("connect_error");
+    };
+  }, [group.id, user.id, group.Participants]);
+
+  // Send a message
+  const sendMessage = () => {
+    if (!newMessage.trim()) return;
+    const tempId = Date.now();
+    lastTempIdSent.current = tempId;
+
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: tempId,
+        userId: user.id,
+        text: newMessage,
+        sender: "Me",
+        isOwnMessage: true,
+        time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      },
+    ]);
+
+    emitSafe(groupSocket, "group:message", { groupId: group.id, message: newMessage, tempId, userId: user.id });
+    setNewMessage("");
+  };
+
+  const handleTypingChange = (e) => {
+    setNewMessage(e.target.value);
+    if (typingTimeout.current) clearTimeout(typingTimeout.current);
+
+    if (e.target.value.length > 0) {
+      sendTyping(groupSocket, group.id, true);
+      typingTimeout.current = setTimeout(() => sendTyping(groupSocket, group.id, false), 2000);
+    } else {
+      sendTyping(groupSocket, group.id, false);
+    }
+  };
+
   return (
     <div className="group-chat">
       {/* Header */}
       <div className="chat-header">
-        <button onClick={onBack}>
-          <ArrowLeft size={20} />
-        </button>
+        <button onClick={onBack}><ArrowLeft size={20} /></button>
         <div className="chat-info">
           <h3>{group.title}</h3>
-          <p>
-            <Users size={14} /> {group.participants} members
-          </p>
+          <p><Users size={14} /> {group.participants} members</p>
         </div>
-        <button className="create-session-btn" onClick={() => setShowSessions(true)}>
-          Sessions
-        </button>
-        <button className="create-session-btn" onClick={() => setShowModal(true)}>
-          <Plus size={18} /> Create Session
-        </button>
+        <button className="create-session-btn" onClick={() => setShowSessions(true)}>Sessions</button>
+        <button className="create-session-btn" onClick={() => setShowModal(true)}><Plus size={18} /> Create Session</button>
       </div>
 
       {/* Messages */}
       <div className="messages">
         {messages.map((msg) => (
-          <div key={msg.id} className={`message ${msg.sender === "Me" ? "me" : "other"}`}>
+          <div key={msg.id} className={`message ${msg.isOwnMessage ? "me" : "other"}`}>
             <div>
               {msg.sender !== "Me" && <h5 className="sender">{msg.sender}</h5>}
               <p className="text">{msg.text}</p>
@@ -241,6 +342,8 @@ export default function GroupChat({ group, onBack }) {
             </div>
           </div>
         ))}
+        {isTyping && <p style={{ fontStyle: "italic" }}>Someone is typing...</p>}
+        <div ref={messagesEndRef} />
       </div>
 
       {/* Input */}
@@ -249,12 +352,10 @@ export default function GroupChat({ group, onBack }) {
           type="text"
           placeholder="Type your message..."
           value={newMessage}
-          onChange={(e) => setNewMessage(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && handleSend()}
+          onChange={handleTypingChange}
+          onKeyDown={(e) => e.key === "Enter" && sendMessage()}
         />
-        <button className="send-btn" onClick={handleSend}>
-          <Send size={18} />
-        </button>
+        <button className="send-btn" onClick={sendMessage}><Send size={18} /></button>
       </div>
 
       {/* Create Session Modal */}
@@ -263,113 +364,28 @@ export default function GroupChat({ group, onBack }) {
           <div className="modal-content">
             <h3>Create New Session</h3>
             <form onSubmit={handleCreateSession}>
-              <label>
-                Title
-                <input
-                  type="text"
-                  value={sessionData.title}
-                  onChange={(e) =>
-                    setSessionData({ ...sessionData, title: e.target.value })
-                  }
-                />
-              </label>
-              <label>
-                Subject
-                <input
-                  type="text"
-                  value={sessionData.subject}
-                  onChange={(e) =>
-                    setSessionData({ ...sessionData, subject: e.target.value })
-                  }
-                />
-              </label>
-              <label>
-                Description
-                <textarea
-                  value={sessionData.description}
-                  onChange={(e) =>
-                    setSessionData({
-                      ...sessionData,
-                      description: e.target.value,
-                    })
-                  }
-                />
-              </label>
-              <label>
-                Location
-                <input
-                  type="text"
-                  value={sessionData.location || ""}
-                  onChange={(e) =>
-                    setSessionData({ ...sessionData, location: e.target.value })
-                  }
-                />
-              </label>
-              <label>
-                Start Date
-                <input
-                  type="date"
-                  value={sessionData.date}
-                  onChange={(e) =>
-                    setSessionData({ ...sessionData, date: e.target.value })
-                  }
-                />
-              </label>
-              <label>
-                Start Time
-                <input
-                  type="time"
-                  value={sessionData.time}
-                  onChange={(e) =>
-                    setSessionData({ ...sessionData, time: e.target.value })
-                  }
-                />
-              </label>
-              <label>
-                End Date
-                <input
-                  type="date"
-                  value={sessionData.endDate || ""}
-                  onChange={(e) =>
-                    setSessionData({ ...sessionData, endDate: e.target.value })
-                  }
-                />
-              </label>
-              <label>
-                End Time
-                <input
-                  type="time"
-                  value={sessionData.endTime || ""}
-                  onChange={(e) =>
-                    setSessionData({ ...sessionData, endTime: e.target.value })
-                  }
-                />
-              </label>
-
+              <label>Title<input type="text" value={sessionData.title} onChange={(e) => setSessionData({ ...sessionData, title: e.target.value })} /></label>
+              <label>Subject<input type="text" value={sessionData.subject} onChange={(e) => setSessionData({ ...sessionData, subject: e.target.value })} /></label>
+              <label>Description<textarea value={sessionData.description} onChange={(e) => setSessionData({ ...sessionData, description: e.target.value })} /></label>
+              <label>Location<input type="text" value={sessionData.location} onChange={(e) => setSessionData({ ...sessionData, location: e.target.value })} /></label>
+              <label>Start Date<input type="date" value={sessionData.date} onChange={(e) => setSessionData({ ...sessionData, date: e.target.value })} /></label>
+              <label>Start Time<input type="time" value={sessionData.time} onChange={(e) => setSessionData({ ...sessionData, time: e.target.value })} /></label>
+              <label>End Date<input type="date" value={sessionData.endDate} onChange={(e) => setSessionData({ ...sessionData, endDate: e.target.value })} /></label>
+              <label>End Time<input type="time" value={sessionData.endTime} onChange={(e) => setSessionData({ ...sessionData, endTime: e.target.value })} /></label>
               <div className="modal-actions">
-                <button
-                  type="button"
-                  className="outline-btn"
-                  onClick={() => setShowModal(false)}
-                >
-                  Cancel
-                </button>
-                <button type="submit" className="blue-btn">
-                  {creatingSession ? "Creating..." : "Create"}
-                </button>
+                <button type="button" className="outline-btn" onClick={() => setShowModal(false)}>Cancel</button>
+                <button type="submit" className="blue-btn">{creatingSession ? "Creating..." : "Create"}</button>
               </div>
             </form>
           </div>
         </div>
       )}
 
-      {/* Show Sessions Modal */}
+      {/* Upcoming Sessions */}
       {showSessions && (
         <div className="modal-overlay">
           <div className="progress-card full-width">
-            <div className="card-header">
-              <h3>Upcoming Sessions</h3>
-            </div>
+            <div className="card-header"><h3>Upcoming Sessions</h3></div>
             {upcomingSessions.length > 0 ? (
               <div className="sessions-list">
                 {upcomingSessions.map((session) => (
@@ -386,16 +402,12 @@ export default function GroupChat({ group, onBack }) {
             ) : (
               <div className="empty-state">No upcoming sessions. Schedule your next study session!</div>
             )}
-            <div className="modal-actions">
-              <button className="outline-btn" onClick={() => setShowSessions(false)}>
-                Close
-              </button>
-            </div>
+            <div className="modal-actions"><button className="outline-btn" onClick={() => setShowSessions(false)}>Close</button></div>
           </div>
         </div>
       )}
 
-      {/* Session Modal */}
+      {/* Session Details */}
       {selectedSession && (
         <div className="modal-overlay">
           <div className="modal-content">
@@ -409,14 +421,9 @@ export default function GroupChat({ group, onBack }) {
             <p><strong>Organizer:</strong> {selectedSession.eventPlanner}</p>
             <p><strong>Capacity:</strong> {selectedSession.capacity} participants</p>
             <p><strong>Theme:</strong> {selectedSession.theme}</p>
-
             <div className="modal-actions">
-              <button className="outline-btn" onClick={() => setSelectedSession(null)}>
-                Cancel
-              </button>
-              <button className="blue-btn" onClick={() => handleJoinSession(selectedSession)} disabled={joining}>
-                {joining ? "Joining..." : "Join"}
-              </button>
+              <button className="outline-btn" onClick={() => setSelectedSession(null)}>Cancel</button>
+              <button className="blue-btn" onClick={() => handleJoinSession(selectedSession)} disabled={joining}>{joining ? "Joining..." : "Join"}</button>
             </div>
           </div>
         </div>

@@ -7,6 +7,7 @@ import { getPrivateChatHistory } from "../api/chat";
 import DropdownMenu, { chatWindowMenuItems } from "../components/DropdownMenu";
 import EmojiPicker from "../components/EmojiPicker";
 import VoiceRecorder from "../components/VoiceRecorder";
+import VideoCall from "../components/VideoCall";
 
 function makeChatId(userA, userB) {
   return [userA, userB].sort().join(""); // consistent ID for both directions
@@ -19,6 +20,8 @@ export default function ChatWindow({ chat, onBack }) {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [showVoiceRecorder, setShowVoiceRecorder] = useState(false);
   const [attachedFiles, setAttachedFiles] = useState([]);
+  const [isVideoCallActive, setIsVideoCallActive] = useState(false);
+  const [videoCallData, setVideoCallData] = useState(null);
 
   const lastTempIdSent = useRef(null);
   const typingTimeout = useRef(null);
@@ -212,6 +215,44 @@ export default function ChatWindow({ chat, onBack }) {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
+  const startVideoCall = () => {
+    const callId = `call_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const callData = {
+      callId,
+      isCaller: true,
+      otherUserId: chat.id
+    };
+    
+    setVideoCallData(callData);
+    setIsVideoCallActive(true);
+  };
+
+  const endVideoCall = () => {
+    setIsVideoCallActive(false);
+    setVideoCallData(null);
+  };
+
+  // Listen for incoming video calls
+  useEffect(() => {
+    const handleIncomingCall = (data) => {
+      if (data.fromUserId === chat.id) {
+        const callData = {
+          callId: data.callId,
+          isCaller: false,
+          otherUserId: data.fromUserId
+        };
+        setVideoCallData(callData);
+        setIsVideoCallActive(true);
+      }
+    };
+
+    socket.on('webrtc:offer', handleIncomingCall);
+    
+    return () => {
+      socket.off('webrtc:offer', handleIncomingCall);
+    };
+  }, [chat.id]);
+
   return (
     <div className="whatsapp-chat-window">
       {/* WhatsApp-style Header */}
@@ -240,7 +281,13 @@ export default function ChatWindow({ chat, onBack }) {
           </div>
         </div>
         <div className="whatsapp-header-actions">
-          <Button variant="ghost" size="sm" className="whatsapp-action-btn">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="whatsapp-action-btn"
+            onClick={startVideoCall}
+            title="Start video call"
+          >
             <Video size={20} />
           </Button>
           <Button variant="ghost" size="sm" className="whatsapp-action-btn">
@@ -389,6 +436,16 @@ export default function ChatWindow({ chat, onBack }) {
           />
         )}
       </div>
+
+      {/* Video Call Overlay */}
+      {isVideoCallActive && videoCallData && (
+        <VideoCall
+          isCaller={videoCallData.isCaller}
+          otherUserId={videoCallData.otherUserId}
+          onEndCall={endVideoCall}
+          callId={videoCallData.callId}
+        />
+      )}
     </div>
   );
 }

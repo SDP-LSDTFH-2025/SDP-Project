@@ -188,6 +188,42 @@ module.exports = function attachPrivateChatHandlers(nsp) {
       nsp.to(`user-${fromUserId}`).emit('private:read', { by: me });
     });
 
+    // WebRTC Signaling Events
+    socket.on('webrtc:offer', ({ callId, offer, targetUserId }) => {
+      console.log(`WebRTC offer from ${connectedUserId} to ${targetUserId}`);
+      nsp.to(`user-${targetUserId}`).emit('webrtc:offer', {
+        callId,
+        offer,
+        fromUserId: connectedUserId
+      });
+    });
+
+    socket.on('webrtc:answer', ({ callId, answer, targetUserId }) => {
+      console.log(`WebRTC answer from ${connectedUserId} to ${targetUserId}`);
+      nsp.to(`user-${targetUserId}`).emit('webrtc:answer', {
+        callId,
+        answer,
+        fromUserId: connectedUserId
+      });
+    });
+
+    socket.on('webrtc:ice-candidate', ({ callId, candidate, targetUserId }) => {
+      console.log(`WebRTC ICE candidate from ${connectedUserId} to ${targetUserId}`);
+      nsp.to(`user-${targetUserId}`).emit('webrtc:ice-candidate', {
+        callId,
+        candidate,
+        fromUserId: connectedUserId
+      });
+    });
+
+    socket.on('webrtc:call-ended', ({ callId, targetUserId }) => {
+      console.log(`WebRTC call ended by ${connectedUserId}`);
+      nsp.to(`user-${targetUserId}`).emit('webrtc:call-ended', {
+        callId,
+        fromUserId: connectedUserId
+      });
+    });
+
     socket.on('disconnect', ({ chatId }) => {
       socket.emit('private:user:left', {
         userId: connectedUserId,

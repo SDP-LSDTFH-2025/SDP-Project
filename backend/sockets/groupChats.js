@@ -241,6 +241,39 @@ module.exports = function attachGroupChatHandlers(nsp) {
         // Emit to all group members
         nsp.to(`group-${groupId}`).emit('group:message:new', dto);
 
+        // Create notifications for group members (except sender)
+        try {
+            const Notifications = require('../models/Notifications');
+            const Group_members = require('../models/Group_members');
+            const User = require('../models/User');
+            const Study_groups = require('../models/Study_groups');
+            
+            // Get all group members except the sender
+            const members = await Group_members.findAll({
+                where: { group_id: groupId },
+                attributes: ['user_id']
+            });
+            
+            const sender = await User.findByPk(effectiveUserId);
+            const group = await Study_groups.findByPk(groupId);
+            
+            // Create notifications for all members except the sender
+            for (const member of members) {
+                if (member.user_id !== effectiveUserId) {
+                    await Notifications.create({
+                        user_id: member.user_id,
+                        title: "New Group Message",
+                        message: `${sender.username.replaceAll("_", " ")} sent a message in "${group.name}" group.`,
+                        read: false,
+                        created_at: new Date()
+                    });
+                }
+            }
+        } catch (notificationError) {
+            console.error('Failed to create notifications for group message:', notificationError);
+            // Don't fail the main request if notification creation fails
+        }
+
         return ack && ack({ ok: true, data: dto });
       } catch (e) {
         console.error('Group message error:', e);

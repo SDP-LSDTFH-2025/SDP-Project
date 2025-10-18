@@ -1,12 +1,22 @@
 // GroupChat.jsx
 import React, { useState, useEffect, useRef } from "react";
-import { ArrowLeft, Send, Users, Plus } from "lucide-react";
+import { ArrowLeft, Send, Users, Plus, Trash2 } from "lucide-react";
 import "./GroupChat.css";
 import { Input } from "../components/ui/input";
 import { Button } from "../components/ui/button";
-import { useQuery } from "@tanstack/react-query";
-import { getUpcomingSessions, joinSession, createSession } from "../api/groups";
-import { getGroupChatHistory } from "../api/chat";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { getUpcomingSessions, joinSession, createSession, deleteSession } from "../api/groups";
+import { getGroupChatHistory, sendGroupMessage } from "../api/chat";
+import { showSuccess, showError } from "../utils/toast"; 
+
+import { 
+  connectSocketSafe, 
+  joinGroup, 
+  leaveGroup, 
+  sendTyping, 
+  emitSafe 
+} from "../groupSocketHelpers";
+
 import { groupSocket } from "../socket";
 
 export default function GroupChat({ group, onBack }) {
@@ -17,6 +27,9 @@ export default function GroupChat({ group, onBack }) {
   const [selectedSession, setSelectedSession] = useState(null);
   const [joining, setJoining] = useState(false);
   const [creatingSession, setCreatingSession] = useState(false);
+  const [deletingSession, setDeletingSession] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [sessionToDelete, setSessionToDelete] = useState(null);
 
   const [sessionData, setSessionData] = useState({
     title: "",
@@ -31,6 +44,7 @@ export default function GroupChat({ group, onBack }) {
 
   const user = JSON.parse(localStorage.getItem("user"));
   const calendar_token = localStorage.getItem("calendar_token");
+  const queryClient = useQueryClient();
 
   const { data: upcomingData } = useQuery({
     enabled: !!user?.id,
@@ -72,18 +86,26 @@ export default function GroupChat({ group, onBack }) {
   const handleJoinSession = async (session) => {
     setJoining(true);
     try {
-      const data = await joinSession({ userId: user.id, eventId: session.id });
+      const sessionId = session.id || session._id;
+      console.log('Joining session:', session, 'with ID:', sessionId);
+      
+      if (!sessionId) {
+        throw new Error("Session ID not found");
+      }
+      
+      const data = await joinSession({ userId: user.id, eventId: sessionId });
       if (!data.success) throw new Error(data.message || "Failed to join session");
 
-      alert("You joined the session successfully!");
+      showSuccess("You joined the session successfully!");
       setSelectedSession(null);
     } catch (err) {
       console.error(err);
-      alert("Error joining session: " + err.message);
+      showError("Error joining session: " + err.message);
     } finally {
       setJoining(false);
     }
   };
+
 
   const handleCreateSession = async (e) => {
     e.preventDefault();
@@ -93,7 +115,7 @@ export default function GroupChat({ group, onBack }) {
     const end = new Date(`${sessionData.endDate}T${sessionData.endTime}`);
 
     if (end < start) {
-      alert("End date/time cannot be earlier than start date/time.");
+      showError("End date/time cannot be earlier than start date/time.");
       setCreatingSession(false);
       return;
     }
@@ -117,7 +139,9 @@ export default function GroupChat({ group, onBack }) {
       const data = await createSession({ userId: user.id, payload });
       if (!data.success) throw new Error(data.message || "Failed to create session");
 
-      alert("Session Created!");
+
+      showSuccess("Session Created!");
+ 
       setShowModal(false);
 
       // Add to Google Calendar
@@ -148,7 +172,7 @@ export default function GroupChat({ group, onBack }) {
       );
 
       if (resCal.ok) {
-        alert("Added to Google Calendar");
+        showSuccess("Added to Google Calendar");
       }
 
       setSessionData({
@@ -163,10 +187,50 @@ export default function GroupChat({ group, onBack }) {
       });
     } catch (err) {
       console.error("Error creating session:", err);
-      alert(err.message);
+      showError(err.message);
     } finally {
       setCreatingSession(false);
     }
+  };
+
+  const handleDeleteSession = async (session) => {
+    setSessionToDelete(session);
+    setShowDeleteConfirm(true);
+  };
+
+  const confirmDeleteSession = async () => {
+    if (!sessionToDelete) return;
+    
+    setDeletingSession(true);
+    try {
+      const sessionId = sessionToDelete.id || sessionToDelete._id;
+      console.log('Deleting session:', sessionToDelete, 'with ID:', sessionId);
+      
+      if (!sessionId) {
+        throw new Error("Session ID not found");
+      }
+      
+      const data = await deleteSession({ userId: user.id, eventId: sessionId });
+      if (!data.success) throw new Error(data.message || "Failed to delete session");
+
+      showSuccess("Session deleted successfully!");
+      setShowDeleteConfirm(false);
+      setSessionToDelete(null);
+      setSelectedSession(null);
+      
+      // Refresh the sessions list
+      queryClient.invalidateQueries({ queryKey: ["upcomingSessions"] });
+    } catch (err) {
+      console.error(err);
+      showError("Error deleting session: " + err.message);
+    } finally {
+      setDeletingSession(false);
+    }
+  };
+
+  const cancelDeleteSession = () => {
+    setShowDeleteConfirm(false);
+    setSessionToDelete(null);
   };
 
   /* ------------------- SOCKET LOGIC ------------------- */
@@ -285,7 +349,7 @@ export default function GroupChat({ group, onBack }) {
   }, [group.id, user.id, group.Participants]);
 
   // Send a message
-  const sendMessage = () => {
+  const sendMessage = async () => {
     if (!newMessage.trim()) return;
     const tempId = Date.now();
     lastTempIdSent.current = tempId;
@@ -304,6 +368,50 @@ export default function GroupChat({ group, onBack }) {
 
     emitSafe(groupSocket, "group:message", { groupId: group.id, message: newMessage, tempId, userId: user.id });
     setNewMessage("");
+
+    // Try socket first, fallback to HTTP API
+    try {
+      emitSafe(groupSocket, "group:message", { groupId: group.id, message: newMessage, tempId, userId: user.id }, (ack) => {
+        if (!ack.ok) {
+          console.error("Socket message failed:", ack.error);
+          // Fallback to HTTP API
+          sendMessageViaAPI(newMessage, tempId);
+        }
+      });
+    } catch (error) {
+      console.error("Socket error, falling back to HTTP API:", error);
+      // Fallback to HTTP API
+      sendMessageViaAPI(newMessage, tempId);
+    }
+  };
+
+  // Fallback method to send message via HTTP API
+  const sendMessageViaAPI = async (messageText, tempId) => {
+    try {
+      const response = await sendGroupMessage(group.id, messageText);
+      
+      if (response.success) {
+        // Update the temporary message with the real server response
+        setMessages(prev => prev.map(msg => 
+          msg.id === tempId 
+            ? { 
+                ...msg, 
+                id: response.data.id,
+                time: new Date(response.data.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+              }
+            : msg
+        ));
+        console.log("Message sent via HTTP API successfully");
+      } else {
+        throw new Error(response.error || "Failed to send message");
+      }
+    } catch (error) {
+      console.error("HTTP API message failed:", error);
+      showError("Failed to send message. Please try again.");
+      
+      // Remove the temporary message from UI
+      setMessages(prev => prev.filter(msg => msg.id !== tempId));
+    }
   };
 
   const handleTypingChange = (e) => {
@@ -388,16 +496,38 @@ export default function GroupChat({ group, onBack }) {
             <div className="card-header"><h3>Upcoming Sessions</h3></div>
             {upcomingSessions.length > 0 ? (
               <div className="sessions-list">
-                {upcomingSessions.map((session) => (
-                  <div key={session.id} className="session-item" onClick={() => setSelectedSession(session)}>
-                    <div className="session-dot"></div>
-                    <div className="session-info">
-                      <span className="session-title">{session.title}</span>
-                      <span className="session-date">{session.date}</span>
+                {upcomingSessions.map((session) => {
+                  const sessionId = session.id || session._id;
+                  return (
+                    <div key={sessionId} className="session-item">
+                      <div className="session-content" onClick={() => setSelectedSession(session)}>
+                        <div className="session-dot"></div>
+                        <div className="session-info">
+                          <span className="session-title">{session.title}</span>
+                          <span className="session-date">{session.date}</span>
+                        </div>
+                      </div>
+                      <div className="session-actions">
+                        <button className="join-btn"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedSession(session);
+                        }}
+                        >View</button>
+                        <button 
+                          className="delete-btn"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteSession(session);
+                          }}
+                          title="Delete session"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
                     </div>
-                    <button className="join-btn">View</button>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
               <div className="empty-state">No upcoming sessions. Schedule your next study session!</div>
@@ -424,6 +554,43 @@ export default function GroupChat({ group, onBack }) {
             <div className="modal-actions">
               <button className="outline-btn" onClick={() => setSelectedSession(null)}>Cancel</button>
               <button className="blue-btn" onClick={() => handleJoinSession(selectedSession)} disabled={joining}>{joining ? "Joining..." : "Join"}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="modal-overlay">
+          <div className="progress-card">
+            <div className="card-header">
+              <h3>Delete Session</h3>
+            </div>
+            <div className="modal-content">
+              <p>Are you sure you want to delete this session?</p>
+              {sessionToDelete && (
+                <div className="session-preview">
+                  <strong>{sessionToDelete.title}</strong>
+                  <span>{sessionToDelete.date} at {sessionToDelete.startTime}</span>
+                </div>
+              )}
+              <p className="warning-text">This action cannot be undone.</p>
+            </div>
+            <div className="modal-actions">
+              <button 
+                className="outline-btn" 
+                onClick={cancelDeleteSession}
+                disabled={deletingSession}
+              >
+                Cancel
+              </button>
+              <button 
+                className="delete-btn-confirm" 
+                onClick={confirmDeleteSession}
+                disabled={deletingSession}
+              >
+                {deletingSession ? "Deleting..." : "Delete Session"}
+              </button>
             </div>
           </div>
         </div>

@@ -10,6 +10,7 @@ const Events = sequelize.define('Events', {
     eventPlanner: {
         type: DataTypes.UUID,
         allowNull: false,
+        field: 'event_planner'
     },
     event_id: {
         type: DataTypes.STRING,
@@ -17,15 +18,25 @@ const Events = sequelize.define('Events', {
     },
     guest_id: {
         type: DataTypes.UUID,
-        allowNull: false,
+        allowNull: true,
     },
     venue_id: {
         type: DataTypes.STRING,
-        allowNull: false,
+        allowNull: true,
+    },
+    created_at: {
+        type: DataTypes.DATE,
+        allowNull: true,
+    },
+    updated_at: {
+        type: DataTypes.DATE,
+        allowNull: true,
     }
 }, {
-    tableName: 'events',
-    timestamps: false
+    tableName: 'Events',
+    timestamps: true,
+    createdAt: 'created_at',
+    updatedAt: 'updated_at'
 });
 
 module.exports = Events;

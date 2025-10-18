@@ -2,7 +2,9 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query"; 
 import { getAllFriends } from "../api/resources";
+import { showSuccess, showError } from "../utils/toast"; 
 import { getGroups } from "../api/groups";
+import { getUnreadNotificationCount } from "../api/notifications";
 
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import { Button } from "../components/ui/button";
@@ -41,6 +43,8 @@ import ProfilePage from "../pages/ProfilePage.jsx";
 import Feed from "../pages/Feed.jsx";
 import PlanSessions from "../pages/Sessions.jsx";
 import Progress from "../pages/Progress.jsx";
+import Message from "./Message.jsx";
+import Notifications from "./Notifications.jsx";
 
 function Home({ user }) {
   const [activeView, setActiveView] = useState("feed");
@@ -58,6 +62,7 @@ function Home({ user }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
   const [events, setEvents] = useState([]);
+  const [notificationCount, setNotificationCount] = useState(0);
 
   const calendar_token = localStorage.getItem("calendar_token");
 
@@ -82,6 +87,18 @@ function Home({ user }) {
     queryFn: getGroups,
     staleTime: 15 * 60 * 1000,
     cacheTime: 17 * 60 * 1000,
+  });
+
+  const {
+    data: notificationCountData,
+    isLoading: notificationCountLoading,
+  } = useQuery({
+    enabled: !!user?.id,
+    queryKey: ["notificationCount"],
+    queryFn: () => getUnreadNotificationCount(user.id),
+    staleTime: 30 * 1000, // 30 seconds
+    cacheTime: 60 * 1000, // 1 minute
+    refetchInterval: 30 * 1000, // Refetch every 30 seconds
   });
 
   const friends = rawFriends.slice(0, 4).map((u) => ({
@@ -129,6 +146,13 @@ function Home({ user }) {
 
     fetchEvents();
   }, [calendar_token]);
+
+  // Update notification count when data changes
+  useEffect(() => {
+    if (notificationCountData?.success && typeof notificationCountData.data === 'number') {
+      setNotificationCount(notificationCountData.data);
+    }
+  }, [notificationCountData]);
 
   function logout() {
     localStorage.removeItem("user");
@@ -182,7 +206,7 @@ function Home({ user }) {
         setPdfFile(null);
         setPictureFile(null);
         setActiveView("feed");
-        alert("Resource uploaded successfully!");
+        showSuccess("Resource uploaded successfully!");
       } else {
         const errorMessage =
           data.message || `Upload failed with status ${response.status}`;
@@ -204,16 +228,43 @@ function Home({ user }) {
         <h1 className="logo">StudyBuddy</h1>
 
         <div className="nav-actions">
-          <Link to="/messages">
-            <Button className="nav-button">
-              <MessageCircle className="pics" />
-            </Button>
-          </Link>
-          <Link to="/notifications">
-            <Button className="nav-button">
-              <Bell className="pics" />
-            </Button>
-          </Link>
+          <Button
+            className={`nav-button ${activeView === "messages" ? "active" : ""}`}
+            onClick={() => handleNavigationClick("messages")}
+          >
+            <MessageCircle className="pics" />
+          </Button>
+          <Button
+            className={`nav-button ${activeView === "notifications" ? "active" : ""}`}
+            onClick={() => handleNavigationClick("notifications")}
+            style={{ position: 'relative' }}
+          >
+            <Bell className="pics" />
+            {notificationCount > 0 && (
+              <Badge 
+                className="notification-badge"
+                style={{
+                  position: 'absolute',
+                  top: '-8px',
+                  right: '-8px',
+                  minWidth: '18px',
+                  height: '18px',
+                  borderRadius: '50%',
+                  backgroundColor: '#ef4444',
+                  color: 'white',
+                  fontSize: '11px',
+                  fontWeight: 'bold',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: '0 4px',
+                  border: '2px solid white'
+                }}
+              >
+                {notificationCount > 99 ? '99+' : notificationCount}
+              </Badge>
+            )}
+          </Button>
           <Button
             className={`nav-button ${activeView === "profile" ? "active" : ""}`}
             onClick={() => handleNavigationClick("profile")}
@@ -292,6 +343,56 @@ function Home({ user }) {
                 }}
               >
                 <Upload className="pics" /> Upload Resource
+              </Button>
+            </li>
+            <li>
+              <Button
+                className={`buttons ${
+                  activeView === "messages" ? "active" : ""
+                }`}
+                onClick={() => {
+                  handleNavigationClick("messages");
+                  toggleMenu();
+                }}
+              >
+                <MessageCircle className="pics" /> Messages
+              </Button>
+            </li>
+            <li>
+              <Button
+                className={`buttons ${
+                  activeView === "notifications" ? "active" : ""
+                }`}
+                onClick={() => {
+                  handleNavigationClick("notifications");
+                  toggleMenu();
+                }}
+                style={{ position: 'relative' }}
+              >
+                <Bell className="pics" /> Notifications
+                {notificationCount > 0 && (
+                  <Badge 
+                    style={{
+                      position: 'absolute',
+                      top: '-5px',
+                      right: '-5px',
+                      minWidth: '16px',
+                      height: '16px',
+                      borderRadius: '50%',
+                      backgroundColor: '#ef4444',
+                      color: 'white',
+                      fontSize: '10px',
+                      fontWeight: 'bold',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      padding: '0 3px',
+                      border: '1px solid white'
+                    }}
+                  >
+                    {notificationCount > 99 ? '99+' : notificationCount}
+                  </Badge>
+                )}
               </Button>
             </li>
             <li>
@@ -377,6 +478,50 @@ function Home({ user }) {
                   <Upload className="pics" />
                   Upload Resource
                 </Button>
+
+                <Button
+                  className={`buttons ${
+                    activeView === "messages" ? "active" : ""
+                  }`}
+                  onClick={() => handleNavigationClick("messages")}
+                >
+                  <MessageCircle className="pics" />
+                  Messages
+                </Button>
+
+                <Button
+                  className={`buttons ${
+                    activeView === "notifications" ? "active" : ""
+                  }`}
+                  onClick={() => handleNavigationClick("notifications")}
+                  style={{ position: 'relative' }}
+                >
+                  <Bell className="pics" />
+                  Notifications
+                  {notificationCount > 0 && (
+                    <Badge 
+                      style={{
+                        position: 'absolute',
+                        top: '-5px',
+                        right: '-5px',
+                        minWidth: '16px',
+                        height: '16px',
+                        borderRadius: '50%',
+                        backgroundColor: '#ef4444',
+                        color: 'white',
+                        fontSize: '10px',
+                        fontWeight: 'bold',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        padding: '0 3px',
+                        border: '1px solid white'
+                      }}
+                    >
+                      {notificationCount > 99 ? '99+' : notificationCount}
+                    </Badge>
+                  )}
+                </Button>
               </CardContent>
             </Card>
           </div>
@@ -461,7 +606,7 @@ function Home({ user }) {
                   className="upload-btn"
                   onClick={() => setActiveView("upload")}
                 >
-                  <Share2 className="pics" /> Share
+                  <Share2 className="pics" /> Upload Resource
                 </Button>
 
                 <Feed />
@@ -543,6 +688,20 @@ function Home({ user }) {
             {activeView === "groups" && (
               <div className="share-card">
                 <PlanSessions />
+              </div>
+            )}
+
+            {activeView === "messages" && (
+              <div className="share-card">
+                <h2>Messages</h2>
+                <Message />
+              </div>
+            )}
+
+            {activeView === "notifications" && (
+              <div className="share-card">
+                <h2>Notifications</h2>
+                <Notifications user={user} />
               </div>
             )}
           </div>

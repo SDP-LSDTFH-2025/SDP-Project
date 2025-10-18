@@ -2,6 +2,7 @@ import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useState } from "react";
 import { GoogleLogin } from "@react-oauth/google";
 import { manualSignup, googleAuth } from "../api/auth";
+import { showError } from "../utils/toast";
 import "./Signup.css";
 
 const CALENDAR_SCOPE = "https://www.googleapis.com/auth/calendar.events";
@@ -32,7 +33,7 @@ function Signup({ setUser }) {
       navigate("registration");
     } catch (error) {
       console.error("Sign up error:", error);
-      alert("Authentication failed. Please try again.");
+      showError("Authentication failed. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -61,7 +62,7 @@ function Signup({ setUser }) {
       navigate("registration");
     } catch (error) {
       console.error("Google signup error:", error);
-      alert("Google signup failed. Please try again.");
+      showError("Google signup failed. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -123,7 +124,7 @@ function Signup({ setUser }) {
           <div className="google-btn">
             <GoogleLogin
               onSuccess={handleGoogleSignup}
-              onError={() => alert("Google signup failed")}
+              onError={() => showError("Google signup failed")}
             />
           </div>
 

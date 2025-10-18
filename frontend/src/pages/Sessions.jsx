@@ -66,7 +66,7 @@ export default function PlanGroups() {
       queryClient.invalidateQueries({ queryKey: ["groups"] });
       showToast(data.message, "success");
     } catch (err) {
-      alert("Could not join group: " + err.message);
+      showToast("Could not join group: " + err.message, "error");
     } finally {
       setJoining(null);
     }

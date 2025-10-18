@@ -3,22 +3,11 @@ import React, { useState } from "react";
 import FileCard from "./FileCard";
 import { Input } from "../components/ui/input";
 import { useQuery } from "@tanstack/react-query";
-import { getAllUsers, getAllResources } from "../api/resources";
+import { getAllResources } from "../api/resources";
 import "./Feed.css";
 
 const Feed = () => {
   const [search, setSearch] = useState("");
-
-  const {
-    data: users = [],
-    isLoading: loadingUsers,
-    error: errorUsers,
-  } = useQuery({
-    queryKey: ["users"], 
-    queryFn: getAllUsers,
-    staleTime: 60 * 60 * 1000, // 1 hour in milliseconds
-    cacheTime: 65 * 60 * 1000, // slightly longer than staleTime so it stays cached
-  });
 
   const {
     data: files = [],
@@ -27,9 +16,15 @@ const Feed = () => {
   } = useQuery({
     queryKey: ["resources"],
     queryFn: getAllResources,
-    enabled: users.length > 0,
     staleTime: 20 * 60 * 1000,
     cacheTime: 25 * 60 * 1000,
+    retry: (failureCount, error) => {
+      // Don't retry on authentication errors
+      if (error?.message?.includes("not authenticated")) {
+        return false;
+      }
+      return failureCount < 3;
+    },
   });
   
 
@@ -41,9 +36,22 @@ const Feed = () => {
         f.course_code?.toLowerCase().includes(search.toLowerCase())
     );
 
-  if (loadingUsers || loadingResources) return <p>Loading resources...</p>;
-  if (errorUsers || errorResources)
-    return <p>Error loading resources or users.</p>;
+  if (loadingResources) return (
+    <div style={{ textAlign: 'center', padding: '2rem' }}>
+      <p>Loading resources...</p>
+      <div style={{ 
+        width: '40px', 
+        height: '40px', 
+        border: '4px solid #f3f3f3',
+        borderTop: '4px solid #3498db',
+        borderRadius: '50%',
+        animation: 'spin 1s linear infinite',
+        margin: '1rem auto'
+      }}></div>
+    </div>
+  );
+  if (errorResources)
+    return <p style={{ color: 'red', textAlign: 'center', padding: '2rem' }}>Error loading resources.</p>;
 
   return (
     <>

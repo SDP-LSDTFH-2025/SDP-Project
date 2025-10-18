@@ -21,6 +21,7 @@ const Study_groups = require('./Study_groups');
 const Study_sessions = require('./Study_sessions');
 const Follows_requests = require('./follows_requests');
 const public_resources = require('./public_resources');
+const Events = require('./Events');
 
 
 // Define associations
@@ -106,5 +107,6 @@ module.exports = {
   Study_groups,
   Study_sessions,
   Likes,
-  public_resources
+  public_resources,
+  Events
 };

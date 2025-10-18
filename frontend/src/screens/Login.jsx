@@ -2,6 +2,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { GoogleLogin } from "@react-oauth/google";
 import { manualLogin, googleAuth } from "../api/auth";
+import { showError } from "../utils/toast";
 import "./Login.css";
 
 const CALENDAR_SCOPE = "https://www.googleapis.com/auth/calendar.events";
@@ -22,11 +23,15 @@ function Login({ setUser }) {
     try {
       setLoading(true);
       const data = await manualLogin(formData.email, formData.password);
+      console.log("Manual login successful, setting user:", data);
       setUser(data);
-      navigate("/home");
+      // Small delay to ensure state is updated before navigation
+      setTimeout(() => {
+        navigate("/home");
+      }, 100);
     } catch (error) {
       console.error("Sign In error:", error);
-      alert("Authentication failed. Please try again.");
+      showError("Authentication failed. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -37,6 +42,7 @@ function Login({ setUser }) {
     try {
       setLoading(true);
       const data = await googleAuth(credentialResponse.credential);
+      console.log("Google login successful, setting user:", data);
       setUser(data);
 
       // Request Google Calendar token
@@ -52,10 +58,13 @@ function Login({ setUser }) {
       });
       client.requestAccessToken();
 
-      navigate("/home");
+      // Small delay to ensure state is updated before navigation
+      setTimeout(() => {
+        navigate("/home");
+      }, 100);
     } catch (error) {
       console.error("Google login error:", error);
-      alert("Google login failed. Please try again.");
+      showError("Google login failed. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -110,7 +119,7 @@ function Login({ setUser }) {
         <div className="google-btn">
           <GoogleLogin
             onSuccess={handleGoogleLogin}
-            onError={() => alert("Google login failed")}
+            onError={() => showError("Google login failed")}
           />
         </div>
 

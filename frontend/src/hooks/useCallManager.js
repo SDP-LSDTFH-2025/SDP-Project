@@ -1,10 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
 import { socket } from '../socket';
+import { useCallAudio } from './useCallAudio';
 
 export const useCallManager = () => {
   const [activeCall, setActiveCall] = useState(null);
   const [incomingCall, setIncomingCall] = useState(null);
   const [callHistory, setCallHistory] = useState([]);
+  
+  const { startCalling, stopCalling } = useCallAudio();
 
   // Listen for incoming calls
   useEffect(() => {
@@ -146,7 +149,10 @@ export const useCallManager = () => {
       participants,
       status: 'calling'
     });
-  }, []);
+
+    // Start calling sound for outgoing calls
+    startCalling();
+  }, [startCalling]);
 
   const acceptCall = useCallback(() => {
     if (incomingCall) {
@@ -209,9 +215,11 @@ export const useCallManager = () => {
         });
       }
       
+      // Stop calling sound
+      stopCalling();
       setActiveCall(null);
     }
-  }, [activeCall]);
+  }, [activeCall, stopCalling]);
 
   return {
     activeCall,

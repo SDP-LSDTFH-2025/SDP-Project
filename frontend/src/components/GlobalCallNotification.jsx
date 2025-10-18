@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { Phone, PhoneOff, Video, Mic, MicOff, X } from "lucide-react";
+import { Phone, PhoneOff, Video, Mic, MicOff, X, Volume2, VolumeX } from "lucide-react";
 import { socket } from "../socket";
+import { useCallAudio } from "../hooks/useCallAudio";
 import "./CallNotification.css";
 
 export default function GlobalCallNotification() {
@@ -9,6 +10,18 @@ export default function GlobalCallNotification() {
   const [isMuted, setIsMuted] = useState(false);
   const [isVideoOff, setIsVideoOff] = useState(false);
   const [isSpeakerOff, setIsSpeakerOff] = useState(false);
+  const [isAudioEnabled, setIsAudioEnabled] = useState(true);
+  
+  const {
+    startRinging,
+    stopRinging,
+    startCalling,
+    stopCalling,
+    setRingingVolume,
+    setCallingVolume,
+    isRinging,
+    isCalling
+  } = useCallAudio();
 
   useEffect(() => {
     // Listen for incoming calls globally
@@ -23,6 +36,11 @@ export default function GlobalCallNotification() {
         isIncoming: true,
         isGroupCall: false
       });
+      
+      // Start ringing sound for incoming call
+      if (isAudioEnabled) {
+        startRinging();
+      }
     };
 
     const handleIncomingGroupCall = (data) => {
@@ -39,26 +57,36 @@ export default function GlobalCallNotification() {
         groupName: data.groupName,
         participants: data.participants || []
       });
+      
+      // Start ringing sound for incoming group call
+      if (isAudioEnabled) {
+        startRinging();
+      }
     };
 
     const handleCallAccepted = (data) => {
       console.log('Call accepted globally:', data);
       setIncomingCall(null);
+      stopRinging();
     };
 
     const handleCallDeclined = (data) => {
       console.log('Call declined globally:', data);
       setIncomingCall(null);
+      stopRinging();
     };
 
     const handleCallEnded = (data) => {
       console.log('Call ended globally:', data);
       setIncomingCall(null);
+      stopRinging();
+      stopCalling();
     };
 
     const handleCallBusy = (data) => {
       console.log('Call busy globally:', data);
       setIncomingCall(null);
+      stopRinging();
     };
 
     // Listen to global call events
@@ -116,6 +144,9 @@ export default function GlobalCallNotification() {
 
   const handleAccept = () => {
     if (incomingCall) {
+      // Stop ringing sound
+      stopRinging();
+      
       // Emit socket event to accept call
       if (incomingCall.isGroupCall) {
         socket.emit('group:call:accept', {
@@ -136,6 +167,9 @@ export default function GlobalCallNotification() {
 
   const handleDecline = () => {
     if (incomingCall) {
+      // Stop ringing sound
+      stopRinging();
+      
       // Emit socket event to decline call
       if (incomingCall.isGroupCall) {
         socket.emit('group:call:decline', {
@@ -156,6 +190,15 @@ export default function GlobalCallNotification() {
 
   const handleDismiss = () => {
     setIncomingCall(null);
+    stopRinging();
+  };
+
+  const toggleAudio = () => {
+    setIsAudioEnabled(!isAudioEnabled);
+    if (isAudioEnabled) {
+      stopRinging();
+      stopCalling();
+    }
   };
 
   const toggleMute = () => {
@@ -306,6 +349,28 @@ export default function GlobalCallNotification() {
             Ringing...
           </div>
         )}
+
+        {/* Audio Controls */}
+        <div className="flex justify-center items-center space-x-4 mt-4">
+          <button
+            onClick={toggleAudio}
+            className={`p-2 rounded-full transition-colors ${
+              isAudioEnabled 
+                ? 'bg-green-100 text-green-600 hover:bg-green-200' 
+                : 'bg-red-100 text-red-600 hover:bg-red-200'
+            }`}
+            title={isAudioEnabled ? 'Disable call sounds' : 'Enable call sounds'}
+          >
+            {isAudioEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+          </button>
+          
+          {isRinging && (
+            <div className="flex items-center space-x-2 text-sm text-gray-600">
+              <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+              <span>Ringing...</span>
+            </div>
+          )}
+        </div>
 
         {/* Dismiss button for non-critical notifications */}
         {!isIncoming && (

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Check, X, UserPlus } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getAllUsers, getPendingFriendRequests } from "../api/resources";
@@ -7,6 +7,8 @@ import {
   sendFriendRequest,
   declineFriendRequest,
   getSentFriendRequests,
+  unfriendUser,
+  checkFriendship,
 } from "../api/friends";
 import { showSuccess, showError } from "../utils/toast";
 import "./FriendList.css";
@@ -14,6 +16,7 @@ import "./FriendList.css";
 const FriendList = ({ handleNavigationClick, setSelectedUser }) => {
   const [sentRequests, setSentRequests] = useState([]);
   const [loadingRequests, setLoadingRequests] = useState([]);
+  const [friendshipStatus, setFriendshipStatus] = useState({});
   const queryClient = useQueryClient();
 
   // Fetch suggested friends (all users)
@@ -65,6 +68,11 @@ const FriendList = ({ handleNavigationClick, setSelectedUser }) => {
       });
       if (data.success) {
         showSuccess(`You are now friends with ${fr.user.username}`);
+        // Update friendship status
+        setFriendshipStatus(prev => ({
+          ...prev,
+          [fr.user.id]: true
+        }));
         // Invalidate and refetch the friend requests list
         queryClient.invalidateQueries({ queryKey: ["friendRequests"] });
         queryClient.invalidateQueries({ queryKey: ["sentRequests"] });
@@ -105,6 +113,11 @@ const FriendList = ({ handleNavigationClick, setSelectedUser }) => {
         username: receiver.username,
       });
       if (data.success) {
+        // Update friendship status to show pending request
+        setFriendshipStatus(prev => ({
+          ...prev,
+          [receiver.id]: false // Not friends yet, but request sent
+        }));
         // Invalidate and refetch the sent requests to update the UI
         queryClient.invalidateQueries({ queryKey: ["sentRequests"] });
         showSuccess(`Friend request sent to ${receiver.username}`);
@@ -120,10 +133,75 @@ const FriendList = ({ handleNavigationClick, setSelectedUser }) => {
     }
   };
 
+  const handleUnfriend = async (friend, e) => {
+    e.stopPropagation();
+    try {
+      setLoadingRequests((prev) => [...prev, friend.id]);
+      const data = await unfriendUser({
+        friend_id: friend.id,
+      });
+      if (data.success) {
+        // Update friendship status
+        setFriendshipStatus(prev => ({
+          ...prev,
+          [friend.id]: false
+        }));
+        // Invalidate and refetch queries
+        queryClient.invalidateQueries({ queryKey: ["sentRequests"] });
+        queryClient.invalidateQueries({ queryKey: ["friendRequests"] });
+        showSuccess(`Unfriended ${friend.username}`);
+      } else {
+        showError(`Could not unfriend: ${data.message || 'Unknown error'}`);
+      }
+    } catch (err) {
+      console.error("Error unfriending user", err);
+      const errorMessage = err.response?.data?.message || err.message || "Unknown error";
+      showError(`Error unfriending user: ${errorMessage}`);
+    } finally {
+      setLoadingRequests((prev) => prev.filter((id) => id !== friend.id));
+    }
+  };
+
   const handleCardClick = (user) => {
     setSelectedUser(user);
     handleNavigationClick("usersprof");
   };
+
+  // Check friendship status for a user
+  const checkUserFriendship = async (userId) => {
+    try {
+      const data = await checkFriendship({ friend_id: userId });
+      if (data.success) {
+        setFriendshipStatus(prev => ({
+          ...prev,
+          [userId]: data.are_friends
+        }));
+      }
+    } catch (err) {
+      console.error("Error checking friendship status:", err);
+    }
+  };
+
+  // Check if user is a friend
+  const isFriend = (userId) => {
+    return friendshipStatus[userId] === true;
+  };
+
+  // Check if user has a pending request
+  const hasPendingRequest = (userId) => {
+    return sentRequestUserIds.includes(userId);
+  };
+
+  // Check friendship status for all suggested friends when component loads
+  useEffect(() => {
+    if (suggestedFriends.length > 0) {
+      suggestedFriends.forEach(friend => {
+        if (friendshipStatus[friend.id] === undefined) {
+          checkUserFriendship(friend.id);
+        }
+      });
+    }
+  }, [suggestedFriends]);
 
   // --- Loading/Error states ---
   if (loadingUsers || loadingRequestsQuery || loadingSentRequests) return <p>Loading friends...</p>;
@@ -214,7 +292,11 @@ const FriendList = ({ handleNavigationClick, setSelectedUser }) => {
                     </p>
                   </div>
                 </div>
-                {sentRequestUserIds.includes(friend.id) ? (
+                {isFriend(friend.id) ? (
+                  <button className="unfriend-btn" onClick={(e) => handleUnfriend(friend, e)}>
+                    Unfriend
+                  </button>
+                ) : sentRequestUserIds.includes(friend.id) ? (
                   <button className="sent-btn" disabled>Sent</button>
                 ) : loadingRequests.includes(friend.id) ? (
                   <button className="sent-btn" disabled>Sending...</button>

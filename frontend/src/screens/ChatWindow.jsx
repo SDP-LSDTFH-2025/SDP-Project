@@ -8,6 +8,7 @@ import DropdownMenu, { chatWindowMenuItems } from "../components/DropdownMenu";
 import EmojiPicker from "../components/EmojiPicker";
 import VoiceRecorder from "../components/VoiceRecorder";
 import VideoCall from "../components/VideoCall";
+import VoiceCall from "../components/VoiceCall";
 
 function makeChatId(userA, userB) {
   return [userA, userB].sort().join(""); // consistent ID for both directions
@@ -22,6 +23,8 @@ export default function ChatWindow({ chat, onBack }) {
   const [attachedFiles, setAttachedFiles] = useState([]);
   const [isVideoCallActive, setIsVideoCallActive] = useState(false);
   const [videoCallData, setVideoCallData] = useState(null);
+  const [isVoiceCallActive, setIsVoiceCallActive] = useState(false);
+  const [voiceCallData, setVoiceCallData] = useState(null);
 
   const lastTempIdSent = useRef(null);
   const typingTimeout = useRef(null);
@@ -232,7 +235,24 @@ export default function ChatWindow({ chat, onBack }) {
     setVideoCallData(null);
   };
 
-  // Listen for incoming video calls
+  const startVoiceCall = () => {
+    const callId = `voice_call_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const callData = {
+      callId,
+      isCaller: true,
+      otherUserId: chat.id
+    };
+    
+    setVoiceCallData(callData);
+    setIsVoiceCallActive(true);
+  };
+
+  const endVoiceCall = () => {
+    setIsVoiceCallActive(false);
+    setVoiceCallData(null);
+  };
+
+  // Listen for incoming calls (both video and voice)
   useEffect(() => {
     const handleIncomingCall = (data) => {
       if (data.fromUserId === chat.id) {
@@ -241,8 +261,15 @@ export default function ChatWindow({ chat, onBack }) {
           isCaller: false,
           otherUserId: data.fromUserId
         };
-        setVideoCallData(callData);
-        setIsVideoCallActive(true);
+        
+        // Determine if it's a voice or video call based on callId
+        if (data.callId.includes('voice_call_')) {
+          setVoiceCallData(callData);
+          setIsVoiceCallActive(true);
+        } else {
+          setVideoCallData(callData);
+          setIsVideoCallActive(true);
+        }
       }
     };
 
@@ -290,7 +317,13 @@ export default function ChatWindow({ chat, onBack }) {
           >
             <Video size={20} />
           </Button>
-          <Button variant="ghost" size="sm" className="whatsapp-action-btn">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="whatsapp-action-btn"
+            onClick={startVoiceCall}
+            title="Start voice call"
+          >
             <Phone size={20} />
           </Button>
           <DropdownMenu 
@@ -444,6 +477,16 @@ export default function ChatWindow({ chat, onBack }) {
           otherUserId={videoCallData.otherUserId}
           onEndCall={endVideoCall}
           callId={videoCallData.callId}
+        />
+      )}
+
+      {/* Voice Call Overlay */}
+      {isVoiceCallActive && voiceCallData && (
+        <VoiceCall
+          isCaller={voiceCallData.isCaller}
+          otherUserId={voiceCallData.otherUserId}
+          onEndCall={endVoiceCall}
+          callId={voiceCallData.callId}
         />
       )}
     </div>

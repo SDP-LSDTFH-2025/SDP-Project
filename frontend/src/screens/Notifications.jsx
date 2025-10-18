@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "../components/ui/card";
 import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
@@ -12,6 +13,7 @@ import { getNotifications, markAllNotificationsAsRead  } from "../api/notificati
 function Notifications({ user }) {
   const [notifications, setNotifications] = useState([]);
   const [showUnreadOnly, setShowUnreadOnly] = useState(false);
+  const queryClient = useQueryClient();
 
   if (!user){
     user = JSON.parse(localStorage.getItem("user"));
@@ -46,6 +48,8 @@ function Notifications({ user }) {
       if (response.success) {
         // Update the local state
         setNotifications(prev => prev.map(n => ({ ...n, unread: false })));
+        // Invalidate the notification count query to refresh the badge
+        queryClient.invalidateQueries({ queryKey: ["notificationCount"] });
       }
     } catch (err) {
       console.error("Failed to mark all as read:", err);

@@ -142,6 +142,50 @@ const FileCard = ({ file }) => {
     }
   };
 
+  const handleShare = async () => {
+    const shareData = {
+      title: file.title,
+      text: file.description,
+      url: window.location.href
+    };
+
+    if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
+      try {
+        await navigator.share(shareData);
+      } catch (err) {
+        console.log("Error sharing:", err);
+        fallbackShare();
+      }
+    } else {
+      fallbackShare();
+    }
+  };
+
+  const fallbackShare = () => {
+    const shareText = `${file.title}\n\n${file.description}\n\nCourse: ${file.course_code}\nAuthor: ${file.user_name.replaceAll("_", " ")}`;
+    
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(shareText).then(() => {
+        alert("Resource details copied to clipboard!");
+      }).catch(() => {
+        showShareModal();
+      });
+    } else {
+      showShareModal();
+    }
+  };
+
+  const showShareModal = () => {
+    const shareText = `${file.title}\n\n${file.description}\n\nCourse: ${file.course_code}\nAuthor: ${file.user_name.replaceAll("_", " ")}`;
+    const textArea = document.createElement("textarea");
+    textArea.value = shareText;
+    document.body.appendChild(textArea);
+    textArea.select();
+    document.execCommand("copy");
+    document.body.removeChild(textArea);
+    alert("Resource details copied to clipboard!");
+  };
+
   const isPdf = file.file_url?.toLowerCase().endsWith(".pdf");
 
   return (
@@ -197,7 +241,7 @@ const FileCard = ({ file }) => {
           <span  onClick={() => setShowComments((prev) => !prev)} >
             <MessageCircle size={18} /> {comments.length}
           </span>
-          <span>
+          <span onClick={handleShare} style={{ cursor: 'pointer' }}>
             <Share2 size={18} />
           </span>
         </div>

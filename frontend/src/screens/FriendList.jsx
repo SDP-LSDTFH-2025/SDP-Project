@@ -1,17 +1,23 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Check, X, UserPlus } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getAllUsers, getPendingFriendRequests } from "../api/resources";
 import {
   respondToFriendRequest,
   sendFriendRequest,
   declineFriendRequest,
+  getSentFriendRequests,
+  unfriendUser,
+  checkFriendship,
 } from "../api/friends";
+import { showSuccess, showError } from "../utils/toast";
 import "./FriendList.css";
 
 const FriendList = ({ handleNavigationClick, setSelectedUser }) => {
   const [sentRequests, setSentRequests] = useState([]);
   const [loadingRequests, setLoadingRequests] = useState([]);
+  const [friendshipStatus, setFriendshipStatus] = useState({});
+  const queryClient = useQueryClient();
 
   // Fetch suggested friends (all users)
   const {
@@ -36,43 +42,66 @@ const FriendList = ({ handleNavigationClick, setSelectedUser }) => {
     staleTime: 5 * 60 * 1000, // more dynamic
   });
 
+  // Fetch sent friend requests
+  const {
+    data: sentRequestsData = { followers: [] },
+    isLoading: loadingSentRequests,
+    error: sentRequestsError,
+  } = useQuery({
+    queryKey: ["sentRequests"],
+    queryFn: getSentFriendRequests,
+    staleTime: 5 * 60 * 1000, // more dynamic
+  });
+
+  // Extract sent request user IDs
+  const sentRequestUserIds = Array.isArray(sentRequestsData.followers) 
+    ? sentRequestsData.followers.map(sr => sr.user.id)
+    : [];
+
   // --- Action handlers ---
   const handleAccept = async (fr, e) => {
     e.stopPropagation();
     try {
-      const user = JSON.parse(localStorage.getItem("user"));
       const data = await respondToFriendRequest({
-        token: user,
-        id: user.id,
         requestID: fr.request.id,
         response: "accept",
       });
       if (data.success) {
-        alert(`You are now friends with ${fr.user.username}`);
+        showSuccess(`You are now friends with ${fr.user.username}`);
+        // Update friendship status
+        setFriendshipStatus(prev => ({
+          ...prev,
+          [fr.user.id]: true
+        }));
+        // Invalidate and refetch the friend requests list
+        queryClient.invalidateQueries({ queryKey: ["friendRequests"] });
+        queryClient.invalidateQueries({ queryKey: ["sentRequests"] });
       } else {
-        alert(`Could not accept request: ${data.message}`);
+        showError(`Could not accept request: ${data.message}`);
       }
     } catch (err) {
       console.error("Error accepting request:", err);
+      showError("Error accepting friend request. Please try again.");
     }
   };
 
   const handleDecline = async (fr, e) => {
     e.stopPropagation();
     try {
-      const user = JSON.parse(localStorage.getItem("user"));
       const data = await declineFriendRequest({
-        token: user,
-        id: user.id,
         requestID: fr.request.id,
       });
       if (data.success) {
-        alert(`Declined request from ${fr.user.username}`);
+        showSuccess(`Declined request from ${fr.user.username}`);
+        // Invalidate and refetch the friend requests list
+        queryClient.invalidateQueries({ queryKey: ["friendRequests"] });
+        queryClient.invalidateQueries({ queryKey: ["sentRequests"] });
       } else {
-        alert(`Could not decline request: ${data.message}`);
+        showError(`Could not decline request: ${data.message}`);
       }
     } catch (err) {
       console.error("Error declining request:", err);
+      showError("Error declining friend request. Please try again.");
     }
   };
 
@@ -80,19 +109,56 @@ const FriendList = ({ handleNavigationClick, setSelectedUser }) => {
     e.stopPropagation();
     try {
       setLoadingRequests((prev) => [...prev, receiver.id]);
-      const user = JSON.parse(localStorage.getItem("user"));
       const data = await sendFriendRequest({
-        token: user,
-        id: user.id,
         username: receiver.username,
       });
       if (data.success) {
-        setSentRequests((prev) => [...prev, receiver.id]);
+        // Update friendship status to show pending request
+        setFriendshipStatus(prev => ({
+          ...prev,
+          [receiver.id]: false // Not friends yet, but request sent
+        }));
+        // Invalidate and refetch the sent requests to update the UI
+        queryClient.invalidateQueries({ queryKey: ["sentRequests"] });
+        showSuccess(`Friend request sent to ${receiver.username}`);
+      } else {
+        showError(`Could not send friend request: ${data.message || data.response || 'Unknown error'}`);
       }
     } catch (err) {
       console.error("Error sending friend request", err);
+      const errorMessage = err.response?.data?.response || err.response?.data?.message || err.message || "Unknown error";
+      showError(`Error sending friend request: ${errorMessage}`);
     } finally {
       setLoadingRequests((prev) => prev.filter((id) => id !== receiver.id));
+    }
+  };
+
+  const handleUnfriend = async (friend, e) => {
+    e.stopPropagation();
+    try {
+      setLoadingRequests((prev) => [...prev, friend.id]);
+      const data = await unfriendUser({
+        friend_id: friend.id,
+      });
+      if (data.success) {
+        // Update friendship status
+        setFriendshipStatus(prev => ({
+          ...prev,
+          [friend.id]: false
+        }));
+        // Invalidate and refetch queries
+        queryClient.invalidateQueries({ queryKey: ["sentRequests"] });
+        queryClient.invalidateQueries({ queryKey: ["friendRequests"] });
+        showSuccess(`Unfriended ${friend.username}`);
+      } else {
+        showError(`Could not unfriend: ${data.message || 'Unknown error'}`);
+      }
+    } catch (err) {
+      console.error("Error unfriending user", err);
+      const errorMessage = err.response?.data?.message || err.message || "Unknown error";
+      showError(`Error unfriending user: ${errorMessage}`);
+    } finally {
+      setLoadingRequests((prev) => prev.filter((id) => id !== friend.id));
     }
   };
 
@@ -101,9 +167,45 @@ const FriendList = ({ handleNavigationClick, setSelectedUser }) => {
     handleNavigationClick("usersprof");
   };
 
+  // Check friendship status for a user
+  const checkUserFriendship = async (userId) => {
+    try {
+      const data = await checkFriendship({ friend_id: userId });
+      if (data.success) {
+        setFriendshipStatus(prev => ({
+          ...prev,
+          [userId]: data.are_friends
+        }));
+      }
+    } catch (err) {
+      console.error("Error checking friendship status:", err);
+    }
+  };
+
+  // Check if user is a friend
+  const isFriend = (userId) => {
+    return friendshipStatus[userId] === true;
+  };
+
+  // Check if user has a pending request
+  const hasPendingRequest = (userId) => {
+    return sentRequestUserIds.includes(userId);
+  };
+
+  // Check friendship status for all suggested friends when component loads
+  useEffect(() => {
+    if (suggestedFriends.length > 0) {
+      suggestedFriends.forEach(friend => {
+        if (friendshipStatus[friend.id] === undefined) {
+          checkUserFriendship(friend.id);
+        }
+      });
+    }
+  }, [suggestedFriends]);
+
   // --- Loading/Error states ---
-  if (loadingUsers || loadingRequestsQuery) return <p>Loading friends...</p>;
-  if (usersError || requestsError) return <p>Error loading friends data</p>;
+  if (loadingUsers || loadingRequestsQuery || loadingSentRequests) return <p>Loading friends...</p>;
+  if (usersError || requestsError || sentRequestsError) return <p>Error loading friends data</p>;
 
   return (
     <div className="friend-list-container">
@@ -190,7 +292,11 @@ const FriendList = ({ handleNavigationClick, setSelectedUser }) => {
                     </p>
                   </div>
                 </div>
-                {sentRequests.includes(friend.id) ? (
+                {isFriend(friend.id) ? (
+                  <button className="unfriend-btn" onClick={(e) => handleUnfriend(friend, e)}>
+                    Unfriend
+                  </button>
+                ) : sentRequestUserIds.includes(friend.id) ? (
                   <button className="sent-btn" disabled>Sent</button>
                 ) : loadingRequests.includes(friend.id) ? (
                   <button className="sent-btn" disabled>Sending...</button>

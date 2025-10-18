@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query"; 
 import { getAllFriends } from "../api/resources";
-import { getGroups } from "../api/groups";
+import { showSuccess, showError } from "../utils/toast"; 
+import { getGroups, getStudySessions } from "../api/groups";
+import { getUnreadNotificationCount } from "../api/notifications";
 
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import { Button } from "../components/ui/button";
@@ -41,14 +43,40 @@ import ProfilePage from "../pages/ProfilePage.jsx";
 import Feed from "../pages/Feed.jsx";
 import PlanSessions from "../pages/Sessions.jsx";
 import Progress from "../pages/Progress.jsx";
+import Message from "./Message.jsx";
+import Notifications from "./Notifications.jsx";
+import CallIndicator from "../components/CallIndicator.jsx";
+import AudioSettings from "../components/AudioSettings.jsx";
 
 function Home({ user }) {
-  const [activeView, setActiveView] = useState("feed");
+  const location = useLocation();
+  const navigate = useNavigate();
+  
+  // Get the current view from URL hash or default to "feed"
+  const getCurrentView = () => {
+    const hash = location.hash.replace('#', '');
+    const validViews = ['feed', 'calendar', 'messages', 'friends', 'profile', 'sessions', 'progress', 'notifications', 'upload', 'requests', 'groups'];
+    return validViews.includes(hash) ? hash : 'feed';
+  };
+  
+  const [activeView, setActiveView] = useState(getCurrentView());
   const [title, setTitle] = useState("");
   const [courseId, setCourseId] = useState("");
   const [description, setDescription] = useState("");
   const [pdfFile, setPdfFile] = useState(null);
   const [pictureFile, setPictureFile] = useState(null);
+
+  // Sync URL with activeView state
+  useEffect(() => {
+    const currentView = getCurrentView();
+    setActiveView(currentView);
+  }, [location.hash]);
+
+  // Update URL when activeView changes
+  const updateActiveView = (view) => {
+    setActiveView(view);
+    navigate(`/home#${view}`, { replace: true });
+  };
   const [error, setError] = useState("");
   const [isFormValid, setIsFormValid] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
@@ -58,6 +86,8 @@ function Home({ user }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
   const [events, setEvents] = useState([]);
+  const [studySessions, setStudySessions] = useState([]);
+  const [notificationCount, setNotificationCount] = useState(0);
 
   const calendar_token = localStorage.getItem("calendar_token");
 
@@ -84,6 +114,29 @@ function Home({ user }) {
     cacheTime: 17 * 60 * 1000,
   });
 
+  const {
+    data: notificationCountData,
+    isLoading: notificationCountLoading,
+  } = useQuery({
+    enabled: !!user?.id,
+    queryKey: ["notificationCount"],
+    queryFn: () => getUnreadNotificationCount(user.id),
+    staleTime: 30 * 1000, // 30 seconds
+    cacheTime: 60 * 1000, // 1 minute
+    refetchInterval: 30 * 1000, // Refetch every 30 seconds
+  });
+
+  const {
+    data: studySessionsData,
+    isLoading: studySessionsLoading,
+  } = useQuery({
+    enabled: !!user?.id,
+    queryKey: ["studySessions", user.id],
+    queryFn: () => getStudySessions(user.id),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    cacheTime: 10 * 60 * 1000, // 10 minutes
+  });
+
   const friends = rawFriends.slice(0, 4).map((u) => ({
     id: u.id,
     username: u.username,
@@ -106,6 +159,19 @@ function Home({ user }) {
     setIsFormValid(isValid);
   }, [title, courseId, description, pdfFile, pictureFile]);
 
+  // Listen for navigation to messages from other components
+  useEffect(() => {
+    const handleNavigateToMessages = () => {
+      handleNavigationClick("messages");
+    };
+
+    window.addEventListener('navigateToMessages', handleNavigateToMessages);
+    
+    return () => {
+      window.removeEventListener('navigateToMessages', handleNavigateToMessages);
+    };
+  }, []);
+
   useEffect(() => {
     async function fetchEvents() {
       if (!calendar_token) return;
@@ -122,6 +188,10 @@ function Home({ user }) {
             title: ev.summary,
             start: ev.start.dateTime || ev.start.date,
             end: ev.end.dateTime || ev.end.date,
+            color: '#10b981', // Green color for Google Calendar events
+            extendedProps: {
+              type: 'google_calendar'
+            }
           }))
         );
       }
@@ -130,6 +200,20 @@ function Home({ user }) {
     fetchEvents();
   }, [calendar_token]);
 
+  // Update study sessions when data changes
+  useEffect(() => {
+    if (studySessionsData?.success && studySessionsData.sessions) {
+      setStudySessions(studySessionsData.sessions);
+    }
+  }, [studySessionsData]);
+
+  // Update notification count when data changes
+  useEffect(() => {
+    if (notificationCountData?.success && typeof notificationCountData.data === 'number') {
+      setNotificationCount(notificationCountData.data);
+    }
+  }, [notificationCountData]);
+
   function logout() {
     localStorage.removeItem("user");
     localStorage.removeItem("isLoggedIn");
@@ -137,7 +221,7 @@ function Home({ user }) {
   }
 
   function handleNavigationClick(view) {
-    setActiveView(view);
+    updateActiveView(view);
   }
 
   const handleUploadSubmit = async (e) => {
@@ -181,8 +265,8 @@ function Home({ user }) {
         setDescription("");
         setPdfFile(null);
         setPictureFile(null);
-        setActiveView("feed");
-        alert("Resource uploaded successfully!");
+        updateActiveView("feed");
+        showSuccess("Resource uploaded successfully!");
       } else {
         const errorMessage =
           data.message || `Upload failed with status ${response.status}`;
@@ -199,21 +283,52 @@ function Home({ user }) {
 
   return (
     <div className="home-container">
+      {/* Call Indicator - shows incoming/active calls */}
+      <CallIndicator />
+      
       {/* Top Navigation Bar */}
       <nav className="navigation">
         <h1 className="logo">StudyBuddy</h1>
 
         <div className="nav-actions">
-          <Link to="/messages">
-            <Button className="nav-button">
-              <MessageCircle className="pics" />
-            </Button>
-          </Link>
-          <Link to="/notifications">
-            <Button className="nav-button">
-              <Bell className="pics" />
-            </Button>
-          </Link>
+          <AudioSettings />
+          <Button
+            className={`nav-button ${activeView === "messages" ? "active" : ""}`}
+            onClick={() => handleNavigationClick("messages")}
+          >
+            <MessageCircle className="pics" />
+          </Button>
+          <Button
+            className={`nav-button ${activeView === "notifications" ? "active" : ""}`}
+            onClick={() => handleNavigationClick("notifications")}
+            style={{ position: 'relative' }}
+          >
+            <Bell className="pics" />
+            {notificationCount > 0 && (
+              <Badge 
+                className="notification-badge"
+                style={{
+                  position: 'absolute',
+                  top: '-8px',
+                  right: '-8px',
+                  minWidth: '18px',
+                  height: '18px',
+                  borderRadius: '50%',
+                  backgroundColor: '#ef4444',
+                  color: 'white',
+                  fontSize: '11px',
+                  fontWeight: 'bold',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: '0 4px',
+                  border: '2px solid white'
+                }}
+              >
+                {notificationCount > 99 ? '99+' : notificationCount}
+              </Badge>
+            )}
+          </Button>
           <Button
             className={`nav-button ${activeView === "profile" ? "active" : ""}`}
             onClick={() => handleNavigationClick("profile")}
@@ -292,6 +407,56 @@ function Home({ user }) {
                 }}
               >
                 <Upload className="pics" /> Upload Resource
+              </Button>
+            </li>
+            <li>
+              <Button
+                className={`buttons ${
+                  activeView === "messages" ? "active" : ""
+                }`}
+                onClick={() => {
+                  handleNavigationClick("messages");
+                  toggleMenu();
+                }}
+              >
+                <MessageCircle className="pics" /> Messages
+              </Button>
+            </li>
+            <li>
+              <Button
+                className={`buttons ${
+                  activeView === "notifications" ? "active" : ""
+                }`}
+                onClick={() => {
+                  handleNavigationClick("notifications");
+                  toggleMenu();
+                }}
+                style={{ position: 'relative' }}
+              >
+                <Bell className="pics" /> Notifications
+                {notificationCount > 0 && (
+                  <Badge 
+                    style={{
+                      position: 'absolute',
+                      top: '-5px',
+                      right: '-5px',
+                      minWidth: '16px',
+                      height: '16px',
+                      borderRadius: '50%',
+                      backgroundColor: '#ef4444',
+                      color: 'white',
+                      fontSize: '10px',
+                      fontWeight: 'bold',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      padding: '0 3px',
+                      border: '1px solid white'
+                    }}
+                  >
+                    {notificationCount > 99 ? '99+' : notificationCount}
+                  </Badge>
+                )}
               </Button>
             </li>
             <li>
@@ -377,6 +542,50 @@ function Home({ user }) {
                   <Upload className="pics" />
                   Upload Resource
                 </Button>
+
+                <Button
+                  className={`buttons ${
+                    activeView === "messages" ? "active" : ""
+                  }`}
+                  onClick={() => handleNavigationClick("messages")}
+                >
+                  <MessageCircle className="pics" />
+                  Messages
+                </Button>
+
+                <Button
+                  className={`buttons ${
+                    activeView === "notifications" ? "active" : ""
+                  }`}
+                  onClick={() => handleNavigationClick("notifications")}
+                  style={{ position: 'relative' }}
+                >
+                  <Bell className="pics" />
+                  Notifications
+                  {notificationCount > 0 && (
+                    <Badge 
+                      style={{
+                        position: 'absolute',
+                        top: '-5px',
+                        right: '-5px',
+                        minWidth: '16px',
+                        height: '16px',
+                        borderRadius: '50%',
+                        backgroundColor: '#ef4444',
+                        color: 'white',
+                        fontSize: '10px',
+                        fontWeight: 'bold',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        padding: '0 3px',
+                        border: '1px solid white'
+                      }}
+                    >
+                      {notificationCount > 99 ? '99+' : notificationCount}
+                    </Badge>
+                  )}
+                </Button>
               </CardContent>
             </Card>
           </div>
@@ -407,26 +616,41 @@ function Home({ user }) {
                   eventContent={() => {
                     return { html: `<div class="event-dot"></div>` };
                   }}
-                  events={events}
+                  events={[...events, ...studySessions]}
                   eventClick={(info) => {
                     info.jsEvent.preventDefault();
+                    const eventType = info.event.extendedProps?.type || 'unknown';
                     setSelectedEvent({
                       title: info.event.title,
                       start: info.event.start,
                       end: info.event.end,
                       color: info.event.backgroundColor,
+                      type: eventType,
+                      location: info.event.extendedProps?.venue || info.event.extendedProps?.location,
+                      venue: info.event.extendedProps?.venue
                     });
                   }}
                 />
                 {selectedEvent && (
                   <div className="event-modal">
                     <div className="event-modal-content">
-                      <h3 style={{ color: "#0000ff" }}>
+                      <h3 style={{ color: selectedEvent.type === 'study_session' ? "#3b82f6" : "#10b981" }}>
                         {selectedEvent.title}
                       </h3>
                       <p>
-                        Date: {selectedEvent.start.toLocaleDateString()} <br />
-                        Time: {selectedEvent.start.toLocaleTimeString()} <br />
+                        <strong>Type:</strong> {selectedEvent.type === 'study_session' ? 'Study Session' : 'Google Calendar Event'} <br />
+                        <strong>Date:</strong> {selectedEvent.start.toLocaleDateString()} <br />
+                        <strong>Time:</strong> {selectedEvent.start.toLocaleTimeString()} - {selectedEvent.end.toLocaleTimeString()} <br />
+                        {selectedEvent.venue && (
+                          <>
+                            <strong>Venue:</strong> {selectedEvent.venue} <br />
+                          </>
+                        )}
+                        {selectedEvent.location && !selectedEvent.venue && (
+                          <>
+                            <strong>Location:</strong> {selectedEvent.location} <br />
+                          </>
+                        )}
                       </p>
                       <button
                         style={{
@@ -436,7 +660,7 @@ function Home({ user }) {
                           fontWeight: "600",
                           cursor: "pointer",
                           border: "none",
-                          background: "#6366f1",
+                          background: selectedEvent.type === 'study_session' ? "#3b82f6" : "#10b981",
                           color: "white",
                         }}
                         onClick={() => setSelectedEvent(null)}
@@ -459,9 +683,9 @@ function Home({ user }) {
                 <h2>Resources</h2>
                 <Button
                   className="upload-btn"
-                  onClick={() => setActiveView("upload")}
+                  onClick={() => updateActiveView("upload")}
                 >
-                  <Share2 className="pics" /> Share
+                  <Share2 className="pics" /> Upload Resource
                 </Button>
 
                 <Feed />
@@ -545,6 +769,20 @@ function Home({ user }) {
                 <PlanSessions />
               </div>
             )}
+
+            {activeView === "messages" && (
+              <div className="share-card">
+                <h2>Messages</h2>
+                <Message />
+              </div>
+            )}
+
+            {activeView === "notifications" && (
+              <div className="share-card">
+                <h2>Notifications</h2>
+                <Notifications user={user} />
+              </div>
+            )}
           </div>
         </section>
 
@@ -559,12 +797,15 @@ function Home({ user }) {
             {friendsError && <p style={{ color: "red" }}>{friendsError.message}</p>}
             {friends.length > 0 ? (
               friends.map((f, i) => (
-                <Link
+                <div
                   key={i}
-                  to="/messages"
-                  state={{ chat: f }}
                   className="buddy-item"
-                  style={{ textDecoration: "none", color: "inherit" }}
+                  style={{ cursor: "pointer" }}
+                  onClick={() => {
+                    handleNavigationClick("messages");
+                    // Store the selected chat in localStorage for the Message component to use
+                    localStorage.setItem("selectedChat", JSON.stringify(f));
+                  }}
                 >
                   <div className="avatar">
                     {f.username
@@ -581,7 +822,7 @@ function Home({ user }) {
                       <span>{f.status}</span>
                     </div>
                   </div>
-                </Link>
+                </div>
               ))
             ) : (
               !friendsLoading && <p className="empty-text">No friends yet.</p>

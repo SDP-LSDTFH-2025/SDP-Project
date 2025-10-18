@@ -105,7 +105,7 @@ export const ChatSidebar = ({ friends }) => {
           
           <CardContent className="space-y-4">
             {/* Messages */}
-            <div className="space-y-3 max-h-60 overflow-y-auto">
+            <div className="space-y-3 max-h-60 overflow-y-auto" style={{ paddingRight: '8px' }}>
               {mockMessages.map((msg, index) => (
                 <div key={index} className={`flex ${msg.isMe ? 'justify-end' : 'justify-start'}`}>
                   <div className={`max-w-[80%] p-3 rounded-lg ${

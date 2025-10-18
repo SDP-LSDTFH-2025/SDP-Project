@@ -48,9 +48,11 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
-      scriptSrc: ["'self'"],
-      imgSrc: ["'self'", "data:", "https:"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://accounts.google.com"],
+      scriptSrc: ["'self'", "https://accounts.google.com", "https://apis.google.com"],
+      imgSrc: ["'self'", "data:", "https:", "https://accounts.google.com"],
+      connectSrc: ["'self'", "https://accounts.google.com", "https://www.googleapis.com"],
+      frameSrc: ["'self'", "https://accounts.google.com"],
     },
   },
   crossOriginEmbedderPolicy: false,
@@ -103,6 +105,7 @@ const restrictedCors = cors({
       process.env.PLANIT_BASE_URL,
       'http://localhost:5173',
       'http://localhost:5174',
+      'https://sdp-project-git-mokgwadi-spd-lsdfths-projects.vercel.app',
       'http://localhost:3000'
     ].filter(Boolean);
 

@@ -12,6 +12,10 @@ const Study_sessions = sequelize.define('study_sessions', {
     user_id: {
         type: DataTypes.UUID,
         allowNull: false,
+        references: {
+            model: 'User',
+            key: 'id'
+        }
     },
     title: {
         type: DataTypes.STRING,
@@ -36,6 +40,11 @@ const Study_sessions = sequelize.define('study_sessions', {
     venue_id: {
         type: DataTypes.INTEGER,
         allowNull: false,
+    },
+    created_at: {
+        type: DataTypes.DATE,
+        allowNull: false,
+        defaultValue: DataTypes.NOW
     }
 }, {
     tableName: "study_sessions",

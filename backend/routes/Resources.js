@@ -4,7 +4,7 @@ const multer = require('multer');
 const crypto = require('crypto');
 const { validate: isUUID } = require('uuid');
 const CloudinaryService = require('../services/cloudinaryService');
-const { Resources, User, Likes, Follows } = require('../models');
+const { Resources, User, Likes, Follows, Notifications } = require('../models');
 const { Op } = require('sequelize');
 const { optimizedAuth } = require('../middleware/optimizedAuth');
 
@@ -236,6 +236,20 @@ router.post('/', optimizedAuth, upload.fields([{ name: 'file', maxCount: 1 }, { 
             created_at: new Date()
         });
 
+        // Create notification for resource upload
+        try {
+            await Notifications.create({
+                user_id: user_id,
+                title: "New Resource Uploaded",
+                message: `You successfully uploaded "${title}" to the resource feed.`,
+                read: false,
+                created_at: new Date()
+            });
+        } catch (notificationError) {
+            console.error('Failed to create notification for resource upload:', notificationError);
+            // Don't fail the main request if notification creation fails
+        }
+
         res.json({ success: true, data: resource });
     } catch (error) {
         console.error('Resource creation failed:', error);
@@ -338,6 +352,9 @@ router.post('/friends', optimizedAuth, async (req, res) => {
             return res.status(400).json({ success: false, error: 'Token and user ID are required' });
         }
 
+        // Add cache headers for better performance
+        res.setHeader('Cache-Control', 'private, max-age=300'); // 5 minutes cache
+
         // Get all friends (both followers and followees - mutual friends)
         const followers = await Follows.findAll({ where: { followee_id: id } });
         const followees = await Follows.findAll({ where: { follower_id: id } });
@@ -364,7 +381,9 @@ router.post('/friends', optimizedAuth, async (req, res) => {
                 attributes: ['id', 'username', 'institution', 'school']
             }],
             order: [['created_at', 'DESC']],
-            limit: 50 // Add pagination
+            limit: 50, // Add pagination
+            // Add index hint for better performance
+            raw: false // Ensure we get full objects for includes
         });
 
         res.json({ success: true, data: resources });

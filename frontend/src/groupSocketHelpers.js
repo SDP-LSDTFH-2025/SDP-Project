@@ -17,7 +17,17 @@ export function connectSocketSafe() {
 
 // Safe emit wrapper
 export function emitSafe(event, payload, ack) {
-  if (!socket.connected) connectSocketSafe();
+  if (!socket.connected) {
+    console.log("Socket not connected, attempting to reconnect...");
+    connectSocketSafe();
+    
+    // If still not connected after a short delay, throw error
+    setTimeout(() => {
+      if (!socket.connected) {
+        throw new Error("Socket connection failed");
+      }
+    }, 1000);
+  }
   socket.emit(event, payload, ack);
 }
 

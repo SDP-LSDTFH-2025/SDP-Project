@@ -1,8 +1,12 @@
 // src/api/resources.js
 import api from "./api";
 
-const token = localStorage.getItem("token");
-const user = JSON.parse(localStorage.getItem("user"));
+// Helper functions to get current auth data
+const getToken = () => localStorage.getItem("token");
+const getUser = () => {
+  const userStr = localStorage.getItem("user");
+  return userStr ? JSON.parse(userStr) : null;
+};
 
 // Get all users once and cache
 export const getAllUsers = async () => {
@@ -15,7 +19,16 @@ export const getAllUsers = async () => {
 
 // Get all resources and enrich with user data
 export const getAllResources = async () => {
-    const res = await api.post("resources/friends", {
+  const token = getToken();
+  const user = getUser();
+  
+  console.log("getAllResources called with:", { token: !!token, userId: user?.id });
+  
+  if (!token || !user) {
+    throw new Error("User not authenticated");
+  }
+  
+  const res = await api.post("resources/friends", {
     token,
     id: user.id,
   });
@@ -23,13 +36,13 @@ export const getAllResources = async () => {
 
   if (!json.success) throw new Error("Failed to fetch resources");
 
-  const users = await getAllUsers(); // fetch all users once
-
+  // Backend already includes user data via Sequelize includes
+  // No need to fetch users separately!
   const enrichedResources = json.data.map((resource) => {
-    const user = users.find((u) => u.id === resource.user_id);
-
-    if (user) {
-      const username = user.username;
+    const userData = resource.User; // User data is already included from backend
+    
+    if (userData) {
+      const username = userData.username;
       const initials = username
         .split("_")
         .map((n) => n[0])
@@ -40,6 +53,8 @@ export const getAllResources = async () => {
         ...resource,
         user_name: username,
         initials,
+        // Remove the nested User object to avoid duplication
+        User: undefined,
       };
     }
 
@@ -47,6 +62,7 @@ export const getAllResources = async () => {
       ...resource,
       user_name: `User ${resource.user_id.slice(0, 4)}`,
       initials: resource.user_id.slice(0, 2).toUpperCase(),
+      User: undefined,
     };
   });
 
@@ -55,11 +71,14 @@ export const getAllResources = async () => {
 
 // Get all friends for current user
 export const getAllFriends = async () => {
+  const token = getToken();
+  const user = getUser();
+  
+  if (!token || !user) {
+    throw new Error("User not authenticated");
+  }
 
-  const res = await api.post("friends", {
-    token,
-    id: user.id,
-  });
+  const res = await api.post("friends", {});
 
   const json = res.data;
 
@@ -71,12 +90,12 @@ export const getAllFriends = async () => {
 
 // Get pending friend requests
 export const getPendingFriendRequests = async () => {
-  if (!user?.id) throw new Error("User not logged in");
+  const token = getToken();
+  const user = getUser();
+  
+  if (!token || !user?.id) throw new Error("User not logged in");
 
-  const res = await api.post("friends/request/pending/users", {
-    token: user,
-    id: user.id,
-  });
+  const res = await api.post("friends/request/pending/users", {});
 
   const json = res.data;
   if (!json.success || !Array.isArray(json.followers)) {

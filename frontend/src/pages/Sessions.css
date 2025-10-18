@@ -273,5 +273,6 @@
 }
 .groups-grid {
   overflow-y: auto;
-  max-height: 80vh;
+  max-height: calc(100vh - 200px);
+  padding-right: 8px;
 }

@@ -14,6 +14,22 @@ export const getPrivateChatHistory = async (senderId, receiverId) => {
 };
 
 /*
+*GET LAST MESSAGE FOR EACH FRIEND
+*/
+export const getLastMessages = async (userId) => {
+  try {
+    const response = await api.get(`private-chats/last-messages`, {
+      params: { user_id: userId },
+    });
+
+    return response.data.data || [];
+  } catch (err) {
+    console.error("Failed to fetch last messages:", err);
+    return [];
+  }
+};
+
+/*
 *GET GROUP CHATS
 */
 export const getGroupChatHistory = async (groupId) => {
@@ -25,6 +41,23 @@ export const getGroupChatHistory = async (groupId) => {
     return response.data.data || [];
   } catch (err) {
     console.error("Failed to fetch group chat history:", err);
+    throw err;
+  }
+};
+
+/*
+*SEND GROUP CHAT MESSAGE
+*/
+export const sendGroupMessage = async (groupId, message) => {
+  try {
+    const response = await api.post(`group-chats`, {
+      groupId,
+      message,
+    });
+
+    return response.data;
+  } catch (err) {
+    console.error("Failed to send group message:", err);
     throw err;
   }
 };

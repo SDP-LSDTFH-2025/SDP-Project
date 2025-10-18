@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "./ui/button.jsx";
 import { useNavigate } from "react-router-dom";
+import { showError } from "../utils/toast";
 import {
   Card,
   CardContent,
@@ -86,7 +87,7 @@ export function Interests({ user }) {
       navigate("../success");
     } catch (error) {
       console.error("Capturing interests error:", error);
-      alert(error.message || "Something went wrong. Please try again.");
+      showError(error.message || "Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }

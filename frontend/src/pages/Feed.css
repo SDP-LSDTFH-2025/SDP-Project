@@ -1,6 +1,7 @@
 .feed{
   overflow: auto;
-  max-height: 80vh;
+  max-height: calc(100vh - 200px);
+  padding-right: 8px;
 }
 /* Search */
 .search-card {
@@ -33,4 +34,10 @@
   left: 15px;
   transform: translateY(-50%);
   color: #666;
+}
+
+/* Loading spinner animation */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }

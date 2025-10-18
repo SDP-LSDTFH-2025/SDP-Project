@@ -6,9 +6,10 @@
     sans-serif;
   overflow-y: auto;
   max-width: 900px;
-  max-height: 80vh;
+  max-height: calc(100vh - 120px);
   margin: 0 auto;
   background-color: #f8f9fa;
+  padding-right: 8px;
 }
 
 .progress-header {

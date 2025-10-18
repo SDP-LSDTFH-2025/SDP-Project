@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getAllFriends } from "../api/resources";
 import { showSuccess, showError } from "../utils/toast"; 
 import { getGroups } from "../api/groups";
+import { getUnreadNotificationCount } from "../api/notifications";
 
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import { Button } from "../components/ui/button";
@@ -61,6 +62,7 @@ function Home({ user }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
   const [events, setEvents] = useState([]);
+  const [notificationCount, setNotificationCount] = useState(0);
 
   const calendar_token = localStorage.getItem("calendar_token");
 
@@ -85,6 +87,18 @@ function Home({ user }) {
     queryFn: getGroups,
     staleTime: 15 * 60 * 1000,
     cacheTime: 17 * 60 * 1000,
+  });
+
+  const {
+    data: notificationCountData,
+    isLoading: notificationCountLoading,
+  } = useQuery({
+    enabled: !!user?.id,
+    queryKey: ["notificationCount"],
+    queryFn: () => getUnreadNotificationCount(user.id),
+    staleTime: 30 * 1000, // 30 seconds
+    cacheTime: 60 * 1000, // 1 minute
+    refetchInterval: 30 * 1000, // Refetch every 30 seconds
   });
 
   const friends = rawFriends.slice(0, 4).map((u) => ({
@@ -132,6 +146,13 @@ function Home({ user }) {
 
     fetchEvents();
   }, [calendar_token]);
+
+  // Update notification count when data changes
+  useEffect(() => {
+    if (notificationCountData?.success && typeof notificationCountData.data === 'number') {
+      setNotificationCount(notificationCountData.data);
+    }
+  }, [notificationCountData]);
 
   function logout() {
     localStorage.removeItem("user");
@@ -216,8 +237,33 @@ function Home({ user }) {
           <Button
             className={`nav-button ${activeView === "notifications" ? "active" : ""}`}
             onClick={() => handleNavigationClick("notifications")}
+            style={{ position: 'relative' }}
           >
             <Bell className="pics" />
+            {notificationCount > 0 && (
+              <Badge 
+                className="notification-badge"
+                style={{
+                  position: 'absolute',
+                  top: '-8px',
+                  right: '-8px',
+                  minWidth: '18px',
+                  height: '18px',
+                  borderRadius: '50%',
+                  backgroundColor: '#ef4444',
+                  color: 'white',
+                  fontSize: '11px',
+                  fontWeight: 'bold',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: '0 4px',
+                  border: '2px solid white'
+                }}
+              >
+                {notificationCount > 99 ? '99+' : notificationCount}
+              </Badge>
+            )}
           </Button>
           <Button
             className={`nav-button ${activeView === "profile" ? "active" : ""}`}
@@ -321,8 +367,32 @@ function Home({ user }) {
                   handleNavigationClick("notifications");
                   toggleMenu();
                 }}
+                style={{ position: 'relative' }}
               >
                 <Bell className="pics" /> Notifications
+                {notificationCount > 0 && (
+                  <Badge 
+                    style={{
+                      position: 'absolute',
+                      top: '-5px',
+                      right: '-5px',
+                      minWidth: '16px',
+                      height: '16px',
+                      borderRadius: '50%',
+                      backgroundColor: '#ef4444',
+                      color: 'white',
+                      fontSize: '10px',
+                      fontWeight: 'bold',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      padding: '0 3px',
+                      border: '1px solid white'
+                    }}
+                  >
+                    {notificationCount > 99 ? '99+' : notificationCount}
+                  </Badge>
+                )}
               </Button>
             </li>
             <li>
@@ -424,9 +494,33 @@ function Home({ user }) {
                     activeView === "notifications" ? "active" : ""
                   }`}
                   onClick={() => handleNavigationClick("notifications")}
+                  style={{ position: 'relative' }}
                 >
                   <Bell className="pics" />
                   Notifications
+                  {notificationCount > 0 && (
+                    <Badge 
+                      style={{
+                        position: 'absolute',
+                        top: '-5px',
+                        right: '-5px',
+                        minWidth: '16px',
+                        height: '16px',
+                        borderRadius: '50%',
+                        backgroundColor: '#ef4444',
+                        color: 'white',
+                        fontSize: '10px',
+                        fontWeight: 'bold',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        padding: '0 3px',
+                        border: '1px solid white'
+                      }}
+                    >
+                      {notificationCount > 99 ? '99+' : notificationCount}
+                    </Badge>
+                  )}
                 </Button>
               </CardContent>
             </Card>

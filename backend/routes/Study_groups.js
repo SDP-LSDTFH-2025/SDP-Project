@@ -105,6 +105,22 @@ router.post('/create', optimizedAuth, async(req,res)=>{
                 joined_at: new Date()
             });
         }
+
+        // Create notification for group creation
+        try {
+            const Notifications = require('../models/Notifications');
+            await Notifications.create({
+                user_id: id,
+                title: "Study Group Created",
+                message: `You successfully created "${title}" study group and added ${participants.length} participants.`,
+                read: false,
+                created_at: new Date()
+            });
+        } catch (notificationError) {
+            console.error('Failed to create notification for group creation:', notificationError);
+            // Don't fail the main request if notification creation fails
+        }
+
         res.status(200).json({message:"Group created successfully"});
     }
     catch(error){

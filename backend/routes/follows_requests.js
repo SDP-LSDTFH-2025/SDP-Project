@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const {Follows_requests} = require('../models');
 const {verifyToken, errorClass,recommendUsers} = require('../middleware/tools');
-const { User, Follows } = require('../models');
+const { User, Follows, Notifications } = require('../models');
 const { sequelize } = require('../config/database');
 const { optimizedAuth } = require('../middleware/optimizedAuth');
 
@@ -146,6 +146,21 @@ router.post('/request', optimizedAuth, async(req,res)=>{
             followee_id:friend.id,
             created_at:new Date()
         })
+
+        // Create notification for friend request
+        try {
+            const sender = await User.findByPk(userId);
+            await Notifications.create({
+                user_id: friend.id,
+                title: "New Friend Request",
+                message: `${sender.username.replaceAll("_", " ")} sent you a friend request.`,
+                read: false,
+                created_at: new Date()
+            });
+        } catch (notificationError) {
+            console.error('Failed to create notification for friend request:', notificationError);
+            // Don't fail the main request if notification creation fails
+        }
         
         console.log('Friend request created successfully');
         res.status(200).json({message:"friend request sent successfully",success:true});
@@ -273,6 +288,21 @@ router.post('/request/response', optimizedAuth, async (req, res) => {
                 transaction: t
             });
         });
+
+        // Create notification for friend request acceptance
+        try {
+            const accepter = await User.findByPk(userId);
+            await Notifications.create({
+                user_id: request.follower_id,
+                title: "Friend Request Accepted",
+                message: `${accepter.username.replaceAll("_", " ")} accepted your friend request.`,
+                read: false,
+                created_at: new Date()
+            });
+        } catch (notificationError) {
+            console.error('Failed to create notification for friend request acceptance:', notificationError);
+            // Don't fail the main request if notification creation fails
+        }
 
         await Follows_requests.destroy({where:{ id: requestID }})
         res.status(200).json({ message: "You are now friends",success:true });

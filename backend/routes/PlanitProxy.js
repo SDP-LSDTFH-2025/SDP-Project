@@ -314,32 +314,47 @@ router.post('/events', async (req, res) => {
     const response = await forwardToPlanit('POST', '/api/events', req, body);
     console.log("Planit create event response:", response);
     
-    // Check if the response is successful
-    if (response.status === 201) {
-      console.log("Planit API returned success status:", response.status);
-      console.log("Response data structure:", JSON.stringify(response.data, null, 2));
-      
-      // Check if we have an event ID to store locally (Planit uses _id for MongoDB)
-      const eventId = response.data?.id || response.data?._id;
-      if (eventId) {
-        try {
-          const event = await Events.create({
-            eventPlanner,
-            event_id: eventId
-          });
-          console.log("Successfully created local event record:", event);
-        } catch (dbError) {
-          console.error("Failed to create local event record:", dbError);
-          // Don't fail the entire request if local DB save fails
-          console.warn("Event created in Planit but failed to save locally");
+      // Check if the response is successful
+      if (response.status === 201) {
+        console.log("Planit API returned success status:", response.status);
+        console.log("Response data structure:", JSON.stringify(response.data, null, 2));
+        
+        // Check if we have an event ID to store locally (Planit uses _id for MongoDB)
+        const eventId = response.data?.id || response.data?._id;
+        if (eventId) {
+          try {
+            const event = await Events.create({
+              eventPlanner,
+              event_id: eventId
+            });
+            console.log("Successfully created local event record:", event);
+
+            // Create notification for session creation
+            try {
+              const Notifications = require('../models/Notifications');
+              await Notifications.create({
+                user_id: eventPlanner,
+                title: "Study Session Created",
+                message: `You successfully created "${body.title || 'a new study session'}" and it's now available for others to join.`,
+                read: false,
+                created_at: new Date()
+              });
+            } catch (notificationError) {
+              console.error('Failed to create notification for session creation:', notificationError);
+              // Don't fail the main request if notification creation fails
+            }
+          } catch (dbError) {
+            console.error("Failed to create local event record:", dbError);
+            // Don't fail the entire request if local DB save fails
+            console.warn("Event created in Planit but failed to save locally");
+          }
+        } else {
+          console.warn("Planit API returned success but no event ID found in response");
+          console.warn("Response data keys:", Object.keys(response.data || {}));
         }
-      } else {
-        console.warn("Planit API returned success but no event ID found in response");
-        console.warn("Response data keys:", Object.keys(response.data || {}));
-      }
-      
-      // Always return the Planit response for successful status codes
-      res.status(response.status).json(response.data);
+        
+        // Always return the Planit response for successful status codes
+        res.status(response.status).json(response.data);
     } else {
       console.error("Planit API returned error status:", response.status);
       console.error("Error response data:", response.data);

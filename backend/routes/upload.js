@@ -5,6 +5,7 @@ const { uploadSingle, uploadMultiple, handleUploadError } = require('../middlewa
 const { uploadPDF } = require('../middleware/upload');
 const Resources = require('../models/Resources');
 const User = require('../models/User');
+const Notifications = require('../models/Notifications');
 const { enhancedAuth } = require('../middleware/security');
 /**
  * @swagger
@@ -168,6 +169,20 @@ router.post('/picture',
           public_id: uploadResult.public_id,
           created_at: new Date()
         });
+
+        // Create notification for resource upload
+        try {
+            await Notifications.create({
+                user_id: user.id,
+                title: "New Resource Uploaded",
+                message: `You successfully uploaded "${title}" to the resource feed.`,
+                read: false,
+                created_at: new Date()
+            });
+        } catch (notificationError) {
+            console.error('Failed to create notification for resource upload:', notificationError);
+            // Don't fail the main request if notification creation fails
+        }
 
       res.json({
         success: true,
@@ -371,6 +386,21 @@ router.post('/pdf', uploadPDF, handleUploadError, async (req, res) => {
       description: description,
       created_at: new Date()
     });
+
+    // Create notification for resource upload
+    try {
+        await Notifications.create({
+            user_id: user.id,
+            title: "New Resource Uploaded",
+            message: `You successfully uploaded "${title}" to the resource feed.`,
+            read: false,
+            created_at: new Date()
+        });
+    } catch (notificationError) {
+        console.error('Failed to create notification for resource upload:', notificationError);
+        // Don't fail the main request if notification creation fails
+    }
+
     res.json({ success: true, message: 'PDF uploaded and resource created', data: resource });
   } catch (error) {
     console.error('PDF upload error:', error);

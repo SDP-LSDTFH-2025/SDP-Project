@@ -4,7 +4,7 @@ const multer = require('multer');
 const crypto = require('crypto');
 const { validate: isUUID } = require('uuid');
 const CloudinaryService = require('../services/cloudinaryService');
-const { Resources, User, Likes, Follows } = require('../models');
+const { Resources, User, Likes, Follows, Notifications } = require('../models');
 const { Op } = require('sequelize');
 const { optimizedAuth } = require('../middleware/optimizedAuth');
 
@@ -235,6 +235,20 @@ router.post('/', optimizedAuth, upload.fields([{ name: 'file', maxCount: 1 }, { 
             course_id: courseId,
             created_at: new Date()
         });
+
+        // Create notification for resource upload
+        try {
+            await Notifications.create({
+                user_id: user_id,
+                title: "New Resource Uploaded",
+                message: `You successfully uploaded "${title}" to the resource feed.`,
+                read: false,
+                created_at: new Date()
+            });
+        } catch (notificationError) {
+            console.error('Failed to create notification for resource upload:', notificationError);
+            // Don't fail the main request if notification creation fails
+        }
 
         res.json({ success: true, data: resource });
     } catch (error) {

@@ -9,6 +9,8 @@ import EmojiPicker from "../components/EmojiPicker";
 import VoiceRecorder from "../components/VoiceRecorder";
 import VideoCall from "../components/VideoCall";
 import VoiceCall from "../components/VoiceCall";
+import VoiceNoteRecorder from "../components/VoiceNoteRecorder";
+import VoiceNotePlayer from "../components/VoiceNotePlayer";
 
 function makeChatId(userA, userB) {
   return [userA, userB].sort().join(""); // consistent ID for both directions
@@ -25,6 +27,7 @@ export default function ChatWindow({ chat, onBack }) {
   const [videoCallData, setVideoCallData] = useState(null);
   const [isVoiceCallActive, setIsVoiceCallActive] = useState(false);
   const [voiceCallData, setVoiceCallData] = useState(null);
+  const [showVoiceNoteRecorder, setShowVoiceNoteRecorder] = useState(false);
 
   const lastTempIdSent = useRef(null);
   const typingTimeout = useRef(null);
@@ -87,7 +90,26 @@ export default function ChatWindow({ chat, onBack }) {
     const handleNewMessage = (msg) => {
       console.log("Incoming socket message:", msg);
 
-      if (msg.tempId && msg.tempId === lastTempIdSent.current) return;
+      // Skip if this is our own message that we already added locally
+      if (msg.tempId && msg.tempId === lastTempIdSent.current) {
+        // Update the local message with server response
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.tempId === msg.tempId
+              ? {
+                  ...m,
+                  id: msg.id,
+                  status: "sent",
+                  from: "me",
+                  type: msg.message_type || 'text',
+                  audioData: msg.audio_data,
+                  duration: msg.audio_duration
+                }
+              : m
+          )
+        );
+        return;
+      }
 
       if (makeChatId(msg.sender_id, msg.receiver_id) === chatId) {
         setMessages((prev) => [
@@ -101,11 +123,17 @@ export default function ChatWindow({ chat, onBack }) {
             }),
             timestamp: new Date(msg.created_at),
             id: msg.id || Date.now(),
-            status: msg.sender_id === currentUserId ? "sent" : "received"
+            status: msg.sender_id === currentUserId ? "sent" : "received",
+            type: msg.message_type || 'text',
+            audioData: msg.audio_data,
+            duration: msg.audio_duration
           },
         ]);
 
-        socket.emit("private:read", { fromUserId: msg.sender_id });
+        // Only emit read receipt for messages from other users
+        if (msg.sender_id !== currentUserId) {
+          socket.emit("private:read", { fromUserId: msg.sender_id });
+        }
       }
     };
 
@@ -128,40 +156,6 @@ export default function ChatWindow({ chat, onBack }) {
     };
   }, [chatId, currentUserId, chat.id, chat.username]);
 
-  const sendMessage = () => {
-    if (!input.trim()) return;
-
-    const tempId = Date.now();
-    lastTempIdSent.current = tempId;
-
-    const localMsg = {
-      from: "me",
-      text: input,
-      time: new Date().toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
-      timestamp: new Date(),
-      id: tempId,
-      status: "sending"
-    };
-    setMessages((prev) => [...prev, localMsg]);
-
-    socket.emit(
-      "private:message",
-      {
-        senderId: currentUserId,
-        receiverId: chat.id,
-        message: input,
-        tempId,
-      },
-      (ack) => {
-        if (!ack.ok) console.error("Message failed:", ack.error);
-      }
-    );
-
-    setInput("");
-  };
 
   const handleTyping = (e) => {
     setInput(e.target.value);
@@ -250,6 +244,108 @@ export default function ChatWindow({ chat, onBack }) {
   const endVoiceCall = () => {
     setIsVoiceCallActive(false);
     setVoiceCallData(null);
+  };
+
+  const toggleVoiceNoteRecorder = () => {
+    setShowVoiceNoteRecorder(!showVoiceNoteRecorder);
+  };
+
+  const handleVoiceNoteSend = (audioBlob) => {
+    // Convert blob to base64 for sending
+    const reader = new FileReader();
+    reader.onload = () => {
+      const base64Audio = reader.result;
+      
+      // Get duration from the audio blob
+      const audio = new Audio();
+      audio.src = URL.createObjectURL(audioBlob);
+      
+      const handleLoadedMetadata = () => {
+        const duration = audio.duration;
+        
+        // Create a voice note message
+        const voiceNoteMessage = {
+          type: 'voice_note',
+          audioData: base64Audio,
+          duration: duration,
+          tempId: `voice_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+        };
+
+        // Send the voice note message
+        sendMessage(voiceNoteMessage);
+        
+        // Clean up
+        URL.revokeObjectURL(audio.src);
+        audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
+      };
+      
+      audio.addEventListener('loadedmetadata', handleLoadedMetadata);
+      
+      // Fallback if metadata doesn't load
+      setTimeout(() => {
+        if (!audio.duration || isNaN(audio.duration)) {
+          console.warn('Could not get audio duration, using 0');
+          const voiceNoteMessage = {
+            type: 'voice_note',
+            audioData: base64Audio,
+            duration: 0,
+            tempId: `voice_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+          };
+          sendMessage(voiceNoteMessage);
+          URL.revokeObjectURL(audio.src);
+        }
+      }, 1000);
+    };
+    reader.readAsDataURL(audioBlob);
+    
+    // Close the recorder
+    setShowVoiceNoteRecorder(false);
+  };
+
+  const sendMessage = (messageData = null) => {
+    const messageToSend = messageData || {
+      type: 'text',
+      content: input.trim(),
+      tempId: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+    };
+
+    if (!messageToSend.content && !messageToSend.audioData && attachedFiles.length === 0) return;
+
+    const tempId = messageToSend.tempId || `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    lastTempIdSent.current = tempId;
+
+    // Add to local messages immediately
+    const newMessage = {
+      id: tempId,
+      sender_id: currentUserId,
+      receiver_id: chat.id,
+      message: messageToSend.content || (messageToSend.type === 'voice_note' ? '🎤 Voice note' : ''),
+      created_at: new Date().toISOString(),
+      tempId,
+      type: messageToSend.type,
+      audioData: messageToSend.audioData,
+      duration: messageToSend.duration
+    };
+
+    setMessages(prev => [...prev, newMessage]);
+
+    // Send via socket
+    socket.emit('private:message', {
+      senderId: currentUserId,
+      receiverId: chat.id,
+      message: newMessage.message,
+      tempId,
+      type: messageToSend.type,
+      audioData: messageToSend.audioData,
+      duration: messageToSend.duration
+    });
+
+    // Clear input and reset state
+    setInput("");
+    setAttachedFiles([]);
+    setShowEmojiPicker(false);
+    setShowVoiceRecorder(false);
+    setShowVoiceNoteRecorder(false);
   };
 
   // Listen for incoming calls (both video and voice)
@@ -347,7 +443,16 @@ export default function ChatWindow({ chat, onBack }) {
               <div key={msg.id || i} className={`whatsapp-message-wrapper ${msg.from}`}>
                 <div className={`whatsapp-message ${msg.from}`}>
                   <div className="whatsapp-message-content">
-                    <p>{msg.text}</p>
+                    {msg.type === 'voice_note' ? (
+                      <VoiceNotePlayer
+                        audioBlob={null}
+                        audioUrl={msg.audioData}
+                        duration={msg.duration}
+                        isOwnMessage={msg.from === "me"}
+                      />
+                    ) : (
+                      <p>{msg.text}</p>
+                    )}
                     <div className="whatsapp-message-meta">
                       <span className="whatsapp-time">{msg.time}</span>
                       {msg.from === "me" && (
@@ -441,15 +546,15 @@ export default function ChatWindow({ chat, onBack }) {
             >
               <Send size={20} />
             </Button>
-          ) : (
-            <Button 
-              className="whatsapp-mic-btn"
-              size="sm"
-              onClick={() => setShowVoiceRecorder(!showVoiceRecorder)}
-            >
-              <Mic size={20} />
-            </Button>
-          )}
+               ) : (
+                 <Button 
+                   className="whatsapp-mic-btn"
+                   size="sm"
+                   onClick={toggleVoiceNoteRecorder}
+                 >
+                   <Mic size={20} />
+                 </Button>
+               )}
         </div>
 
         {/* Emoji Picker */}
@@ -461,11 +566,11 @@ export default function ChatWindow({ chat, onBack }) {
           />
         )}
 
-        {/* Voice Recorder */}
-        {showVoiceRecorder && (
-          <VoiceRecorder
-            onRecordingComplete={handleVoiceRecordingComplete}
-            onCancel={() => setShowVoiceRecorder(false)}
+        {/* Voice Note Recorder */}
+        {showVoiceNoteRecorder && (
+          <VoiceNoteRecorder
+            onSend={handleVoiceNoteSend}
+            onCancel={() => setShowVoiceNoteRecorder(false)}
           />
         )}
       </div>

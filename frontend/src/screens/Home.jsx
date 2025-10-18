@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query"; 
 import { getAllFriends } from "../api/resources";
 import { showSuccess, showError } from "../utils/toast"; 
@@ -47,12 +47,34 @@ import Message from "./Message.jsx";
 import Notifications from "./Notifications.jsx";
 
 function Home({ user }) {
-  const [activeView, setActiveView] = useState("feed");
+  const location = useLocation();
+  const navigate = useNavigate();
+  
+  // Get the current view from URL hash or default to "feed"
+  const getCurrentView = () => {
+    const hash = location.hash.replace('#', '');
+    const validViews = ['feed', 'calendar', 'messages', 'friends', 'profile', 'sessions', 'progress', 'notifications', 'upload', 'requests', 'groups'];
+    return validViews.includes(hash) ? hash : 'feed';
+  };
+  
+  const [activeView, setActiveView] = useState(getCurrentView());
   const [title, setTitle] = useState("");
   const [courseId, setCourseId] = useState("");
   const [description, setDescription] = useState("");
   const [pdfFile, setPdfFile] = useState(null);
   const [pictureFile, setPictureFile] = useState(null);
+
+  // Sync URL with activeView state
+  useEffect(() => {
+    const currentView = getCurrentView();
+    setActiveView(currentView);
+  }, [location.hash]);
+
+  // Update URL when activeView changes
+  const updateActiveView = (view) => {
+    setActiveView(view);
+    navigate(`/home#${view}`, { replace: true });
+  };
   const [error, setError] = useState("");
   const [isFormValid, setIsFormValid] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
@@ -197,7 +219,7 @@ function Home({ user }) {
   }
 
   function handleNavigationClick(view) {
-    setActiveView(view);
+    updateActiveView(view);
   }
 
   const handleUploadSubmit = async (e) => {
@@ -241,7 +263,7 @@ function Home({ user }) {
         setDescription("");
         setPdfFile(null);
         setPictureFile(null);
-        setActiveView("feed");
+        updateActiveView("feed");
         showSuccess("Resource uploaded successfully!");
       } else {
         const errorMessage =
@@ -655,7 +677,7 @@ function Home({ user }) {
                 <h2>Resources</h2>
                 <Button
                   className="upload-btn"
-                  onClick={() => setActiveView("upload")}
+                  onClick={() => updateActiveView("upload")}
                 >
                   <Share2 className="pics" /> Upload Resource
                 </Button>

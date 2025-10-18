@@ -121,16 +121,34 @@ module.exports = function attachPrivateChatHandlers(nsp) {
     // Send a private message
     socket.on('private:message', async (payload, ack) => {
       try {
-        const { senderId, receiverId, message, tempId } = payload || {};
+        const { senderId, receiverId, message, tempId, type, audioData, duration } = payload || {};
         const effectiveSenderId = connectedUserId || senderId;
-        if (!effectiveSenderId || !receiverId || !message) {
-          return ack && ack({ ok: false, error: 'senderId, receiverId and message are required' });
+        
+        // Validate required fields based on message type
+        if (!effectiveSenderId || !receiverId) {
+          return ack && ack({ ok: false, error: 'senderId and receiverId are required' });
         }
+
+        // For text messages, message is required
+        if ((!type || type === 'text') && !message) {
+          return ack && ack({ ok: false, error: 'message is required for text messages' });
+        }
+
+        // For voice notes, audioData is required
+        if (type === 'voice_note' && !audioData) {
+          return ack && ack({ ok: false, error: 'audioData is required for voice notes' });
+        }
+
+        const messageType = type || 'text';
+        const messageText = message || (type === 'voice_note' ? '🎤 Voice note' : '');
 
         const record = await PrivateChats.create({
           sender_id: effectiveSenderId,
           receiver_id: receiverId,
-          message
+          message: messageText,
+          message_type: messageType,
+          audio_data: audioData || null,
+          audio_duration: duration || null
         });
 
         const dto = {
@@ -138,6 +156,9 @@ module.exports = function attachPrivateChatHandlers(nsp) {
           sender_id: record.sender_id,
           receiver_id: record.receiver_id,
           message: record.message,
+          message_type: record.message_type,
+          audio_data: record.audio_data,
+          audio_duration: record.audio_duration,
           created_at: record.created_at,
           tempId
         };
@@ -152,11 +173,12 @@ module.exports = function attachPrivateChatHandlers(nsp) {
             const User = require('../models/User');
             
             const sender = await User.findByPk(effectiveSenderId);
+            const messageTypeText = messageType === 'voice_note' ? 'voice note' : 'message';
             
             await Notifications.create({
                 user_id: receiverId,
                 title: "New Private Message",
-                message: `${sender.username.replaceAll("_", " ")} sent you a private message.`,
+                message: `${sender.username.replaceAll("_", " ")} sent you a ${messageTypeText}.`,
                 read: false,
                 created_at: new Date()
             });

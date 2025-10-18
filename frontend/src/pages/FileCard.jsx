@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { Heart, MessageCircle, Share2, Download, X } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Heart, MessageCircle, Share2, Download, X, MoreVertical, Edit, Trash2 } from "lucide-react";
 import {
   getAllUsers,
   getResourceComments,
   checkLike,
   toggleLike,
   addResourceComment,
+  deleteResource,
+  updateResource,
 } from "../api/resources";
 import "./FileCard.css";
 
@@ -17,6 +19,12 @@ const FileCard = ({ file }) => {
   const [likes, setLikes] = useState(file.likes || 0);
   const [liked, setLiked] = useState(false);
   const [showComments, setShowComments] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editTitle, setEditTitle] = useState(file.title);
+  const [editDescription, setEditDescription] = useState(file.description);
+  
+  const queryClient = useQueryClient();
 
   const storedUser = JSON.parse(localStorage.getItem("user"));
   const initial_user = storedUser.username
@@ -186,6 +194,85 @@ const FileCard = ({ file }) => {
     alert("Resource details copied to clipboard!");
   };
 
+  const handleDelete = async () => {
+    if (!window.confirm("Are you sure you want to delete this resource? This action cannot be undone.")) {
+      return;
+    }
+
+    try {
+      const data = await deleteResource(file.id);
+      if (data.success) {
+        // Invalidate and refetch the resources query to update the UI
+        queryClient.invalidateQueries({ queryKey: ["resources"] });
+        alert("Resource deleted successfully!");
+      } else {
+        alert("Failed to delete resource: " + (data.error || "Unknown error"));
+      }
+    } catch (err) {
+      console.error("Delete error:", err);
+      alert("Failed to delete resource: " + (err.message || "Unknown error"));
+    }
+  };
+
+  const handleEdit = () => {
+    setIsEditing(true);
+    setEditTitle(file.title);
+    setEditDescription(file.description);
+    setShowMenu(false);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editTitle.trim() || !editDescription.trim()) {
+      alert("Title and description cannot be empty");
+      return;
+    }
+
+    try {
+      const data = await updateResource(file.id, {
+        title: editTitle.trim(),
+        description: editDescription.trim(),
+      });
+      
+      if (data.success) {
+        // Update the file object with new data
+        file.title = editTitle.trim();
+        file.description = editDescription.trim();
+        setIsEditing(false);
+        // Invalidate and refetch the resources query to update the UI
+        queryClient.invalidateQueries({ queryKey: ["resources"] });
+        alert("Resource updated successfully!");
+      } else {
+        alert("Failed to update resource: " + (data.message || "Unknown error"));
+      }
+    } catch (err) {
+      console.error("Update error:", err);
+      alert("Failed to update resource: " + (err.message || "Unknown error"));
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+    setEditTitle(file.title);
+    setEditDescription(file.description);
+  };
+
+  // Check if current user is the owner of the resource
+  const isOwner = storedUser && file.user_id === storedUser.id;
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showMenu && !event.target.closest('.file-menu')) {
+        setShowMenu(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showMenu]);
+
   const isPdf = file.file_url?.toLowerCase().endsWith(".pdf");
 
   return (
@@ -201,12 +288,65 @@ const FileCard = ({ file }) => {
             </div>
           </div>
         </div>
-        <span className="file-badge">{isPdf ? "PDF" : "IMG"}</span>
+        <div className="file-header-right">
+          <span className="file-badge">{isPdf ? "PDF" : "IMG"}</span>
+          {isOwner && (
+            <div className="file-menu">
+              <button 
+                className="menu-button"
+                onClick={() => setShowMenu(!showMenu)}
+              >
+                <MoreVertical size={20} />
+              </button>
+              {showMenu && (
+                <div className="menu-dropdown">
+                  <button onClick={handleEdit} className="menu-item">
+                    <Edit size={16} />
+                    Edit
+                  </button>
+                  <button onClick={handleDelete} className="menu-item delete">
+                    <Trash2 size={16} />
+                    Delete
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Title & Description */}
-      <h3 className="file-title">{file.title}</h3>
-      <p className="file-description">{file.description}</p>
+      {isEditing ? (
+        <div className="edit-form">
+          <input
+            type="text"
+            className="edit-title-input"
+            value={editTitle}
+            onChange={(e) => setEditTitle(e.target.value)}
+            placeholder="Resource title"
+          />
+          <textarea
+            className="edit-description-input"
+            value={editDescription}
+            onChange={(e) => setEditDescription(e.target.value)}
+            placeholder="Resource description"
+            rows={3}
+          />
+          <div className="edit-actions">
+            <button onClick={handleSaveEdit} className="save-btn">
+              Save
+            </button>
+            <button onClick={handleCancelEdit} className="cancel-btn">
+              Cancel
+            </button>
+          </div>
+        </div>
+      ) : (
+        <>
+          <h3 className="file-title">{file.title}</h3>
+          <p className="file-description">{file.description}</p>
+        </>
+      )}
 
       {/* Preview */}
       <div className="file-preview" onClick={() => setShowModal(true)}>

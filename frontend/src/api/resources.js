@@ -141,3 +141,18 @@ export const addResourceComment = async ({ userId, fileId, message }) => {
   });
   return res.data;
 };
+
+// Delete resource
+export const deleteResource = async (resourceId) => {
+  const res = await api.delete(`resources/${resourceId}`);
+  return res.data;
+};
+
+// Update resource
+export const updateResource = async (resourceId, { title, description }) => {
+  const res = await api.put(`resources/${resourceId}`, {
+    title,
+    description,
+  });
+  return res.data;
+};

@@ -826,10 +826,7 @@ router.put('/:id', optimizedAuth, async (req, res) => {
       return res.status(404).json({ success: false, message: 'Resource not found' });
     }
 
-    // Update title/description
-    if (title) resource.title = title;
-    if (description) resource.description = description;
-
+    // Handle like increment (anyone can like)
     if (incrementLikes) {
       if (!userId) {
         return res.status(401).json({ success: false, message: 'User not authenticated' });
@@ -843,6 +840,18 @@ router.put('/:id', optimizedAuth, async (req, res) => {
         await resource.reload();
       }
     } else {
+      // For title/description updates, check ownership
+      if (!userId) {
+        return res.status(401).json({ success: false, message: 'User not authenticated' });
+      }
+
+      if (resource.user_id !== userId) {
+        return res.status(403).json({ success: false, message: 'You can only edit your own resources' });
+      }
+
+      // Update title/description
+      if (title) resource.title = title;
+      if (description) resource.description = description;
       await resource.save();
     }
 
@@ -915,12 +924,24 @@ router.put('/:id', optimizedAuth, async (req, res) => {
 router.delete('/:id', optimizedAuth, async (req, res) => {
     try {
         const resourceId = parseInt(req.params.id);
+        const userId = req.user?.id;
+
         if (isNaN(resourceId)) {
             return res.status(400).json({ success: false, error: 'Invalid resource ID' });
         }
+
+        if (!userId) {
+            return res.status(401).json({ success: false, error: 'User not authenticated' });
+        }
+
         const resource = await Resources.findByPk(resourceId);
         if (!resource) {
             return res.status(404).json({ success: false, error: 'Resource not found' });
+        }
+
+        // Check if user is the owner of the resource
+        if (resource.user_id !== userId) {
+            return res.status(403).json({ success: false, error: 'You can only delete your own resources' });
         }
 
         // Delete from Cloudinary if public_id exists

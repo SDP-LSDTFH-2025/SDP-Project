@@ -7,65 +7,7 @@ const Resources = require('../models/Resources');
 const User = require('../models/User');
 const Notifications = require('../models/Notifications');
 const { enhancedAuth } = require('../middleware/security');
-/**
- * @swagger
- * /api/v1/upload/test:
- *   get:
- *     summary: Test Cloudinary configuration
- *     tags: [Upload]
- *     responses:
- *       200:
- *         description: Cloudinary configuration test
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                 message:
- *                   type: string
- *                 config:
- *                   type: object
- *       500:
- *         description: Configuration error
- */
-router.get('/test', async (req, res) => {
-  try {
-    // Test Cloudinary configuration
-    const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
-    const apiKey = process.env.CLOUDINARY_API_KEY;
-    const apiSecret = process.env.CLOUDINARY_API_SECRET;
 
-    if (!cloudName || !apiKey || !apiSecret) {
-      return res.status(500).json({
-        success: false,
-        error: 'Cloudinary configuration missing. Please check your environment variables.',
-        missing: {
-          cloudName: !cloudName,
-          apiKey: !apiKey,
-          apiSecret: !apiSecret
-        }
-      });
-    }
-
-    res.json({
-      success: true,
-      message: 'Cloudinary configuration is valid',
-      config: {
-        cloudName: cloudName,
-        apiKey: apiKey ? `${apiKey.substring(0, 4)}...` : 'missing',
-        apiSecret: apiSecret ? `${apiSecret.substring(0, 4)}...` : 'missing'
-      }
-    });
-  } catch (error) {
-    console.error('Cloudinary test error:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to test Cloudinary configuration'
-    });
-  }
-});
 
 /**
  * @swagger

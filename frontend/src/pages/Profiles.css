@@ -94,7 +94,19 @@ body {
   border: none;
   transition: background 0.2s;
 }
-
+.sending{
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  background: #2563eb;
+  color: white;
+}
+.sending:hover {
+  background: #1d4ed8;
+}
 .friend-btn.add {
   background: #2563eb;
   color: white;
@@ -111,6 +123,13 @@ body {
 
 .friend-btn.unfriend:hover {
   background: #dc2626;
+}
+
+.friend-btn.sent {
+  background: #9ca3af;
+  color: white;
+  cursor: not-allowed;
+  opacity: 0.8;
 }
 
 .friend-status {

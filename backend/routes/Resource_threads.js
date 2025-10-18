@@ -1,7 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const { Resource_threads, User } = require('../models');
+const { Resource_threads, User, Resources, Notifications } = require('../models');
 const { Op } = require('sequelize');
+const { optimizedAuth } = require('../middleware/optimizedAuth');
 
 /**
  * @swagger
@@ -66,7 +67,7 @@ const { Op } = require('sequelize');
  *       500:
  *         description: Internal server error
  */
-router.post('/', async (req, res) => {
+router.post('/', optimizedAuth, async (req, res) => {
     const { user_id, resource_id, message, parent_id } = req.body;
 
     try {
@@ -96,6 +97,27 @@ router.post('/', async (req, res) => {
             parent_id: parent_id || null, // Allow null for top-level threads
             created_at: new Date()
         });
+
+        // Create notification for resource comment
+        try {
+            const commenter = await User.findByPk(user_id);
+            const resource = await Resources.findByPk(resource_id);
+            const resourceOwner = await User.findByPk(resource.user_id);
+            
+            // Only notify if the commenter is not the resource owner
+            if (resourceOwner.id !== user_id) {
+                await Notifications.create({
+                    user_id: resource.user_id,
+                    title: "New Comment on Resource",
+                    message: `${commenter.username.replaceAll("_", " ")} commented on your resource "${resource.title}".`,
+                    read: false,
+                    created_at: new Date()
+                });
+            }
+        } catch (notificationError) {
+            console.error('Failed to create notification for resource comment:', notificationError);
+            // Don't fail the main request if notification creation fails
+        }
 
         res.json({ success: true, data: resource_thread });
     } catch (error) {
@@ -212,7 +234,7 @@ router.get('/', async (req, res) => {
  *       500:
  *         description: Internal server error
  */
-router.put('/:id', async (req, res) => {
+router.put('/:id', optimizedAuth, async (req, res) => {
     const { message } = req.body;
 
     try {
@@ -256,7 +278,7 @@ router.put('/:id', async (req, res) => {
  *       500:
  *         description: Internal server error
  */
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', optimizedAuth, async (req, res) => {
     try {
         const resource_thread = await Resource_threads.findByPk(req.params.id);
         if (!resource_thread) {

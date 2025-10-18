@@ -5,8 +5,7 @@ const Progress = sequelize.define('progress', {
     id: {
         type: DataTypes.INTEGER,
         primaryKey: true,
-        allowNull: false,
-        unique: true,
+        autoIncrement: true,
     },
     user_id: {
         type: DataTypes.UUID,
@@ -18,15 +17,26 @@ const Progress = sequelize.define('progress', {
     },
     section: {
         type: DataTypes.STRING,
-        allowNull: false,
+        allowNull: true,
     },
     hours_studied: {
         type: DataTypes.FLOAT,
         allowNull: false,
     },
-    study_date: {
+    date_last_studied: {
         type: DataTypes.DATEONLY,
         allowNull: false,
+    },
+    progress:{
+        type:DataTypes.FLOAT,
+        allowNull: true
+    },
+    completed:{
+        type:DataTypes.BOOLEAN,
+        allowNull:true
+    },
+    study_days_streak: {
+        type: DataTypes.INTEGER
     }
 }, {
     tableName: "progress",

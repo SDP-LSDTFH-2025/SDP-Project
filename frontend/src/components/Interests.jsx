@@ -1,9 +1,16 @@
 import { useState, useEffect } from "react";
 import { Button } from "./ui/button.jsx";
-//import { Badge } from "./ui/badge.jsx";
 import { useNavigate } from "react-router-dom";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card.jsx";
-import "./styles/Interest.css"
+import { showError } from "../utils/toast";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle
+} from "./ui/card.jsx";
+import "./styles/Interest.css";
+import { registerInterests } from "../api/auth";
 
 const academicInterests = [
   "Mathematics", "Computer Science", "Physics", "Chemistry", "Biology",
@@ -22,12 +29,13 @@ const studyPreferences = [
 ];
 
 export function Interests({ user }) {
- const navigate = useNavigate();
+  const navigate = useNavigate();
   const [selectedInterests, setSelectedInterests] = useState([]);
   const [selectedPreferences, setSelectedPreferences] = useState([]);
   const [currentUser, setCurrentUser] = useState(user);
+  const [loading, setLoading] = useState(false);
 
-   useEffect(() => {
+  useEffect(() => {
     if (!currentUser) {
       const storedUser = localStorage.getItem("user");
       if (storedUser) {
@@ -36,196 +44,179 @@ export function Interests({ user }) {
     }
   }, [currentUser]);
 
-  if (!currentUser) {
-    return <p>Loading user info...</p>; // prevent null errors
-  }
+  if (!currentUser) return <p>Loading user info...</p>;
 
   const handleInterestToggle = (interest) => {
-    setSelectedInterests(prev => 
-      prev.includes(interest) 
-        ? prev.filter(i => i !== interest)
+    setSelectedInterests((prev) =>
+      prev.includes(interest)
+        ? prev.filter((i) => i !== interest)
         : [...prev, interest]
     );
   };
 
   const handlePreferenceToggle = (preference) => {
-    setSelectedPreferences(prev => 
-      prev.includes(preference) 
-        ? prev.filter(p => p !== preference)
+    setSelectedPreferences((prev) =>
+      prev.includes(preference)
+        ? prev.filter((p) => p !== preference)
         : [...prev, preference]
     );
   };
 
-  async function handleInterests(e) {
-    if (e) e.preventDefault(); // stop page reload
-
-    const registrationData = JSON.parse(localStorage.getItem("registrationData")) || {};
-    const userty = JSON.parse(localStorage.getItem("user"));
-
-    const payload = {
-      google_id: userty.google_id,
-      course: registrationData.course || "",
-      year_of_study: registrationData.year || "",
-      academic_interests: selectedInterests.join(", "),
-      study_preferences: selectedPreferences.join(", "),
-      institution: registrationData.university || "",
-      school: registrationData.faculty || ""
-    };
-    console.log(payload);
+  const handleInterests = async (e) => {
+    if (e) e.preventDefault();
+    setLoading(true);
 
     try {
-      const SERVER = import.meta.env.VITE_PROD_SERVER || import.meta.env.VITE_DEV_SERVER ;
+      const registrationData = JSON.parse(localStorage.getItem("registrationData")) || {};
+      const userty = JSON.parse(localStorage.getItem("user"));
 
-      // Send token to backend for verification  /* this shall be changend to env*/
-      const res = await fetch(`${SERVER}/api/v1/users/register`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
+      const payload = {
+        user_id: userty.id,
+        course: registrationData.course || "",
+        year_of_study: registrationData.year || "",
+        academic_interests: selectedInterests.join(", "),
+        study_preferences: selectedPreferences.join(", "),
+        institution: registrationData.university || "",
+        school: registrationData.faculty || ""
+      };
 
-
-      const data = await res.json();
-      console.log(data);
-
-      if (!res.ok) {
-        console.error("Backend error:", data);
-        alert(data.error || "Something went wrong.");
-        return;
-      }
+      const data = await registerInterests(payload);
 
       localStorage.setItem("payload", JSON.stringify(data));
       localStorage.removeItem("registrationData");
       navigate("../success");
-
     } catch (error) {
       console.error("Capturing interests error:", error);
-      alert("Something went wrong. Please try again.");
+      showError(error.message || "Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
     }
-  }
+  };
 
-  function onSkip(){
-    navigate("../success");
-  }
+  const onSkip = () => navigate("../success");
 
   return (
     <div className="interests-container">
-    <Card className="interests-card">
-      <CardHeader className="interests-header">
-        <CardTitle className="interests-title">Tell Us About Your Interests</CardTitle>
-        <CardDescription className="interests-description">Select your academic interests and study preferences to help us connect you with relevant content and study partners</CardDescription>
-      </CardHeader>
-  
-      <CardContent className="interests-content">
-        <form className="interests-form" onSubmit={handleInterests}>
-          <div className="interests-sections">
-            <section className="interest-section">
-              <h3 className="section-title">Academic Interests</h3>
-              <p className="section-description">Select subjects and topics you're interested in or studying</p>
-              <div className="badge-container">
-                {academicInterests.map((interest) => (
-                  <span
-                    key={interest}
-                    className={`interest-badge ${
-                      selectedInterests.includes(interest) ? "selected" : ""
-                    }`}
-                    onClick={() => handleInterestToggle(interest)}
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault();
-                        handleInterestToggle(interest);
-                      }
-                    }}
-                    aria-pressed={selectedInterests.includes(interest)}
-                  >
-                    {interest}
-                  </span>
-                ))}
-              </div>
-            </section>
-  
-            <section className="interest-section">
-              <h3 className="section-title">Study Preferences</h3>
-              <p className="section-description">Select your preferred ways of learning and studying</p>
-              <div className="badge-container">
-                {studyPreferences.map((pref) => (
-                  <span
-                    key={pref}
-                    className={`interest-badge ${
-                      selectedPreferences.includes(pref) ? "selected" : ""
-                    }`}
-                    onClick={() => handlePreferenceToggle(pref)}
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault();
-                        handlePreferenceToggle(pref);
-                      }
-                    }}
-                    aria-pressed={selectedPreferences.includes(pref)}
-                  >
-                    {pref}
-                  </span>
-                ))}
-              </div>
-            </section>
-          </div>
-  
-          {(selectedInterests.length > 0 || selectedPreferences.length > 0) && (
-            <div className="selections-summary">
-              <h4 className="summary-title">Your Selections:</h4>
-              {selectedInterests.length > 0 && (
-                <div className="summary-section">
-                  <p className="summary-label">Academic Interests ({selectedInterests.length}):</p>
-                  <div className="summary-badges">
-                    {selectedInterests.map(i => (
-                      <span key={i} className="summary-badge">{i}</span>
-                    ))}
-                  </div>
+      <Card className="interests-card">
+        <CardHeader className="interests-header">
+          <CardTitle className="interests-title">Tell Us About Your Interests</CardTitle>
+          <CardDescription className="interests-description">
+            Select your academic interests and study preferences to help us connect you with relevant content and study partners
+          </CardDescription>
+        </CardHeader>
+
+        <CardContent className="interests-content">
+          <form className="interests-form" onSubmit={handleInterests}>
+            <div className="interests-sections">
+              {/* Academic Interests */}
+              <section className="interest-section">
+                <h3 className="section-title">Academic Interests</h3>
+                <p className="section-description">
+                  Select subjects and topics you're interested in or studying
+                </p>
+                <div className="badge-container">
+                  {academicInterests.map((interest) => (
+                    <span
+                      key={interest}
+                      className={`interest-badge ${selectedInterests.includes(interest) ? "selected" : ""}`}
+                      onClick={() => handleInterestToggle(interest)}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          handleInterestToggle(interest);
+                        }
+                      }}
+                      aria-pressed={selectedInterests.includes(interest)}
+                    >
+                      {interest}
+                    </span>
+                  ))}
                 </div>
-              )}
-              {selectedPreferences.length > 0 && (
-                <div className="summary-section">
-                  <p className="summary-label">Study Preferences ({selectedPreferences.length}):</p>
-                  <div className="summary-badges">
-                    {selectedPreferences.map(p => (
-                      <span key={p} className="summary-badge">{p}</span>
-                    ))}
-                  </div>
+              </section>
+
+              {/* Study Preferences */}
+              <section className="interest-section">
+                <h3 className="section-title">Study Preferences</h3>
+                <p className="section-description">
+                  Select your preferred ways of learning and studying
+                </p>
+                <div className="badge-container">
+                  {studyPreferences.map((pref) => (
+                    <span
+                      key={pref}
+                      className={`interest-badge ${selectedPreferences.includes(pref) ? "selected" : ""}`}
+                      onClick={() => handlePreferenceToggle(pref)}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          handlePreferenceToggle(pref);
+                        }
+                      }}
+                      aria-pressed={selectedPreferences.includes(pref)}
+                    >
+                      {pref}
+                    </span>
+                  ))}
                 </div>
-              )}
+              </section>
             </div>
-          )}
-  
-          <div className="interests-actions">
-            <Button
-              type="button"
-              className="action-button action-button-outline"
-              onClick={() => navigate("../registration")}
-            >
-              Back
-            </Button>
-            <Button
-              type="button"
-              className="action-button action-button-ghost"
-              onClick={onSkip}
-            >
-              Skip for now
-            </Button>
-            <Button
-              type="submit"
-              className="action-button action-button-primary"
-              disabled={!(selectedInterests.length > 0 || selectedPreferences.length > 0)}
-            >
-              Continue
-            </Button>
-          </div>
-        </form>
-      </CardContent>
-    </Card>
-  </div>
-  
+
+            {(selectedInterests.length > 0 || selectedPreferences.length > 0) && (
+              <div className="selections-summary">
+                <h4 className="summary-title">Your Selections:</h4>
+                {selectedInterests.length > 0 && (
+                  <div className="summary-section">
+                    <p className="summary-label">Academic Interests ({selectedInterests.length}):</p>
+                    <div className="summary-badges">
+                      {selectedInterests.map((i) => (
+                        <span key={i} className="summary-badge">{i}</span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {selectedPreferences.length > 0 && (
+                  <div className="summary-section">
+                    <p className="summary-label">Study Preferences ({selectedPreferences.length}):</p>
+                    <div className="summary-badges">
+                      {selectedPreferences.map((p) => (
+                        <span key={p} className="summary-badge">{p}</span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            <div className="interests-actions">
+              <Button
+                type="button"
+                className="action-button action-button-outline"
+                onClick={() => navigate("../registration")}
+              >
+                Back
+              </Button>
+              <Button
+                type="button"
+                className="action-button action-button-ghost"
+                onClick={onSkip}
+              >
+                Skip for now
+              </Button>
+              <Button
+                type="submit"
+                className="action-button action-button-primary"
+                disabled={!(selectedInterests.length > 0 || selectedPreferences.length > 0) || loading}
+              >
+                {loading ? "Saving..." : "Continue"}
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+    </div>
   );
 }

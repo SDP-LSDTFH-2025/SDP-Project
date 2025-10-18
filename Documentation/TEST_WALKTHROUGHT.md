@@ -55,6 +55,12 @@
 
   **reason**: To get all users or specific users.
 
+* [x] **Test-User-Get-notification**
+
+  **desc**: Check if we can get users by Id or All.
+
+  **reason**: To get all users or specific users.
+
 * ~~[ ] **Authentication**~~
 
   **desc**: Testing the authentication endpoint directly.

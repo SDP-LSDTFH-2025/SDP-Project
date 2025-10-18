@@ -146,6 +146,25 @@ module.exports = function attachPrivateChatHandlers(nsp) {
         if (receiverId) nsp.to(`user-${receiverId}`).emit('private:message:new', dto);
         socket.emit('private:message:new', dto);
 
+        // Create notification for private message
+        try {
+            const Notifications = require('../models/Notifications');
+            const User = require('../models/User');
+            
+            const sender = await User.findByPk(effectiveSenderId);
+            
+            await Notifications.create({
+                user_id: receiverId,
+                title: "New Private Message",
+                message: `${sender.username.replaceAll("_", " ")} sent you a private message.`,
+                read: false,
+                created_at: new Date()
+            });
+        } catch (notificationError) {
+            console.error('Failed to create notification for private message:', notificationError);
+            // Don't fail the main request if notification creation fails
+        }
+
         return ack && ack({ ok: true, data: dto });
       } catch (e) {
         return ack && ack({ ok: false, error: 'failed_to_send' });
@@ -169,8 +188,12 @@ module.exports = function attachPrivateChatHandlers(nsp) {
       nsp.to(`user-${fromUserId}`).emit('private:read', { by: me });
     });
 
-    socket.on('disconnect', () => {
-      // No-op for now
+    socket.on('disconnect', ({ chatId }) => {
+      socket.emit('private:user:left', {
+        userId: connectedUserId,
+        chatId,
+        timestamp: new Date().toISOString()
+      });
     });
   });
 };

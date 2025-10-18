@@ -4,8 +4,9 @@ const multer = require('multer');
 const crypto = require('crypto');
 const { validate: isUUID } = require('uuid');
 const CloudinaryService = require('../services/cloudinaryService');
-const { Resources, User,Likes } = require('../models');
+const { Resources, User, Likes, Follows, Notifications } = require('../models');
 const { Op } = require('sequelize');
+const { optimizedAuth } = require('../middleware/optimizedAuth');
 
 // Configure multer for file uploads
 const storage = multer.memoryStorage();
@@ -159,7 +160,7 @@ const upload = multer({
  *                 error:
  *                   type: string
  */
-router.post('/', upload.fields([{ name: 'file', maxCount: 1 }, { name: 'picture', maxCount: 1 }]), async (req, res) => {
+router.post('/', optimizedAuth, upload.fields([{ name: 'file', maxCount: 1 }, { name: 'picture', maxCount: 1 }]), async (req, res) => {
     const { user_id, course_id, title, description } = req.body;
     const file = req.files?.file?.[0];
     const picture = req.files?.picture?.[0];
@@ -235,6 +236,20 @@ router.post('/', upload.fields([{ name: 'file', maxCount: 1 }, { name: 'picture'
             created_at: new Date()
         });
 
+        // Create notification for resource upload
+        try {
+            await Notifications.create({
+                user_id: user_id,
+                title: "New Resource Uploaded",
+                message: `You successfully uploaded "${title}" to the resource feed.`,
+                read: false,
+                created_at: new Date()
+            });
+        } catch (notificationError) {
+            console.error('Failed to create notification for resource upload:', notificationError);
+            // Don't fail the main request if notification creation fails
+        }
+
         res.json({ success: true, data: resource });
     } catch (error) {
         console.error('Resource creation failed:', error);
@@ -268,10 +283,112 @@ router.post('/', upload.fields([{ name: 'file', maxCount: 1 }, { name: 'picture'
  */
 router.get('/all', async (req, res) => {
     try{
-    const resources = await Resources.findAll();
+    const { limit = 50, offset = 0 } = req.query;
+    
+    const resources = await Resources.findAll({
+        include: [{
+            model: User,
+            attributes: ['id', 'username', 'institution', 'school']
+        }],
+        limit: parseInt(limit),
+        offset: parseInt(offset),
+        order: [['created_at', 'DESC']]
+    });
+    
     res.json({ success: true, data: resources });
     } catch (error) {
         console.error('Get all resources error:', error);
+        res.status(500).json({ success: false, error: 'Internal server error' });
+    }
+});
+
+/**
+ * @swagger
+ * /api/v1/resources/friends:
+ *   post:
+ *     summary: Get resources from friends only
+ *     tags: [Resources]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - token
+ *               - id
+ *             properties:
+ *               token:
+ *                 type: string
+ *                 description: Firebase JWT token
+ *               id:
+ *                 type: string
+ *                 format: uuid
+ *                 description: ID of the user whose friends' resources are being retrieved
+ *     responses:
+ *       200:
+ *         description: List of resources from friends
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Resource'
+ *       400:
+ *         description: Missing required information
+ *       500:
+ *         description: Internal server error
+ */
+router.post('/friends', optimizedAuth, async (req, res) => {
+    try {
+        const { token, id } = req.body;
+
+        if (!token || !id) {
+            return res.status(400).json({ success: false, error: 'Token and user ID are required' });
+        }
+
+        // Add cache headers for better performance
+        res.setHeader('Cache-Control', 'private, max-age=300'); // 5 minutes cache
+
+        // Get all friends (both followers and followees - mutual friends)
+        const followers = await Follows.findAll({ where: { followee_id: id } });
+        const followees = await Follows.findAll({ where: { follower_id: id } });
+        
+        // Combine both directions to get mutual friends
+        const friendIds = [
+            ...followers.map(f => f.follower_id),
+            ...followees.map(f => f.followee_id)
+        ];
+
+        // Remove duplicates
+        const uniqueFriendIds = [...new Set(friendIds)];
+
+        // If no friends, return empty array
+        if (uniqueFriendIds.length === 0) {
+            return res.json({ success: true, data: [] });
+        }
+
+        // Get resources from friends only with user data
+        const resources = await Resources.findAll({
+            where: { user_id: { [Op.in]: uniqueFriendIds } },
+            include: [{
+                model: User,
+                attributes: ['id', 'username', 'institution', 'school']
+            }],
+            order: [['created_at', 'DESC']],
+            limit: 50, // Add pagination
+            // Add index hint for better performance
+            raw: false // Ensure we get full objects for includes
+        });
+
+        res.json({ success: true, data: resources });
+    } catch (error) {
+        console.error('Get friends resources error:', error);
         res.status(500).json({ success: false, error: 'Internal server error' });
     }
 });
@@ -427,8 +544,13 @@ router.get('/', async (req, res) => {
         const where = title ? { title: { [Op.iLike]: `%${title}%` } } : {};
         const resources = await Resources.findAll({
             where,
+            include: [{
+                model: User,
+                attributes: ['id', 'username', 'institution', 'school']
+            }],
             limit: parseInt(limit),
             offset: parseInt(offset),
+            order: [['created_at', 'DESC']]
         });
         res.json({ success: true, data: resources });
     } catch (error) {
@@ -515,8 +637,13 @@ router.get('/course/:id', async (req, res) => {
         }
         const resources = await Resources.findAll({
             where: { course_id: courseId },
+            include: [{
+                model: User,
+                attributes: ['id', 'username', 'institution', 'school']
+            }],
             limit: parseInt(limit),
             offset: parseInt(offset),
+            order: [['created_at', 'DESC']]
         });
         res.json({ success: true, data: resources });
     } catch (error) {
@@ -619,8 +746,13 @@ router.get('/user/:id', async (req, res) => {
         }
         const resources = await Resources.findAll({
             where: { user_id: userId },
+            include: [{
+                model: User,
+                attributes: ['id', 'username', 'institution', 'school']
+            }],
             limit: parseInt(limit),
             offset: parseInt(offset),
+            order: [['created_at', 'DESC']]
         });
         res.json({ success: true, data: resources });
     } catch (error) {
@@ -679,7 +811,7 @@ router.get('/user/:id', async (req, res) => {
  *       500:
  *         description: Internal server error
  */
-router.put('/:id', async (req, res) => {
+router.put('/:id', optimizedAuth, async (req, res) => {
   try {
     const resourceId = parseInt(req.params.id, 10);
     const { title, description, incrementLikes } = req.body;
@@ -780,7 +912,7 @@ router.put('/:id', async (req, res) => {
  *                 error:
  *                   type: string
  */
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', optimizedAuth, async (req, res) => {
     try {
         const resourceId = parseInt(req.params.id);
         if (isNaN(resourceId)) {

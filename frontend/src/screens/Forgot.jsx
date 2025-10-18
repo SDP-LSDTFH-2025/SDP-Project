@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { showSuccess } from "../utils/toast";
 import "./Forgot.css";
 
 function Forgot() {
@@ -10,7 +11,7 @@ function Forgot() {
     console.log("Password reset requested for:", email);
 
     // Call your backend API here
-    alert("If this email exists, you’ll receive a reset link.");
+    showSuccess("If this email exists, you'll receive a reset link.");
   };
 
   return (

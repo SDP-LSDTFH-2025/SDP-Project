@@ -6,9 +6,13 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 const compression = require('compression');
 const rateLimit = require('express-rate-limit');
-const swaggerJsdoc = require('swagger-jsdoc');
-const swaggerUi = require('swagger-ui-express');
+const { generateAllSwaggerSpecs } = require('./config/swagger');
+const { createMainApiSwaggerUI, createPublicApiSwaggerUI } = require('./config/swagger/uiConfig');
+const path = require('path');
+
+// Load env from project root .env if present, then fallback to backend/env
 require('dotenv').config();
+require('dotenv').config({ path: path.join(__dirname, '.env') });
 const router = require('express').Router();
 const { sequelize } = require('./config/database');
 const routes = require('./routes');
@@ -19,6 +23,7 @@ const {
   securityHeaders, 
   requestSizeLimit 
 } = require('./middleware/security');
+const { optimizedAuth } = require('./middleware/optimizedAuth');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -26,44 +31,8 @@ const http = require('http');
 const { createSocketServer } = require('./sockets/server');
 
 
-// Swagger configuration
-const swaggerOptions = {
-  definition: {
-    openapi: '3.0.0',
-    info: {
-      title: 'SDP Project API',
-      version: '1.0.0',
-      description: 'Backend API for SDP Project',
-      contact: {
-        name: 'API Support',
-        email: 'support@example.com'
-      }
-    },
-    servers: [
-      {
-        url: `http://localhost:${PORT}`,
-        description: 'Development server'
-      }
-      ,
-      {
-        url: `ws://localhost:${PORT}${(process.env.API_PREFIX||'/api/v1').replace(/\/$/, '')}/sockets`,
-        description: 'WebSocket (Socket.IO namespace with API prefix)'
-      }
-    ],
-    components: {
-      securitySchemes: {
-        bearerAuth: {
-          type: 'http',
-          scheme: 'bearer',
-          bearerFormat: 'JWT'
-        }
-      }
-    }
-  },
-  apis: ['./routes/*.js', './models/*.js', './sockets/*.js']
-};
-
-const swaggerSpec = swaggerJsdoc(swaggerOptions);
+// Generate Swagger specifications
+const swaggerSpecs = generateAllSwaggerSpecs(PORT);
 
 // Rate limiting
 const limiter = rateLimit({
@@ -79,9 +48,11 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
-      scriptSrc: ["'self'"],
-      imgSrc: ["'self'", "data:", "https:"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://accounts.google.com"],
+      scriptSrc: ["'self'", "https://accounts.google.com", "https://apis.google.com"],
+      imgSrc: ["'self'", "data:", "https:", "https://accounts.google.com"],
+      connectSrc: ["'self'", "https://accounts.google.com", "https://www.googleapis.com"],
+      frameSrc: ["'self'", "https://accounts.google.com"],
     },
   },
   crossOriginEmbedderPolicy: false,
@@ -93,20 +64,50 @@ app.use(speedLimiter);
 
 // Standard middleware
 app.use(compression());
-app.use(cors({
+
+// CORS configuration
+// Define API prefix and public API path
+const apiPrefix = (process.env.API_PREFIX || '/api/v1').replace(/\/$/, '');
+const publicApiPath = `${apiPrefix}/public`;
+
+// 1) Permissive CORS for public API routes only
+app.use(publicApiPath, cors({
+  origin: true, // reflect request origin (allows any origin)
+  credentials: false,
+  methods: ['GET', 'POST', 'DELETE', 'OPTIONS', 'PATCH', 'PUT'],
+  allowedHeaders: [
+    'Content-Type',
+    'Authorization',
+    'user_id',
+    'x-user-id',
+    'x-requested-with',
+    'x-auth-token',
+    'x-csrf-token',
+    'x-xsrf-token',
+    'x-api-key',
+    'x-client-id',
+    'x-client-secret',
+    'x-client-token',
+    'x-client-refresh-token',
+    'x-client-access-token'
+  ]
+}));
+
+// 2) Restricted CORS for the rest of the app
+const restrictedCors = cors({
   origin: function(origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
-    
+    if (!origin) return callback(null, true); // Allow non-browser and curl
+
     const allowedOrigins = [
       process.env.PROD_LIVE_HOST,
       process.env.PROD_PREVIEW_HOST,
       process.env.CORS_ORIGIN,
+      process.env.PLANIT_BASE_URL,
       'http://localhost:5173',
       'http://localhost:5174',
       'http://localhost:3000'
-    ].filter(Boolean); // Remove undefined values
-    
+    ].filter(Boolean);
+
     if (allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
@@ -115,18 +116,44 @@ app.use(cors({
     }
   },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
-app.use(express.json({ limit: '100mb' }));
-app.use(express.urlencoded({ extended: true, limit: '100mb' }));
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH', 'HEAD'],
+  allowedHeaders: [
+    'Content-Type',
+    'Authorization',
+    'user_id',
+    'x-user-id',
+    'x-requested-with',
+    'x-auth-token',
+    'x-csrf-token',
+    'x-xsrf-token',
+    'x-api-key',
+    'x-client-id',
+    'x-client-secret',
+    'x-client-token',
+    'x-client-refresh-token',
+    'x-client-access-token'
+  ]
+});
+
+// Apply restricted CORS except for public API path (already handled above)
+app.use((req, res, next) => {
+  if (req.path.startsWith(publicApiPath)) return next();
+  return restrictedCors(req, res, next);
+});
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(morgan('combined'));
 
 // Apply rate limiting to all requests
 app.use(limiter);
 
 // Swagger documentation
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+// Main API docs
+app.use('/api-docs', ...createMainApiSwaggerUI(swaggerSpecs.mainApi));
+
+// Public Resources API docs
+app.use('/public-resources/api-docs', ...createPublicApiSwaggerUI(swaggerSpecs.publicApi));
+
 
 app.get('/health', (req, res) => {
   res.json({
@@ -155,16 +182,17 @@ async function startServer() {
     // Test database connection
     await sequelize.authenticate();
     console.log('✅ Database connection established successfully.');
-    //await sequelize.sync({ alter:true  });
+  
 
 
-    console.log('✅ Database synchronized successfully.');
+ 
     // Start HTTP + Socket server
     const server = http.createServer(app);
     const allowedOrigins = [
       process.env.PROD_LIVE_HOST,
       process.env.PROD_PREVIEW_HOST,
       process.env.CORS_ORIGIN,
+      process.env.PLANIT_BASE_URL,
       'http://localhost:5173',
       'http://localhost:5174',
       'http://localhost:3000'
@@ -174,6 +202,7 @@ async function startServer() {
     server.listen(PORT, () => {
       console.log(`🚀 Server is running on port ${PORT}`);
       console.log(`📚 API Documentation available at: ${process.env.BACKEND_URL}/api-docs`);
+      console.log(`📚 Public Resources API Documentation available at: ${process.env.BACKEND_URL}/public-resources/api-docs`);
     });
 
   } catch (error) {

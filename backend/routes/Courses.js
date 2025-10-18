@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { Courses,UserCourses } = require('../models');
 const { Op } = require('sequelize');
+const { optimizedAuth } = require('../middleware/optimizedAuth');
 
 // Debug: Check if Courses model is properly loaded
 console.log('Courses model loaded:', !!Courses);
@@ -122,7 +123,7 @@ router.get('/', async (req, res) => {
  *         description: Internal server error
  *      
  */
-router.post('/add', async (req, res) => {
+router.post('/add', optimizedAuth, async (req, res) => {
   try {
     const { code, name, school, approved, created_by } = req.body;
     
@@ -192,7 +193,7 @@ router.post('/add', async (req, res) => {
  *       500:
  *         description: Internal server error
  */
-router.put('/update', async (req, res) => {
+router.put('/update', optimizedAuth, async (req, res) => {
   try {
     const { code, name, school, approved, created_by } = req.body;
 
@@ -264,7 +265,7 @@ router.put('/update', async (req, res) => {
  *       500:
  *         description: Internal server error
  */
-router.delete('/', async (req, res) => {
+router.delete('/', optimizedAuth, async (req, res) => {
   try {
     const {created_by, code} = req.body;
 
@@ -679,7 +680,7 @@ router.get('/pending', async (req, res) => {
  *       500:
  *         description: Internal server error
  */
-router.put('/approve', async (req, res) => {
+router.put('/approve', optimizedAuth, async (req, res) => {
   try {
     const { approved = true, code } = req.body;
     const updatedCourse = await Courses.update({ approved }, { where: { code: req.body.code } });
@@ -734,7 +735,7 @@ router.put('/approve', async (req, res) => {
  *       500:
  *         description: Internal server error
  */
-router.put('/reject', async (req, res) => {
+router.put('/reject', optimizedAuth, async (req, res) => {
   try {
     const { code } = req.body;
     await Courses.update({ approved: false }, { where: { code: req.body.code } });

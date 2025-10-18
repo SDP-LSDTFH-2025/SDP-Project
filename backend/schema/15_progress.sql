@@ -1,5 +1,4 @@
 CREATE TABLE progress (
-  id SERIAL PRIMARY KEY,
   user_id VARCHAR,
   topic VARCHAR,
   section VARCHAR,

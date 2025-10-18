@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const { User, Likes, Resources } = require('../models');
+const { User, Likes, Resources, Notifications } = require('../models');
+const { optimizedAuth } = require('../middleware/optimizedAuth');
 
 /**
  * @swagger
@@ -191,7 +192,7 @@ router.get('/:id', async (req, res) => {
  *       409:
  *         description: User already liked resource
  */
-router.post('/:id', async (req, res) => {
+router.post('/:id', optimizedAuth, async (req, res) => {
   try {
     const resourceId = parseInt(req.params.id, 10);
     const { user_id } = req.body;
@@ -221,6 +222,26 @@ router.post('/:id', async (req, res) => {
 
     // **Increment resource likes**
     await resource.increment('likes', { by: 1 });
+
+    // Create notification for resource like
+    try {
+      const liker = await User.findByPk(user_id);
+      const resourceOwner = await User.findByPk(resource.user_id);
+      
+      // Only notify if the liker is not the resource owner
+      if (resourceOwner.id !== user_id) {
+        await Notifications.create({
+          user_id: resource.user_id,
+          title: "Resource Liked",
+          message: `${liker.username.replaceAll("_", " ")} liked your resource "${resource.title}".`,
+          read: false,
+          created_at: new Date()
+        });
+      }
+    } catch (notificationError) {
+      console.error('Failed to create notification for resource like:', notificationError);
+      // Don't fail the main request if notification creation fails
+    }
 
     res.status(201).json({ success: true, message: 'Resource liked successfully' });
   } catch (err) {
@@ -262,7 +283,7 @@ router.post('/:id', async (req, res) => {
  *       403:
  *         description: User has not liked this resource
  */
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', optimizedAuth, async (req, res) => {
   try {
     const resourceId = parseInt(req.params.id, 10);
     const { user_id } = req.body;

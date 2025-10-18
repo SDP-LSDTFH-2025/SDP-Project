@@ -1,7 +1,7 @@
 const express = require('express');
 const { body, validationResult, query } = require('express-validator');
-const { User, UserCourses } = require('../models');
-const { enhancedAuth } = require('../middleware/security');
+const { User, UserCourses, Courses, sequelize } = require('../models');
+const { optimizedAuth } = require('../middleware/optimizedAuth');
 const { Follows } = require('../models');
 const { Op } = require('sequelize');
 
@@ -70,11 +70,32 @@ router.get('/friends', [
       error: 'User not found'
     });
   }
-  const user_courses = await UserCourses.findAll({ where: { user_id } });
-  const friends = await UserCourses.findAll({ where: { course_id: { [Op.in]: user_courses.map(course => course.course_id) } } });
-  const friends_ids = friends.map(friend => friend.user_id);
-  const friends_who_are_not_following_this_user = await Follows.findAll({ where: { follower_id: { [Op.in]: friends_ids }, followee_id: { [Op.notIn]: [user_id] } } });
-  const friends_list = await User.findAll({ where: { id: { [Op.in]: friends_who_are_not_following_this_user.map(friend => friend.followee_id) } } });
+  // Optimized query to get friends in one go
+  const friends_list = await User.findAll({
+    include: [{
+      model: UserCourses,
+      as: 'UserCourses',
+      include: [{
+        model: Courses,
+        as: 'Course'
+      }]
+    }],
+    where: {
+      id: {
+        [Op.in]: sequelize.literal(`(
+          SELECT DISTINCT uc2.user_id 
+          FROM user_courses uc1 
+          JOIN user_courses uc2 ON uc1.course_id = uc2.course_id 
+          WHERE uc1.user_id = '${user_id}' 
+          AND uc2.user_id != '${user_id}'
+          AND uc2.user_id NOT IN (
+            SELECT follower_id FROM follows WHERE followee_id = '${user_id}'
+          )
+        )`)
+      }
+    },
+    limit: 50
+  });
   res.json({ success: true, data: friends_list });
   }
   catch(error){
@@ -222,11 +243,11 @@ router.get('/', async (req, res) => {
  *       500:
  *         description: Internal server error
  */
-router.post('/register', async (req, res) => {
+router.post('/register', optimizedAuth, async (req, res) => {
   try{
   console.log("Payload received on backend:", req.body)
   const {user_id,course,year_of_study,academic_interests,study_preferences,institution,school} = req.body;
-  const user = await User.findOne({where:{user_id}});
+  const user = await User.findOne({where:{id: user_id}});
   if (!user) {
     return res.status(404).json({
       success: false,
@@ -236,10 +257,10 @@ router.post('/register', async (req, res) => {
 
   await User.update(
   { course, year_of_study, academic_interests, study_preferences, institution, school },
-  { where: { user_id } }
+  { where: { id: user_id } }
 );
 
-const updated_user = await User.findOne({ where: { user_id } });
+const updated_user = await User.findOne({ where: { id: user_id } });
 
   res.json({
     success: true,

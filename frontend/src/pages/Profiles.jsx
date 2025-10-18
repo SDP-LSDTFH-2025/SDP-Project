@@ -1,17 +1,48 @@
 import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import "./Profiles.css";
 import { MapPin, Calendar, CircleDot, Circle } from "lucide-react";
+import { sendFriendRequest, getSentFriendRequests } from "../api/friends";
+import { showSuccess, showError } from "../utils/toast";
 
 const Profiles = ({ user }) => {
   
   const [isFriend, setIsFriend] = useState(false);
 
+  // Check if friend request has been sent
+  const {
+    data: sentRequestsData = { followers: [] },
+    isLoading: loadingSentRequests,
+  } = useQuery({
+    queryKey: ["sentRequests"],
+    queryFn: getSentFriendRequests,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const sentRequestUserIds = Array.isArray(sentRequestsData.followers) 
+    ? sentRequestsData.followers.map(sr => sr.user.id)
+    : [];
+  const hasSentRequest = sentRequestUserIds.includes(user?.id);
+
   if (!user) return <p>No profile data found.</p>;
 
-  const handleFriendToggle = () => {
-    setIsFriend((prev) => !prev);
-    // 🔹 TODO: Here you’d also call your backend API
-    // fetch(`/api/friends/toggle/${user.id}`, { method: "POST" })
+  const handleFriendToggle = async () => {
+    try {
+      const data = await sendFriendRequest({
+        username: user.username,
+      });
+      if (data.success) {
+        setIsFriend(true);
+        showSuccess(`Friend request sent to ${user.username}`);
+      } else {
+        showError(`Could not send friend request: ${data.message || data.response || 'Unknown error'}`);
+      }
+    } catch (err) {
+      console.error("Error sending friend request:", err);
+      const errorMessage = err.response?.data?.response || err.response?.data?.message || err.message || "Unknown error";
+      showError(`Error sending friend request: ${errorMessage}`);
+    }
   };
   
   return (
@@ -56,16 +87,33 @@ const Profiles = ({ user }) => {
           {/* 🔹 Friend button row */}
           <div className="friend-action">
             <button
-              className={`friend-btn ${isFriend ? "unfriend" : "add"}`}
-              onClick={handleFriendToggle}
+              className={`friend-btn ${hasSentRequest ? "sent" : isFriend ? "unfriend" : "add"}`}
+              onClick={hasSentRequest ? undefined : handleFriendToggle}
+              disabled={hasSentRequest}
             >
-              {isFriend ? "Unfriend" : "Add Friend"}
+              {hasSentRequest ? "Sent" : isFriend ? "Unfriend" : "Add Friend"}
             </button>
-            <button
-              className={`friend-btn ${isFriend ? "unfriend" : "add"}`}
-              onClick={handleFriendToggle}
+            <button 
+              className="sending"
+              onClick={() => {
+                // Navigate to messages and store the selected chat
+                window.location.href = '/home';
+                setTimeout(() => {
+                  // Store the selected chat in localStorage for the Message component to use
+                  localStorage.setItem("selectedChat", JSON.stringify({
+                    id: user.id,
+                    username: user.username,
+                    is_active: user.is_active,
+                    course: user.course || "",
+                    name: user.username.replaceAll("_", " "),
+                  }));
+                  // Trigger navigation to messages
+                  const event = new CustomEvent('navigateToMessages');
+                  window.dispatchEvent(event);
+                }, 100);
+              }}
             >
-              {isFriend ? "Send Message" : "Send Message"}
+              Send Message
             </button>
 
           </div>

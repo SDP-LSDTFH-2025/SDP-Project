@@ -6,6 +6,9 @@ body { background: #f7f8fb; }
   margin: 0;
   align-items: center;
   font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,system-ui,sans-serif;
+  overflow-y: auto;
+  max-height: calc(100vh - 120px);
+  padding-right: 8px;
 }
 
 /* HEADER CARD */

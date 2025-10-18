@@ -3,6 +3,7 @@
     height: 100vh;
     background: #f9f9f9;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    overflow: hidden;
   }
   
   /* Left sidebar (chat list) */
@@ -13,6 +14,8 @@
   }
   .chat-list-container {
     padding: 1rem;
+    overflow-y: auto;
+    max-height: calc(100vh - 60px);
   }
   .chat-item {
     display: flex;

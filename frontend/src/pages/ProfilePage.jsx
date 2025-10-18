@@ -154,12 +154,21 @@ const ProfilePage = () => {
                 <Edit size={16} className="icon" />
                 Edit
               </button>
-              <Link to="/messages" style={{ textDecoration: "none" }}>
-                <button className="messages-button">
-                  <MessageCircle size={16} className="icon" />
-                  Messages
-                </button>
-              </Link>
+              <button 
+                className="messages-button"
+                onClick={() => {
+                  // Navigate to messages
+                  window.location.href = '/home';
+                  setTimeout(() => {
+                    // Trigger navigation to messages
+                    const event = new CustomEvent('navigateToMessages');
+                    window.dispatchEvent(event);
+                  }, 100);
+                }}
+              >
+                <MessageCircle size={16} className="icon" />
+                Messages
+              </button>
             </>
           )}
         </div>

@@ -42,6 +42,7 @@
 .card-scroll {
   overflow-y: auto;
   max-height: 50vh;
+  padding-right: 8px;
 }
 
 .request-count {

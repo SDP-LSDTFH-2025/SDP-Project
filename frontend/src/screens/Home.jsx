@@ -123,6 +123,19 @@ function Home({ user }) {
     setIsFormValid(isValid);
   }, [title, courseId, description, pdfFile, pictureFile]);
 
+  // Listen for navigation to messages from other components
+  useEffect(() => {
+    const handleNavigateToMessages = () => {
+      handleNavigationClick("messages");
+    };
+
+    window.addEventListener('navigateToMessages', handleNavigateToMessages);
+    
+    return () => {
+      window.removeEventListener('navigateToMessages', handleNavigateToMessages);
+    };
+  }, []);
+
   useEffect(() => {
     async function fetchEvents() {
       if (!calendar_token) return;
@@ -718,12 +731,15 @@ function Home({ user }) {
             {friendsError && <p style={{ color: "red" }}>{friendsError.message}</p>}
             {friends.length > 0 ? (
               friends.map((f, i) => (
-                <Link
+                <div
                   key={i}
-                  to="/messages"
-                  state={{ chat: f }}
                   className="buddy-item"
-                  style={{ textDecoration: "none", color: "inherit" }}
+                  style={{ cursor: "pointer" }}
+                  onClick={() => {
+                    handleNavigationClick("messages");
+                    // Store the selected chat in localStorage for the Message component to use
+                    localStorage.setItem("selectedChat", JSON.stringify(f));
+                  }}
                 >
                   <div className="avatar">
                     {f.username
@@ -740,7 +756,7 @@ function Home({ user }) {
                       <span>{f.status}</span>
                     </div>
                   </div>
-                </Link>
+                </div>
               ))
             ) : (
               !friendsLoading && <p className="empty-text">No friends yet.</p>

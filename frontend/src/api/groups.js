@@ -210,18 +210,15 @@ export const joinSession = async ({ userId, eventId, userData }) => {
   console.log('Guest data being sent:', guestData);
   
   try {
-    const res = await api.post(`planit/guests/event/${eventId}`, guestData, {
-    headers: {
-      "user_id": userId,
-      "Content-Type": "application/json",
-    },
-  });
-  console.log("joinSession response:", res.data);
-  // Return success object for consistency
-  return { success: true, data: res.data };
+    // Use the new EventGuest API for consistency
+    const { addGuest } = await import('./EventGuest.js');
+    const guest = await addGuest(eventId, guestData);
+    
+    console.log("joinSession response:", guest);
+    return { success: true, data: guest };
   } catch (err) {
     console.error("joinSession error:", err);
-    throw new Error(err.response?.data?.error || "Failed to join session");
+    throw new Error(err.message || "Failed to join session");
   }
 };
 
@@ -263,5 +260,31 @@ export const deleteSession = async ({ userId, eventId }) => {
   } catch (err) {
     console.error("deleteSession error:", err);
     throw new Error(err.response?.data?.error || "Failed to delete session");
+  }
+};
+
+/*
+ * Get study sessions for calendar
+*/
+export const getStudySessions = async (userId) => {
+  try {
+    const res = await api.get("planit/study-sessions", {
+      headers: {
+        "user_id": userId,
+      },
+    });
+    
+    if (res.data.success) {
+      return res.data;
+    } else {
+      throw new Error(res.data.error || "Failed to fetch study sessions");
+    }
+  } catch (err) {
+    console.error("getStudySessions error:", err);
+    // Return empty sessions instead of throwing to prevent UI crash
+    return {
+      success: true,
+      sessions: []
+    };
   }
 };

@@ -14,6 +14,22 @@ export const getPrivateChatHistory = async (senderId, receiverId) => {
 };
 
 /*
+*GET LAST MESSAGE FOR EACH FRIEND
+*/
+export const getLastMessages = async (userId) => {
+  try {
+    const response = await api.get(`private-chats/last-messages`, {
+      params: { user_id: userId },
+    });
+
+    return response.data.data || [];
+  } catch (err) {
+    console.error("Failed to fetch last messages:", err);
+    return [];
+  }
+};
+
+/*
 *GET GROUP CHATS
 */
 export const getGroupChatHistory = async (groupId) => {

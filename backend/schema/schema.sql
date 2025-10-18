@@ -179,7 +179,10 @@ CREATE TABLE study_sessions (
   start_time TIMESTAMP,
   end_time TIMESTAMP,
   reminder_sent BOOLEAN,
-  FOREIGN KEY (user_id) REFERENCES users (google_id)
+  venue_name VARCHAR,
+  venue_id INTEGER,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users (id)
 );
 
 -- 17. Events table for Planit integration

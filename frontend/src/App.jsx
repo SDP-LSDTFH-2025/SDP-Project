@@ -7,6 +7,7 @@ import { Welcome } from "./components/Welcome.jsx";
 import { Registration } from "./components/Registration.jsx";
 import { Interests } from "./components/Interests.jsx";
 import { Success } from "./components/Success.jsx";
+import { CallProvider } from "./components/CallProvider.jsx";
 
 // ProtectedRoute wrapper to guard private routes
 function ProtectedRoute({ user, children }) {
@@ -44,32 +45,33 @@ export default function App() {
   if (loading) return <p>Loading...</p>; // Prevent route rendering before state restoration
 
   return (
-    <BrowserRouter>
-      <Toaster 
-        position="top-right"
-        toastOptions={{
-          duration: 4000,
-          style: {
-            background: '#363636',
-            color: '#fff',
-          },
-          success: {
-            duration: 3000,
-            iconTheme: {
-              primary: '#4ade80',
-              secondary: '#fff',
+    <CallProvider>
+      <BrowserRouter>
+        <Toaster 
+          position="top-right"
+          toastOptions={{
+            duration: 4000,
+            style: {
+              background: '#363636',
+              color: '#fff',
             },
-          },
-          error: {
-            duration: 5000,
-            iconTheme: {
-              primary: '#ef4444',
-              secondary: '#fff',
+            success: {
+              duration: 3000,
+              iconTheme: {
+                primary: '#4ade80',
+                secondary: '#fff',
+              },
             },
-          },
-        }}
-      />
-      <Routes>
+            error: {
+              duration: 5000,
+              iconTheme: {
+                primary: '#ef4444',
+                secondary: '#fff',
+              },
+            },
+          }}
+        />
+        <Routes>
         {/* Landing page */}
         <Route
           path="/"
@@ -101,7 +103,8 @@ export default function App() {
 
         {/* Welcome page (registration entry) */}
         <Route path="/welcome" element={<Welcome />} />
-      </Routes>
-    </BrowserRouter>
+        </Routes>
+      </BrowserRouter>
+    </CallProvider>
   );
 }

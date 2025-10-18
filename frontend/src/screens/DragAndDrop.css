@@ -1,50 +1,96 @@
+/* Drag-and-Drop Area */
 .drag-area {
-    border: 1.5px dashed #e2e0e0;
-    border-radius: 12px;
-    padding: 2rem;
-    text-align: center;
-    cursor: pointer;
-    transition: background 0.2s, border-color 0.2s;
-    margin: 1rem 0;
+  border: 1.5px dashed #e2e0e0;
+  border-radius: 14px;
+  padding: 2.5rem;
+  text-align: center;
+  cursor: pointer;
+  background: #fafafa;
+  transition: all 0.25s ease-in-out;
+  margin: 1.5rem 0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.drag-area:hover {
+  border-color: #bdbdbd;
+  background: #fdfdfd;
+  transform: scale(1.01);
+}
+
+.drag-area.dragging {
+  background: #f0f8ff;
+  border-color: #d1d1ff;
+  box-shadow: 0 0 8px rgba(0, 0, 255, 0.15);
+}
+
+/* File Input */
+.file-input {
+  display: none;
+}
+
+/* Upload Button */
+.custom-upload-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 1.2rem;
+  padding: 0.8rem 1.4rem;
+  background: linear-gradient(90deg, #0000ff, #8000ff);
+  color: #fff;
+  font-weight: 500;
+  font-size: 15px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.25s ease-in-out;
+  box-shadow: 0 3px 6px rgba(0, 0, 255, 0.15);
+}
+
+.custom-upload-btn:hover {
+  background: linear-gradient(90deg, #0000d0, #7000d0);
+  box-shadow: 0 4px 10px rgba(0, 0, 255, 0.25);
+  transform: translateY(-2px);
+}
+
+/* File List */
+.file-list {
+  list-style: none;
+  margin-top: 1.2rem;
+  padding: 0;
+  text-align: left;
+}
+
+.file-list li {
+  font-size: 18px;
+  color: #0a0ad2;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  transition: color 0.2s;
+}
+
+.file-list li::before {
+  content: "📄";
+  margin-right: 8px;
+  font-size: 18px;
+}
+
+.file-list li:hover {
+  color: #8000ff;
+}
+
+/* Smooth fade-in animation for new uploads */
+@keyframes fadeInFile {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
   }
-  
-  .drag-area.dragging {
-    background: #f0f8ff;
-    border-color: #e2e0e0;
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
-  
-  .file-input {
-    margin-top: 1rem;
-  }
-  
-  .file-list {
-    list-style: none;
-    margin-top: 1rem;
-    padding: 0;
-  }
-  
-  .file-list li {
-    font-size: 25px;
-    color: #0a0ad2;
-    margin-bottom: 5px;
-  }
-  .file-input {
-    display: none;
-  }
-  .custom-upload-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    margin-top: 1rem;
-    padding: 0.7rem 1rem;
-    background: linear-gradient(90deg, #0000ff, #8000ff); 
-    color: white;
-    font-weight: 400;
-    border-radius: 0.5rem;
-    cursor: pointer;
-    transition: background 0.2s ease-in-out;
-  }
-  
-  .custom-upload-btn:hover {
-    background: #8000ff; /* darker blue */
-  }
+}
+
+.file-list li {
+  animation: fadeInFile 0.3s ease;
+}

@@ -105,6 +105,7 @@ const restrictedCors = cors({
       process.env.PLANIT_BASE_URL,
       'http://localhost:5173',
       'http://localhost:5174',
+      'https://sdp-project-git-mokgwadi-spd-lsdfths-projects.vercel.app',
       'http://localhost:3000'
     ].filter(Boolean);
 

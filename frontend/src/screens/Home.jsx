@@ -45,6 +45,8 @@ import PlanSessions from "../pages/Sessions.jsx";
 import Progress from "../pages/Progress.jsx";
 import Message from "./Message.jsx";
 import Notifications from "./Notifications.jsx";
+import CallIndicator from "../components/CallIndicator.jsx";
+import AudioSettings from "../components/AudioSettings.jsx";
 
 function Home({ user }) {
   const location = useLocation();
@@ -281,11 +283,15 @@ function Home({ user }) {
 
   return (
     <div className="home-container">
+      {/* Call Indicator - shows incoming/active calls */}
+      <CallIndicator />
+      
       {/* Top Navigation Bar */}
       <nav className="navigation">
         <h1 className="logo">StudyBuddy</h1>
 
         <div className="nav-actions">
+          <AudioSettings />
           <Button
             className={`nav-button ${activeView === "messages" ? "active" : ""}`}
             onClick={() => handleNavigationClick("messages")}

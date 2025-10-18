@@ -213,7 +213,7 @@ export const joinSession = async ({ userId, eventId, userData }) => {
     const res = await api.post(`planit/guests/event/${eventId}`, guestData, {
     headers: {
       "user_id": userId,
-      "content-type": "application/json",
+      "Content-Type": "application/json",
     },
   });
   console.log("joinSession response:", res.data);

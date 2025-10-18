@@ -508,7 +508,12 @@ export default function GroupChat({ group, onBack }) {
                         </div>
                       </div>
                       <div className="session-actions">
-                        <button className="join-btn">View</button>
+                        <button className="join-btn"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedSession(session);
+                        }}
+                        >View</button>
                         <button 
                           className="delete-btn"
                           onClick={(e) => {

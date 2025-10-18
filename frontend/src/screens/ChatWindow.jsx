@@ -214,36 +214,70 @@ export default function ChatWindow({ chat, onBack }) {
 
   const startVideoCall = () => {
     const callId = `call_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    const callData = {
-      callId,
-      isCaller: true,
-      otherUserId: chat.id
-    };
     
-    setVideoCallData(callData);
-    setIsVideoCallActive(true);
+    // Use the new call manager to initiate call
+    if (window.callManager) {
+      window.callManager.initiateCall({
+        callType: 'video',
+        targetUserId: chat.id,
+        targetUserName: chat.username,
+        targetUserAvatar: chat.avatar,
+        isGroupCall: false
+      });
+    } else {
+      // Fallback to old system
+      const callData = {
+        callId,
+        isCaller: true,
+        otherUserId: chat.id
+      };
+      
+      setVideoCallData(callData);
+      setIsVideoCallActive(true);
+    }
   };
 
   const endVideoCall = () => {
-    setIsVideoCallActive(false);
-    setVideoCallData(null);
+    if (window.callManager && window.callManager.activeCall) {
+      window.callManager.endCall();
+    } else {
+      setIsVideoCallActive(false);
+      setVideoCallData(null);
+    }
   };
 
   const startVoiceCall = () => {
     const callId = `voice_call_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    const callData = {
-      callId,
-      isCaller: true,
-      otherUserId: chat.id
-    };
     
-    setVoiceCallData(callData);
-    setIsVoiceCallActive(true);
+    // Use the new call manager to initiate call
+    if (window.callManager) {
+      window.callManager.initiateCall({
+        callType: 'voice',
+        targetUserId: chat.id,
+        targetUserName: chat.username,
+        targetUserAvatar: chat.avatar,
+        isGroupCall: false
+      });
+    } else {
+      // Fallback to old system
+      const callData = {
+        callId,
+        isCaller: true,
+        otherUserId: chat.id
+      };
+      
+      setVoiceCallData(callData);
+      setIsVoiceCallActive(true);
+    }
   };
 
   const endVoiceCall = () => {
-    setIsVoiceCallActive(false);
-    setVoiceCallData(null);
+    if (window.callManager && window.callManager.activeCall) {
+      window.callManager.endCall();
+    } else {
+      setIsVoiceCallActive(false);
+      setVoiceCallData(null);
+    }
   };
 
   const toggleVoiceNoteRecorder = () => {

@@ -344,32 +344,66 @@ export default function GroupChat({ group, onBack }) {
 
   const startVideoCall = () => {
     const callId = `group_video_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    setVideoCallData({
-      callId,
-      groupId: group.id,
-      participants: group.Participants || []
-    });
-    setIsVideoCallActive(true);
+    
+    // Use the new call manager to initiate group call
+    if (window.callManager) {
+      window.callManager.initiateCall({
+        callType: 'video',
+        isGroupCall: true,
+        groupId: group.id,
+        groupName: group.name,
+        participants: group.Participants || []
+      });
+    } else {
+      // Fallback to old system
+      setVideoCallData({
+        callId,
+        groupId: group.id,
+        participants: group.Participants || []
+      });
+      setIsVideoCallActive(true);
+    }
   };
 
   const endVideoCall = () => {
-    setIsVideoCallActive(false);
-    setVideoCallData(null);
+    if (window.callManager && window.callManager.activeCall) {
+      window.callManager.endCall();
+    } else {
+      setIsVideoCallActive(false);
+      setVideoCallData(null);
+    }
   };
 
   const startVoiceCall = () => {
     const callId = `group_voice_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    setVoiceCallData({
-      callId,
-      groupId: group.id,
-      participants: group.Participants || []
-    });
-    setIsVoiceCallActive(true);
+    
+    // Use the new call manager to initiate group call
+    if (window.callManager) {
+      window.callManager.initiateCall({
+        callType: 'voice',
+        isGroupCall: true,
+        groupId: group.id,
+        groupName: group.name,
+        participants: group.Participants || []
+      });
+    } else {
+      // Fallback to old system
+      setVoiceCallData({
+        callId,
+        groupId: group.id,
+        participants: group.Participants || []
+      });
+      setIsVoiceCallActive(true);
+    }
   };
 
   const endVoiceCall = () => {
-    setIsVoiceCallActive(false);
-    setVoiceCallData(null);
+    if (window.callManager && window.callManager.activeCall) {
+      window.callManager.endCall();
+    } else {
+      setIsVoiceCallActive(false);
+      setVoiceCallData(null);
+    }
   };
 
   const formatFileSize = (bytes) => {

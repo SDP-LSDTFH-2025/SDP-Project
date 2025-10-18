@@ -246,6 +246,124 @@ module.exports = function attachPrivateChatHandlers(nsp) {
       });
     });
 
+    // Private Call Management Events
+    socket.on('private:call:initiate', async ({ callId, callType, targetUserId, targetUserName, targetUserAvatar }) => {
+      try {
+        console.log(`Private call initiated by ${connectedUserId} to ${targetUserId}`);
+        
+        // Check if target user is online
+        const targetUserSockets = await nsp.adapter.sockets(new Set([`user-${targetUserId}`]));
+        const isTargetOnline = targetUserSockets.size > 0;
+        
+        if (!isTargetOnline) {
+          // User is offline, send busy signal
+          socket.emit('private:call:busy', {
+            callId,
+            callType,
+            targetUserId,
+            reason: 'User is offline'
+          });
+          return;
+        }
+
+        // Send call notification to target user (globally, not just in chat)
+        nsp.to(`user-${targetUserId}`).emit('private:call:incoming', {
+          callId,
+          callType,
+          callerId: connectedUserId,
+          callerName: targetUserName, // This should be the caller's name
+          callerAvatar: targetUserAvatar // This should be the caller's avatar
+        });
+
+        // Send calling status to caller
+        socket.emit('private:call:initiated', {
+          callId,
+          callType,
+          targetUserId,
+          status: 'calling'
+        });
+      } catch (error) {
+        console.error('Error initiating private call:', error);
+        socket.emit('private:call:error', {
+          callId,
+          error: 'Failed to initiate call'
+        });
+      }
+    });
+
+    socket.on('private:call:accept', ({ callId, callType, callerId }) => {
+      console.log(`Private call accepted by ${connectedUserId}`);
+      
+      // Notify caller that call was accepted
+      nsp.to(`user-${callerId}`).emit('private:call:accepted', {
+        callId,
+        callType,
+        acceptedBy: connectedUserId
+      });
+
+      // Start WebRTC signaling
+      nsp.to(`user-${callerId}`).emit('webrtc:offer', {
+        callId,
+        fromUserId: connectedUserId
+      });
+    });
+
+    socket.on('private:call:decline', ({ callId, callType, callerId }) => {
+      console.log(`Private call declined by ${connectedUserId}`);
+      
+      // Notify caller that call was declined
+      nsp.to(`user-${callerId}`).emit('private:call:declined', {
+        callId,
+        callType,
+        declinedBy: connectedUserId
+      });
+    });
+
+    socket.on('private:call:end', ({ callId, callType, targetUserId }) => {
+      console.log(`Private call ended by ${connectedUserId}`);
+      
+      // Notify other participant that call ended
+      nsp.to(`user-${targetUserId}`).emit('private:call:ended', {
+        callId,
+        callType,
+        endedBy: connectedUserId
+      });
+
+      // Also emit WebRTC call ended event
+      nsp.to(`user-${targetUserId}`).emit('webrtc:call-ended', {
+        callId,
+        fromUserId: connectedUserId
+      });
+    });
+
+    // Call control events
+    socket.on('call:mute', ({ callId, isMuted }) => {
+      // Broadcast mute status to other participants
+      socket.broadcast.emit('call:participant:muted', {
+        callId,
+        userId: connectedUserId,
+        isMuted
+      });
+    });
+
+    socket.on('call:video:toggle', ({ callId, isVideoOff }) => {
+      // Broadcast video status to other participants
+      socket.broadcast.emit('call:participant:video:toggled', {
+        callId,
+        userId: connectedUserId,
+        isVideoOff
+      });
+    });
+
+    socket.on('call:speaker:toggle', ({ callId, isSpeakerOff }) => {
+      // Broadcast speaker status to other participants
+      socket.broadcast.emit('call:participant:speaker:toggled', {
+        callId,
+        userId: connectedUserId,
+        isSpeakerOff
+      });
+    });
+
     socket.on('disconnect', ({ chatId }) => {
       socket.emit('private:user:left', {
         userId: connectedUserId,

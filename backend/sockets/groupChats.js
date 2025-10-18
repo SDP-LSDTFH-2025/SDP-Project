@@ -391,6 +391,203 @@ module.exports = function attachGroupChatHandlers(nsp) {
       }
     });
 
+    // Group Call Management Events
+    socket.on('group:call:initiate', async ({ callId, callType, groupId, groupName, participants }) => {
+      try {
+        console.log(`Group call initiated by ${connectedUserId} in group ${groupId}`);
+        
+        // Get all group members
+        const members = await Group_members.findAll({
+          where: { group_id: groupId },
+          attributes: ['user_id']
+        });
+
+        const memberIds = members.map(m => m.user_id);
+        const onlineMembers = [];
+
+        // Check which members are online
+        for (const memberId of memberIds) {
+          if (memberId !== connectedUserId) {
+            const memberSockets = await nsp.adapter.sockets(new Set([`user-${memberId}`]));
+            if (memberSockets.size > 0) {
+              onlineMembers.push(memberId);
+            }
+          }
+        }
+
+        // Send call notification to all online group members (globally, not just in group chat)
+        for (const memberId of onlineMembers) {
+          nsp.to(`user-${memberId}`).emit('group:call:incoming', {
+            callId,
+            callType,
+            callerId: connectedUserId,
+            callerName: 'Group Call Initiator', // This should be the actual caller's name
+            callerAvatar: null, // This should be the actual caller's avatar
+            groupId,
+            groupName,
+            participants: onlineMembers
+          });
+        }
+
+        // Send calling status to caller
+        socket.emit('group:call:initiated', {
+          callId,
+          callType,
+          groupId,
+          groupName,
+          onlineMembers,
+          status: 'calling'
+        });
+      } catch (error) {
+        console.error('Error initiating group call:', error);
+        socket.emit('group:call:error', {
+          callId,
+          error: 'Failed to initiate group call'
+        });
+      }
+    });
+
+    socket.on('group:call:accept', ({ callId, callType, groupId }) => {
+      console.log(`Group call accepted by ${connectedUserId}`);
+      
+      // Notify all group members that user joined the call
+      nsp.to(`group-${groupId}`).emit('group:call:participant:joined', {
+        callId,
+        callType,
+        userId: connectedUserId,
+        groupId
+      });
+
+      // Send acceptance confirmation to caller
+      socket.emit('group:call:accepted', {
+        callId,
+        callType,
+        groupId,
+        acceptedBy: connectedUserId
+      });
+    });
+
+    socket.on('group:call:decline', ({ callId, callType, groupId }) => {
+      console.log(`Group call declined by ${connectedUserId}`);
+      
+      // Notify all group members that user declined the call
+      nsp.to(`group-${groupId}`).emit('group:call:participant:declined', {
+        callId,
+        callType,
+        userId: connectedUserId,
+        groupId
+      });
+    });
+
+    socket.on('group:call:end', ({ callId, callType, groupId }) => {
+      console.log(`Group call ended by ${connectedUserId}`);
+      
+      // Notify all group members that call ended
+      nsp.to(`group-${groupId}`).emit('group:call:ended', {
+        callId,
+        callType,
+        groupId,
+        endedBy: connectedUserId
+      });
+    });
+
+    // Group call control events
+    socket.on('group:call:mute', ({ callId, isMuted }) => {
+      // Broadcast mute status to all group members
+      nsp.to(`group-${groupId}`).emit('group:call:participant:muted', {
+        callId,
+        userId: connectedUserId,
+        isMuted
+      });
+    });
+
+    socket.on('group:call:video:toggle', ({ callId, isVideoOff }) => {
+      // Broadcast video status to all group members
+      nsp.to(`group-${groupId}`).emit('group:call:participant:video:toggled', {
+        callId,
+        userId: connectedUserId,
+        isVideoOff
+      });
+    });
+
+    socket.on('group:call:speaker:toggle', ({ callId, isSpeakerOff }) => {
+      // Broadcast speaker status to all group members
+      nsp.to(`group-${groupId}`).emit('group:call:participant:speaker:toggled', {
+        callId,
+        userId: connectedUserId,
+        isSpeakerOff
+      });
+    });
+
+    // Group WebRTC signaling events
+    socket.on('group:video:call:start', ({ callId, groupId, participants }) => {
+      console.log(`Group video call started by ${connectedUserId}`);
+      nsp.to(`group-${groupId}`).emit('group:video:call:started', {
+        callId,
+        groupId,
+        startedBy: connectedUserId,
+        participants
+      });
+    });
+
+    socket.on('group:voice:call:start', ({ callId, groupId, participants }) => {
+      console.log(`Group voice call started by ${connectedUserId}`);
+      nsp.to(`group-${groupId}`).emit('group:voice:call:started', {
+        callId,
+        groupId,
+        startedBy: connectedUserId,
+        participants
+      });
+    });
+
+    socket.on('group:video:call:offer', ({ callId, targetUserId, offer }) => {
+      nsp.to(`user-${targetUserId}`).emit('group:video:call:offer', {
+        callId,
+        offer,
+        fromUserId: connectedUserId
+      });
+    });
+
+    socket.on('group:video:call:answer', ({ callId, targetUserId, answer }) => {
+      nsp.to(`user-${targetUserId}`).emit('group:video:call:answer', {
+        callId,
+        answer,
+        fromUserId: connectedUserId
+      });
+    });
+
+    socket.on('group:video:call:ice-candidate', ({ callId, targetUserId, candidate }) => {
+      nsp.to(`user-${targetUserId}`).emit('group:video:call:ice-candidate', {
+        callId,
+        candidate,
+        fromUserId: connectedUserId
+      });
+    });
+
+    socket.on('group:voice:call:offer', ({ callId, targetUserId, offer }) => {
+      nsp.to(`user-${targetUserId}`).emit('group:voice:call:offer', {
+        callId,
+        offer,
+        fromUserId: connectedUserId
+      });
+    });
+
+    socket.on('group:voice:call:answer', ({ callId, targetUserId, answer }) => {
+      nsp.to(`user-${targetUserId}`).emit('group:voice:call:answer', {
+        callId,
+        answer,
+        fromUserId: connectedUserId
+      });
+    });
+
+    socket.on('group:voice:call:ice-candidate', ({ callId, targetUserId, candidate }) => {
+      nsp.to(`user-${targetUserId}`).emit('group:voice:call:ice-candidate', {
+        callId,
+        candidate,
+        fromUserId: connectedUserId
+      });
+    });
+
     socket.on('disconnect', ({groupId}) => {
       // No-op for now
       socket.emit('group:user:left', {

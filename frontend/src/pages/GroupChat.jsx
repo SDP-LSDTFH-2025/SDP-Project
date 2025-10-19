@@ -334,64 +334,82 @@ export default function GroupChat({ group, onBack }) {
   };
 
   const startVideoCall = () => {
-    const callId = `group_video_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    
-    // Use the new call manager to initiate group call
-    if (window.callManager) {
-      window.callManager.initiateCall({
-        callType: 'video',
-        isGroupCall: true,
-        groupId: group.id,
-        groupName: group.name,
-        participants: group.Participants || []
-      });
-    } else {
-      // Fallback to old system
-      setVideoCallData({
-        callId,
-        groupId: group.id,
-        participants: group.Participants || []
-      });
-      setIsVideoCallActive(true);
+    try {
+      const callId = `group_video_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      
+      // Use the new call manager to initiate group call
+      if (window.callManager) {
+        window.callManager.initiateCall({
+          callType: 'video',
+          isGroupCall: true,
+          groupId: group.id,
+          groupName: group.name,
+          participants: group.Participants || []
+        });
+      } else {
+        // Fallback to old system
+        setVideoCallData({
+          callId,
+          groupId: group.id,
+          participants: group.Participants || []
+        });
+        setIsVideoCallActive(true);
+      }
+    } catch (error) {
+      console.error("Error starting group video call:", error);
+      alert("Failed to start group video call. Please try again.");
     }
   };
 
   const endVideoCall = () => {
-    if (window.callManager && window.callManager.activeCall) {
-      window.callManager.endCall();
-    } else {
+    try {
+      if (window.callManager && window.callManager.activeCall) {
+        window.callManager.endCall();
+      }
+    } catch (error) {
+      console.error("Error ending group video call:", error);
+    } finally {
       setIsVideoCallActive(false);
       setVideoCallData(null);
     }
   };
 
   const startVoiceCall = () => {
-    const callId = `group_voice_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    
-    // Use the new call manager to initiate group call
-    if (window.callManager) {
-      window.callManager.initiateCall({
-        callType: 'voice',
-        isGroupCall: true,
-        groupId: group.id,
-        groupName: group.name,
-        participants: group.Participants || []
-      });
-    } else {
-      // Fallback to old system
-      setVoiceCallData({
-        callId,
-        groupId: group.id,
-        participants: group.Participants || []
-      });
-      setIsVoiceCallActive(true);
+    try {
+      const callId = `group_voice_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      
+      // Use the new call manager to initiate group call
+      if (window.callManager) {
+        window.callManager.initiateCall({
+          callType: 'voice',
+          isGroupCall: true,
+          groupId: group.id,
+          groupName: group.name,
+          participants: group.Participants || []
+        });
+      } else {
+        // Fallback to old system
+        setVoiceCallData({
+          callId,
+          groupId: group.id,
+          participants: group.Participants || []
+        });
+        setIsVoiceCallActive(true);
+      }
+    } catch (error) {
+      console.error("Error starting group voice call:", error);
+      alert("Failed to start group voice call. Please try again.");
     }
   };
 
   const endVoiceCall = () => {
-    if (window.callManager && window.callManager.activeCall) {
-      window.callManager.endCall();
-    } else {
+    try {
+      if (window.callManager && window.callManager.activeCall) {
+        window.callManager.endCall();
+      }
+    } catch (error) {
+      console.error("Error ending group voice call:", error);
+    } finally {
       setIsVoiceCallActive(false);
       setVoiceCallData(null);
     }

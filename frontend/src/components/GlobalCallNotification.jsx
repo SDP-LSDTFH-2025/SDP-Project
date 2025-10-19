@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Phone, PhoneOff, Video, Mic, MicOff, X, Volume2, VolumeX } from "lucide-react";
 import { socket } from "../socket";
-import { useCallAudio } from "../hooks/useCallAudio";
 import "./CallNotification.css";
 
 export default function GlobalCallNotification() {
@@ -12,16 +11,6 @@ export default function GlobalCallNotification() {
   const [isSpeakerOff, setIsSpeakerOff] = useState(false);
   const [isAudioEnabled, setIsAudioEnabled] = useState(true);
   
-  const {
-    startRinging,
-    stopRinging,
-    startCalling,
-    stopCalling,
-    setRingingVolume,
-    setCallingVolume,
-    isRinging,
-    isCalling
-  } = useCallAudio();
 
   useEffect(() => {
     // Listen for incoming calls globally
@@ -39,7 +28,6 @@ export default function GlobalCallNotification() {
       
       // Start ringing sound for incoming call
       if (isAudioEnabled) {
-        startRinging();
       }
     };
 
@@ -60,33 +48,27 @@ export default function GlobalCallNotification() {
       
       // Start ringing sound for incoming group call
       if (isAudioEnabled) {
-        startRinging();
       }
     };
 
     const handleCallAccepted = (data) => {
       console.log('Call accepted globally:', data);
       setIncomingCall(null);
-      stopRinging();
     };
 
     const handleCallDeclined = (data) => {
       console.log('Call declined globally:', data);
       setIncomingCall(null);
-      stopRinging();
     };
 
     const handleCallEnded = (data) => {
       console.log('Call ended globally:', data);
       setIncomingCall(null);
-      stopRinging();
-      stopCalling();
     };
 
     const handleCallBusy = (data) => {
       console.log('Call busy globally:', data);
       setIncomingCall(null);
-      stopRinging();
     };
 
     // Listen to global call events
@@ -145,7 +127,6 @@ export default function GlobalCallNotification() {
   const handleAccept = () => {
     if (incomingCall) {
       // Stop ringing sound
-      stopRinging();
       
       // Emit socket event to accept call
       if (incomingCall.isGroupCall) {
@@ -168,7 +149,6 @@ export default function GlobalCallNotification() {
   const handleDecline = () => {
     if (incomingCall) {
       // Stop ringing sound
-      stopRinging();
       
       // Emit socket event to decline call
       if (incomingCall.isGroupCall) {
@@ -190,14 +170,11 @@ export default function GlobalCallNotification() {
 
   const handleDismiss = () => {
     setIncomingCall(null);
-    stopRinging();
   };
 
   const toggleAudio = () => {
     setIsAudioEnabled(!isAudioEnabled);
     if (isAudioEnabled) {
-      stopRinging();
-      stopCalling();
     }
   };
 

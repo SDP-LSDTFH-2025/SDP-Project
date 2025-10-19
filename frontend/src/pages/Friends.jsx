@@ -98,7 +98,6 @@ export default function Friends({ setSelectedUser, handleNavigationClick }) {
               <button 
                 className="message-btn"
                 onClick={() => {
-                  handleNavigationClick("messages");
                   // Store the selected chat in localStorage for the Message component to use
                   localStorage.setItem("selectedChat", JSON.stringify({
                     id: friend.id,
@@ -107,6 +106,7 @@ export default function Friends({ setSelectedUser, handleNavigationClick }) {
                     course: friend.course || "",
                     name: friend.username.replaceAll("_", " "),
                   }));
+                  handleNavigationClick("messages");
                 }}
               >
                 <MessageCircle size={13} /> Message

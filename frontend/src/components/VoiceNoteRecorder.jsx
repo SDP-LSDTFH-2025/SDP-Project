@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Mic, Square, Play, Pause, Trash2, Send, Download } from "lucide-react";
+import { Mic, Square, Play, Pause, Trash2, Send } from "lucide-react";
 
 export default function VoiceNoteRecorder({ onSend, onCancel }) {
   const [isRecording, setIsRecording] = useState(false);
@@ -135,18 +135,6 @@ export default function VoiceNoteRecorder({ onSend, onCancel }) {
     setIsPlaying(false);
   };
 
-  const downloadRecording = () => {
-    if (audioBlob) {
-      const url = URL.createObjectURL(audioBlob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `voice-note-${Date.now()}.webm`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    }
-  };
 
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
@@ -236,28 +224,21 @@ export default function VoiceNoteRecorder({ onSend, onCancel }) {
                 onClick={togglePlayback}
                 title="Play/Pause"
               >
-                <Play size={20} />
+                <Play size={24} />
               </button>
               <button 
                 className="delete-btn"
                 onClick={handleDelete}
                 title="Delete"
               >
-                <Trash2 size={20} />
-              </button>
-              <button 
-                className="download-btn"
-                onClick={downloadRecording}
-                title="Download"
-              >
-                <Download size={20} />
+                <Trash2 size={24} />
               </button>
               <button 
                 className="send-btn"
                 onClick={handleSend}
                 title="Send"
               >
-                <Send size={20} />
+                <Send size={24} />
               </button>
             </div>
           </div>
@@ -286,28 +267,21 @@ export default function VoiceNoteRecorder({ onSend, onCancel }) {
                 onClick={togglePlayback}
                 title="Pause"
               >
-                <Pause size={20} />
+                <Pause size={24} />
               </button>
               <button 
                 className="delete-btn"
                 onClick={handleDelete}
                 title="Delete"
               >
-                <Trash2 size={20} />
-              </button>
-              <button 
-                className="download-btn"
-                onClick={downloadRecording}
-                title="Download"
-              >
-                <Download size={20} />
+                <Trash2 size={24} />
               </button>
               <button 
                 className="send-btn"
                 onClick={handleSend}
                 title="Send"
               >
-                <Send size={20} />
+                <Send size={24} />
               </button>
             </div>
           </div>

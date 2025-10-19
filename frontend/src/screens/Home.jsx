@@ -53,7 +53,7 @@ function Home({ user }) {
   // Get the current view from URL hash or default to "feed"
   const getCurrentView = () => {
     const hash = location.hash.replace('#', '');
-    const validViews = ['feed', 'calendar', 'messages', 'friends', 'profile', 'sessions', 'progress', 'notifications', 'upload', 'requests', 'groups'];
+    const validViews = ['feed', 'calendar', 'messages', 'friends', 'profile', 'sessions', 'progress', 'notifications', 'upload', 'requests', 'groups', 'usersprof'];
     return validViews.includes(hash) ? hash : 'feed';
   };
   
@@ -335,7 +335,10 @@ function Home({ user }) {
       
       {/* Top Navigation Bar */}
       <nav className="navigation">
-        <h1 className="logo">StudyBuddy</h1>
+        <div className="logo-container">
+          <img src="/image.png" alt="StudyBuddy Logo" className="logo-image" />
+          <h1 className="logo-text">StudyBuddy</h1>
+        </div>
 
         <div className="nav-actions">
           <Button

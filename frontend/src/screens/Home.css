@@ -48,11 +48,22 @@
     box-shadow: 0 0 0 2px rgba(128, 0, 255, 0.2);
   }
   /* Logo styling */
-  .logo {
-    font-size: 1.8rem; /* Adjust the logo size */
+  .logo-container {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  
+  .logo-image {
+    height: 40px;
+    width: auto;
+  }
+  
+  .logo-text {
+    font-size: 1.8rem;
     font-weight: bold;
     color: linear-gradient(90deg, #0000ff, #8000ff,#ff00ff);
-    margin-top: auto;
+    margin: 0;
   }
   
   /* Nav buttons container */

@@ -19,7 +19,7 @@ import img11 from "../assets/TUT.png";
 import img12 from "../assets/cput.png";
 import img13 from "../assets/VUT.png";
 import img14 from "../assets/msa.png";
-import logo from "../assets/logo.svg";
+import logo from "../../public/image.png";
 gsap.registerPlugin(ScrollTrigger);
 const cardData = [
   {

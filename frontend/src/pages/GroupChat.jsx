@@ -40,7 +40,6 @@ export default function GroupChat({ group, onBack }) {
   // Voice note and call states
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [showVoiceNoteRecorder, setShowVoiceNoteRecorder] = useState(false);
-  const [attachedFiles, setAttachedFiles] = useState([]);
   const [isVideoCallActive, setIsVideoCallActive] = useState(false);
   const [videoCallData, setVideoCallData] = useState(null);
   const [isVoiceCallActive, setIsVoiceCallActive] = useState(false);
@@ -262,14 +261,6 @@ export default function GroupChat({ group, onBack }) {
     setShowEmojiPicker(false);
   };
 
-  const handleFileSelect = (e) => {
-    const files = Array.from(e.target.files);
-    setAttachedFiles(prev => [...prev, ...files]);
-  };
-
-  const removeFile = (index) => {
-    setAttachedFiles(prev => prev.filter((_, i) => i !== index));
-  };
 
   const handleVoiceNoteSend = async (audioBlob) => {
     try {
@@ -406,13 +397,6 @@ export default function GroupChat({ group, onBack }) {
     }
   };
 
-  const formatFileSize = (bytes) => {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-  };
 
 
   /* ------------------- SOCKET LOGIC ------------------- */
@@ -421,7 +405,6 @@ export default function GroupChat({ group, onBack }) {
   const typingTimeout = useRef(null);
   const messagesEndRef = useRef(null);
   const hasJoinedGroupRef = useRef(false);
-  const fileInputRef = useRef(null);
 
   // Scroll to bottom on new messages
   useEffect(() => {
@@ -733,16 +716,6 @@ export default function GroupChat({ group, onBack }) {
       {/* Input */}
       <div className="chat-input">
         <div className="input-container">
-          <button className="attach-btn" onClick={() => fileInputRef.current?.click()} title="Attach File">
-            <File size={18} />
-          </button>
-          <input
-            type="file"
-            ref={fileInputRef}
-            onChange={handleFileSelect}
-            multiple
-            style={{ display: 'none' }}
-          />
           
           <div className="message-input-container">
             <input
@@ -754,33 +727,13 @@ export default function GroupChat({ group, onBack }) {
               className="message-input"
             />
             
-            {/* File attachments preview */}
-            {attachedFiles.length > 0 && (
-              <div className="attached-files">
-                {attachedFiles.map((file, index) => (
-                  <div key={index} className="attached-file">
-                    <div className="file-info">
-                      <span className="file-name">{file.name}</span>
-                      <span className="file-size">{formatFileSize(file.size)}</span>
-                    </div>
-                    <button 
-                      className="remove-file-btn" 
-                      onClick={() => removeFile(index)}
-                      title="Remove file"
-                    >
-                      ×
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
           </div>
 
           <button className="emoji-btn" onClick={toggleEmojiPicker} title="Emoji">
             <Smile size={18} />
           </button>
           
-          {newMessage.trim() || attachedFiles.length > 0 ? (
+          {newMessage.trim() ? (
             <button className="send-btn" onClick={sendMessage}>
               <Send size={18} />
             </button>

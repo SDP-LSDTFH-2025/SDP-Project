@@ -22,6 +22,6 @@ describe("POST /api/v1/auth/", () => {
 	});
 
 	it("should fail testing api without real token", async () => {
-		const response = await request(server).post(`/api/v1/auth/signIn`).send({email:"fakepassword"}).expect(400);
+		const response = await request(server).post(`/api/v1/auth/signIn`).send({email:"fakepassword"}).expect(422);
 	});
 });

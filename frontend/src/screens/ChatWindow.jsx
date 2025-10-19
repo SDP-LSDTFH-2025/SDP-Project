@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Input } from "../components/ui/input";
-import { Send, ArrowLeft, Phone, Video, Smile, Paperclip, Mic, Image, File } from "lucide-react";
+import { Send, ArrowLeft, Phone, Video, Smile, Mic } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { socket } from "../socket";
 import { getPrivateChatHistory } from "../api/chat";
@@ -21,7 +21,6 @@ export default function ChatWindow({ chat, onBack }) {
   const [isTyping, setIsTyping] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [showVoiceRecorder, setShowVoiceRecorder] = useState(false);
-  const [attachedFiles, setAttachedFiles] = useState([]);
   const [isVideoCallActive, setIsVideoCallActive] = useState(false);
   const [videoCallData, setVideoCallData] = useState(null);
   const [isVoiceCallActive, setIsVoiceCallActive] = useState(false);
@@ -31,7 +30,6 @@ export default function ChatWindow({ chat, onBack }) {
   const lastTempIdSent = useRef(null);
   const typingTimeout = useRef(null);
   const messagesEndRef = useRef(null);
-  const fileInputRef = useRef(null);
 
   const currentUser = JSON.parse(localStorage.getItem("user"));
   const currentUserId = currentUser?.id;
@@ -180,21 +178,6 @@ export default function ChatWindow({ chat, onBack }) {
     setShowEmojiPicker(false);
   };
 
-  const handleFileSelect = (e) => {
-    const files = Array.from(e.target.files);
-    const newFiles = files.map(file => ({
-      id: Date.now() + Math.random(),
-      file,
-      name: file.name,
-      size: file.size,
-      type: file.type
-    }));
-    setAttachedFiles(prev => [...prev, ...newFiles]);
-  };
-
-  const removeFile = (fileId) => {
-    setAttachedFiles(prev => prev.filter(file => file.id !== fileId));
-  };
 
   const handleVoiceRecordingComplete = (audioBlob) => {
     // For now, just show a message that voice recording is not sent to backend
@@ -203,13 +186,6 @@ export default function ChatWindow({ chat, onBack }) {
     setShowVoiceRecorder(false);
   };
 
-  const formatFileSize = (bytes) => {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-  };
 
   const startVideoCall = () => {
     const callId = `call_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -342,7 +318,7 @@ export default function ChatWindow({ chat, onBack }) {
       tempId: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
     };
 
-    if (!messageToSend.content && !messageToSend.audioData && attachedFiles.length === 0) return;
+    if (!messageToSend.content && !messageToSend.audioData) return;
 
     const tempId = messageToSend.tempId || `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     lastTempIdSent.current = tempId;
@@ -360,7 +336,24 @@ export default function ChatWindow({ chat, onBack }) {
       duration: messageToSend.duration
     };
 
-    setMessages(prev => [...prev, newMessage]);
+    setMessages(prev => [
+      ...prev,
+      {
+        id: newMessage.id,
+        from: "me",
+        text: newMessage.message,
+        time: new Date(newMessage.created_at).toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+        timestamp: new Date(newMessage.created_at),
+        status: "sending",
+        type: newMessage.type,
+        audioData: newMessage.audioData,
+        duration: newMessage.duration,
+      }
+    ]);
+    
 
     // Send via socket
     socket.emit('private:message', {
@@ -375,7 +368,6 @@ export default function ChatWindow({ chat, onBack }) {
 
     // Clear input and reset state
     setInput("");
-    setAttachedFiles([]);
     setShowEmojiPicker(false);
     setShowVoiceRecorder(false);
     setShowVoiceNoteRecorder(false);
@@ -504,49 +496,8 @@ export default function ChatWindow({ chat, onBack }) {
 
       {/* WhatsApp-style Input Area */}
       <div className="whatsapp-input-area">
-        {/* File Attachments Preview */}
-        {attachedFiles.length > 0 && (
-          <div className="attached-files">
-            {attachedFiles.map((file) => (
-              <div key={file.id} className="attached-file">
-                <div className="file-info">
-                  {file.type.startsWith('image/') ? (
-                    <Image size={16} />
-                  ) : (
-                    <File size={16} />
-                  )}
-                  <span className="file-name">{file.name}</span>
-                  <span className="file-size">({formatFileSize(file.size)})</span>
-                </div>
-                <button
-                  onClick={() => removeFile(file.id)}
-                  className="remove-file-btn"
-                >
-                  ×
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
 
         <div className="whatsapp-input-container">
-          <div className="input-actions">
-            <input
-              ref={fileInputRef}
-              type="file"
-              multiple
-              onChange={handleFileSelect}
-              style={{ display: 'none' }}
-            />
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="whatsapp-attach-btn"
-              onClick={() => fileInputRef.current?.click()}
-            >
-              <Paperclip size={20} />
-            </Button>
-          </div>
           
           <div className="whatsapp-input-wrapper">
             <Input
@@ -567,14 +518,22 @@ export default function ChatWindow({ chat, onBack }) {
             </Button>
           </div>
           
-          {input.trim() || attachedFiles.length > 0 ? (
-            <Button 
-              onClick={sendMessage} 
-              className="whatsapp-send-btn"
-              size="sm"
-            >
-              <Send size={20} />
-            </Button>
+          {input.trim() ? (
+     <Button
+     type="button"
+     onClick={(e) => {
+       e.preventDefault();
+       e.stopPropagation();
+       console.log("Send button clicked manually");
+       sendMessage();
+     }}
+     className="whatsapp-send-btn"
+     size="sm"
+     title="Send message"
+   >
+     <Send size={20} />
+   </Button>
+   
                ) : (
                  <Button 
                    className="whatsapp-mic-btn"

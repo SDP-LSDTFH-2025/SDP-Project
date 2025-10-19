@@ -44,7 +44,10 @@ export default function Messages() {
           <ArrowLeft size={20} />
           Back to Home
         </Button>
-        <h1 className="messages-title">Messages</h1>
+        <div className="messages-logo-container">
+          <img src="/image.png" alt="StudyBuddy Logo" className="messages-logo" />
+          <h1 className="messages-title">Messages</h1>
+        </div>
       </div>
 
       {/* Messages container */}

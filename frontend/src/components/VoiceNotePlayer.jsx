@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Play, Pause, Download, Trash2 } from "lucide-react";
+import { Play, Pause, Trash2 } from "lucide-react";
 
 export default function VoiceNotePlayer({ 
   audioBlob, 
@@ -88,20 +88,6 @@ export default function VoiceNotePlayer({
     return null;
   };
 
-  const downloadVoiceNote = () => {
-    const url = getAudioUrl();
-    if (url) {
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `voice-note-${Date.now()}.webm`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      if (audioBlob) {
-        URL.revokeObjectURL(url);
-      }
-    }
-  };
 
   const formatTime = (seconds) => {
     if (!seconds || isNaN(seconds)) return "0:00";
@@ -178,25 +164,17 @@ export default function VoiceNotePlayer({
         </div>
 
         {/* Action Buttons */}
-        <div className="action-buttons">
-          <button 
-            className="download-btn"
-            onClick={downloadVoiceNote}
-            title="Download"
-          >
-            <Download size={16} />
-          </button>
-          
-          {isOwnMessage && onDelete && (
+        {isOwnMessage && onDelete && (
+          <div className="action-buttons">
             <button 
               className="delete-btn"
               onClick={onDelete}
               title="Delete"
             >
-              <Trash2 size={16} />
+              <Trash2 size={20} />
             </button>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
       {/* Hidden audio element */}

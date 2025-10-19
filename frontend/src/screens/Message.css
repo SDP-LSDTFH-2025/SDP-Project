@@ -33,6 +33,17 @@
   color: #2563eb;
 }
 
+.messages-logo-container {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.messages-logo {
+  height: 32px;
+  width: auto;
+}
+
 .messages-title {
   margin: 0;
   font-size: 1.5rem;
@@ -220,7 +231,7 @@
     margin: 0;
     font-size: 1rem;
   font-weight: 600;
-  color: #000000;
+  color: #ffffff;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1740,13 +1751,14 @@
 
 .playback-controls {
   display: flex;
-  gap: 0.75rem;
+  gap: 1rem;
   align-items: center;
+  justify-content: center;
 }
 
-.play-btn, .delete-btn, .download-btn, .send-btn {
-  width: 40px;
-  height: 40px;
+.play-btn, .delete-btn, .send-btn {
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
   border: none;
   cursor: pointer;
@@ -1780,15 +1792,6 @@
   transform: scale(1.05);
 }
 
-.download-btn {
-  background: #6b7280;
-  color: #ffffff;
-}
-
-.download-btn:hover {
-  background: #4b5563;
-  transform: scale(1.05);
-}
 
 .send-btn {
   background: #10b981;
@@ -1901,15 +1904,15 @@
 
 .action-buttons {
   display: flex;
-  gap: 0.5rem;
+  gap: 0.75rem;
   margin-left: auto;
+  align-items: center;
 }
 
-.voice-note-player .delete-btn,
-.voice-note-player .download-btn {
-  width: 28px;
-  height: 28px;
-  font-size: 0.75rem;
+.voice-note-player .delete-btn {
+  width: 40px;
+  height: 40px;
+  font-size: 1rem;
 }
 
 .loading-spinner {
@@ -2032,9 +2035,9 @@
     height: 45px;
   }
   
-  .play-btn, .delete-btn, .download-btn, .send-btn {
-    width: 36px;
-    height: 36px;
+  .play-btn, .delete-btn, .send-btn {
+    width: 40px;
+    height: 40px;
   }
   
   .voice-note-player {
@@ -2095,6 +2098,7 @@
   
   .whatsapp-chat-header h3 {
     font-size: 0.9375rem;
+    color: #ffffff;
   }
   
   .whatsapp-time {

@@ -335,7 +335,10 @@ function Home({ user }) {
       
       {/* Top Navigation Bar */}
       <nav className="navigation">
-        <h1 className="logo">StudyBuddy</h1>
+        <div className="logo-container">
+          <img src="/image.png" alt="StudyBuddy Logo" className="logo-image" />
+          <h1 className="logo-text">StudyBuddy</h1>
+        </div>
 
         <div className="nav-actions">
           <Button

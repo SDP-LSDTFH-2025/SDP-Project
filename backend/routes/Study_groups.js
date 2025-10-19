@@ -81,9 +81,9 @@ router.post('/create', optimizedAuth, async(req,res)=>{
         if (!token||!id||!title||!course_code){
             return errorClass.insufficientInfo(res);
         }
-        // if (!verifyToken.fireBaseToken(token,id)){
-        //     return errorClass.errorRes('Invalid Token',res,401);
-        // }
+        if (!verifyToken.fireBaseToken(token,id)){
+            return errorClass.errorRes('Invalid Token',res,401);
+        }
    
         const group = await Study_groups.create({
             name:title,
@@ -219,9 +219,9 @@ router.post('/join', optimizedAuth, async(req,res)=>{
         if (!token||!id||!groupID){
             return errorClass.insufficientInfo(res);
         }
-        // if (!verifyToken.fireBaseToken(token,id)){
-        //     return errorClass.errorRes('Invalid Token',res,401);
-        // }
+        if (!verifyToken.fireBaseToken(token,id)){
+            return errorClass.errorRes('Invalid Token',res,401);
+        }
         
         const joined = await Group_members.findOne({where:{user_id:id,group_id:groupID}});
         if (joined){
@@ -326,9 +326,9 @@ router.post('/leave', optimizedAuth, async(req,res)=>{
         if (!token||!id||!groupID){
             return errorClass.insufficientInfo(res);
         }
-        // if (!verifyToken.fireBaseToken(token,id)){
-        //     return errorClass.errorRes('Invalid Token',res,401);
-        // }
+        if (!verifyToken.fireBaseToken(token,id)){
+            return errorClass.errorRes('Invalid Token',res,401);
+        }
         
         const joined = await Group_members.findOne({where:{user_id:id,group_id:groupID}});
         if (!joined){
@@ -687,9 +687,9 @@ router.get('/myGroups/:token/:id',async(req,res)=>{
         if (!token||!id) {
             return errorClass.insufficientInfo(res);
         }
-        // if (!verifyToken.fireBaseToken(token,id)){
-        //     return errorClass.errorRes('Invalid Token',res,401);
-        // }
+        if (!verifyToken.fireBaseToken(token,id)){
+            return errorClass.errorRes('Invalid Token',res,401);
+        }
 
         // Get all group memberships
         const group_members = await Group_members.findAll({
@@ -842,9 +842,9 @@ router.get('/recommendedGroups/:token/:id',async(req,res)=>{
         if (!token||!id) {
             return errorClass.insufficientInfo(res);
         }
-        // if (!verifyToken.fireBaseToken(token,id)){
-        //     return errorClass.errorRes('Invalid Token',res,401);
-        // }
+        if (!verifyToken.fireBaseToken(token,id)){
+            return errorClass.errorRes('Invalid Token',res,401);
+        }
         let myGroups = [];
         const user = await User.findOne({
             where:{id}

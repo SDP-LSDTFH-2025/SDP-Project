@@ -374,10 +374,11 @@ router.post('/signIn', async (req, res) => {
           });
           //generate token for more control
           const Token = jwt.sign(
-              { id: endUser.id},
-              process.env.JWT_SECRET,
-              { expiresIn: '7d' }
-          );
+                { id: endUser.id, username: endUser.username },
+                process.env.JWT_SECRET,
+                { expiresIn: process.env.JWT_EXPIRES_IN || '24h' }
+              );
+
           res.status(200).json({token:Token,data:endUser,success:true});
           console.log('user created successfully');
           })
@@ -466,10 +467,10 @@ router.post('/logIn',async (req, res) => {
        
             //generate token for more control
             const Token = jwt.sign(
-                { id: existance.id},
-                process.env.JWT_SECRET,
-                { expiresIn: '7d' }
-            );
+                  { id: existance.id, username: existance.username },
+                  process.env.JWT_SECRET,
+                  { expiresIn: process.env.JWT_EXPIRES_IN || '24h' }
+                );
             res.status(200).json({token:Token,data:existance,success:true});
             console.log('user logged in successfully');
           })

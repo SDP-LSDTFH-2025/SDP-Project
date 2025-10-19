@@ -111,7 +111,16 @@ export default function Friends({ setSelectedUser, handleNavigationClick }) {
               >
                 <MessageCircle size={13} /> Message
               </button>
-              <button className="profile-btn" onClick={() => handleProfileClick(friend)}>
+              <button 
+                className="profile-btn" 
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  console.log("Profile button clicked for:", friend.name || friend.username);
+                  handleProfileClick(friend);
+                }}
+                title="View Profile"
+              >
                 <User size={13} /> Profile
               </button>
             </div>

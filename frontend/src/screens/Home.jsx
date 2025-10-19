@@ -53,7 +53,7 @@ function Home({ user }) {
   // Get the current view from URL hash or default to "feed"
   const getCurrentView = () => {
     const hash = location.hash.replace('#', '');
-    const validViews = ['feed', 'calendar', 'messages', 'friends', 'profile', 'sessions', 'progress', 'notifications', 'upload', 'requests', 'groups'];
+    const validViews = ['feed', 'calendar', 'messages', 'friends', 'profile', 'sessions', 'progress', 'notifications', 'upload', 'requests', 'groups', 'usersprof'];
     return validViews.includes(hash) ? hash : 'feed';
   };
   

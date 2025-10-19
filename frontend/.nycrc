@@ -4,7 +4,8 @@
 	"exclude": [
 		"tests/**",
 		"node_modules/**",
-		"src/api/**",
+		"src/hooks/**",
+		"src/utils/**",
 		"src/functions/**",
 		"src/components",
 		"src/screens/Signup.jsx",

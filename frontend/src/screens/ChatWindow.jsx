@@ -360,7 +360,24 @@ export default function ChatWindow({ chat, onBack }) {
       duration: messageToSend.duration
     };
 
-    setMessages(prev => [...prev, newMessage]);
+    setMessages(prev => [
+      ...prev,
+      {
+        id: newMessage.id,
+        from: "me",
+        text: newMessage.message,
+        time: new Date(newMessage.created_at).toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+        timestamp: new Date(newMessage.created_at),
+        status: "sending",
+        type: newMessage.type,
+        audioData: newMessage.audioData,
+        duration: newMessage.duration,
+      }
+    ]);
+    
 
     // Send via socket
     socket.emit('private:message', {
@@ -568,13 +585,21 @@ export default function ChatWindow({ chat, onBack }) {
           </div>
           
           {input.trim() || attachedFiles.length > 0 ? (
-            <Button 
-              onClick={sendMessage} 
-              className="whatsapp-send-btn"
-              size="sm"
-            >
-              <Send size={20} />
-            </Button>
+     <Button
+     type="button"
+     onClick={(e) => {
+       e.preventDefault();
+       e.stopPropagation();
+       console.log("Send button clicked manually");
+       sendMessage();
+     }}
+     className="whatsapp-send-btn"
+     size="sm"
+     title="Send message"
+   >
+     <Send size={20} />
+   </Button>
+   
                ) : (
                  <Button 
                    className="whatsapp-mic-btn"

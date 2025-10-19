@@ -4,8 +4,8 @@ test.describe("Home Page Shows Correctly", () => {
 	test("Check if all needed things show", async ({ page }) => {
 		await page.goto('http://localhost:5174/home');
 
-		await expect(page.getByRole('button').filter({ hasText: /^$/ }).nth(3)).toBeVisible();
-		await page.getByRole('button').filter({ hasText: /^$/ }).nth(3).click();
+		await expect(page.getByRole('button').filter({ hasText: /^$/ }).nth(2)).toBeVisible();
+		await page.getByRole('button').filter({ hasText: /^$/ }).nth(2).click();
 
 		await expect(page.getByRole('button', { name: 'Edit' })).toBeVisible();
 		await expect(page.locator('#root section').getByRole('button', { name: 'Messages' })).toBeVisible();

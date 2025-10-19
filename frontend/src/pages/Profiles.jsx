@@ -6,7 +6,7 @@ import { MapPin, Calendar, CircleDot, Circle } from "lucide-react";
 import { sendFriendRequest, getSentFriendRequests } from "../api/friends";
 import { showSuccess, showError } from "../utils/toast";
 
-const Profiles = ({ user }) => {
+const Profiles = ({ user, currentUser }) => {
   
   const [isFriend, setIsFriend] = useState(false);
 
@@ -24,6 +24,9 @@ const Profiles = ({ user }) => {
     ? sentRequestsData.followers.map(sr => sr.user.id)
     : [];
   const hasSentRequest = sentRequestUserIds.includes(user?.id);
+  
+  // Check if viewing own profile
+  const isOwnProfile = currentUser && user && currentUser.id === user.id;
 
   if (!user) return <p>No profile data found.</p>;
 
@@ -86,19 +89,19 @@ const Profiles = ({ user }) => {
 
           {/* 🔹 Friend button row */}
           <div className="friend-action">
-            <button
-              className={`friend-btn ${hasSentRequest ? "sent" : isFriend ? "unfriend" : "add"}`}
-              onClick={hasSentRequest ? undefined : handleFriendToggle}
-              disabled={hasSentRequest}
-            >
-              {hasSentRequest ? "Sent" : isFriend ? "Unfriend" : "Add Friend"}
-            </button>
-            <button 
-              className="sending"
-              onClick={() => {
-                // Navigate to messages and store the selected chat
-                window.location.href = '/home';
-                setTimeout(() => {
+            {!isOwnProfile && (
+              <button
+                className={`friend-btn ${hasSentRequest ? "sent" : isFriend ? "unfriend" : "add"}`}
+                onClick={hasSentRequest ? undefined : handleFriendToggle}
+                disabled={hasSentRequest}
+              >
+                {hasSentRequest ? "Sent" : isFriend ? "Unfriend" : "Add Friend"}
+              </button>
+            )}
+            {!isOwnProfile && (
+              <button 
+                className="sending"
+                onClick={() => {
                   // Store the selected chat in localStorage for the Message component to use
                   localStorage.setItem("selectedChat", JSON.stringify({
                     id: user.id,
@@ -107,14 +110,13 @@ const Profiles = ({ user }) => {
                     course: user.course || "",
                     name: user.username.replaceAll("_", " "),
                   }));
-                  // Trigger navigation to messages
-                  const event = new CustomEvent('navigateToMessages');
-                  window.dispatchEvent(event);
-                }, 100);
-              }}
-            >
-              Send Message
-            </button>
+                  // Navigate to messages
+                  window.location.href = '/messages';
+                }}
+              >
+                Send Message
+              </button>
+            )}
 
           </div>
         </div>

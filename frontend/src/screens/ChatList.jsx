@@ -2,13 +2,9 @@ import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getAllFriends } from "../api/resources";
 import { getLastMessages } from "../api/chat";
-import { Search, MessageCircle } from "lucide-react";
-import { Input } from "../components/ui/input";
-import { Button } from "../components/ui/button";
-import DropdownMenu, { chatListMenuItems } from "../components/DropdownMenu";
+import { MessageCircle } from "lucide-react";
 
 export default function ChatList({ onSelectChat }) {
-  const [searchQuery, setSearchQuery] = useState("");
   const currentUser = JSON.parse(localStorage.getItem("user"));
   const currentUserId = currentUser?.id;
 
@@ -56,10 +52,8 @@ export default function ChatList({ onSelectChat }) {
     unreadCount: lastMessagesMap[friend.id]?.unreadCount || 0
   }));
 
-  // Filter friends based on search query
-  const filteredFriends = friendsWithMessages.filter(friend =>
-    friend.username.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Show all friends (no search filtering)
+  const filteredFriends = friendsWithMessages;
 
   const isLoading = friendsLoading || messagesLoading;
   const error = friendsError;
@@ -98,37 +92,16 @@ export default function ChatList({ onSelectChat }) {
       <div className="whatsapp-header">
         <div className="header-content">
           <h1>Chats</h1>
-          <div className="header-actions">
-            <Button variant="ghost" size="sm" className="header-btn">
-              <Search size={20} />
-            </Button>
-            <DropdownMenu 
-              items={chatListMenuItems}
-              className="header-btn"
-            />
-          </div>
         </div>
       </div>
 
-      {/* WhatsApp-style Search */}
-      <div className="whatsapp-search">
-        <div className="search-container">
-          <Search className="search-icon" size={16} />
-          <Input
-            placeholder="Search or start new chat"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="whatsapp-search-input"
-          />
-        </div>
-      </div>
 
       {/* Chat Items - WhatsApp Style */}
       <div className="whatsapp-chat-items">
         {filteredFriends.length === 0 ? (
           <div className="whatsapp-empty-state">
             <div className="empty-icon">💬</div>
-            <h3>{searchQuery ? "No chats found" : "No chats yet"}</h3>
+            <h3>No chats yet</h3>
             <p>Start a conversation with your friends!</p>
           </div>
         ) : (

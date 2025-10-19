@@ -43,10 +43,8 @@ import ProfilePage from "../pages/ProfilePage.jsx";
 import Feed from "../pages/Feed.jsx";
 import PlanSessions from "../pages/Sessions.jsx";
 import Progress from "../pages/Progress.jsx";
-import Message from "./Message.jsx";
 import Notifications from "./Notifications.jsx";
 import CallIndicator from "../components/CallIndicator.jsx";
-import AudioSettings from "../components/AudioSettings.jsx";
 
 function Home({ user }) {
   const location = useLocation();
@@ -221,7 +219,11 @@ function Home({ user }) {
   }
 
   function handleNavigationClick(view) {
-    updateActiveView(view);
+    if (view === "messages") {
+      navigate("/messages");
+    } else {
+      updateActiveView(view);
+    }
   }
 
   const handleUploadSubmit = async (e) => {
@@ -291,7 +293,6 @@ function Home({ user }) {
         <h1 className="logo">StudyBuddy</h1>
 
         <div className="nav-actions">
-          <AudioSettings />
           <Button
             className={`nav-button ${activeView === "messages" ? "active" : ""}`}
             onClick={() => handleNavigationClick("messages")}
@@ -753,7 +754,7 @@ function Home({ user }) {
                 <Progress />
               </div>
             )}
-            {activeView === "usersprof" && <Profiles user={selectedUser} />}
+            {activeView === "usersprof" && <Profiles user={selectedUser} currentUser={user} />}
 
             {activeView === "friends" && (
               <div className="share-card">
@@ -770,12 +771,6 @@ function Home({ user }) {
               </div>
             )}
 
-            {activeView === "messages" && (
-              <div className="share-card">
-                <h2>Messages</h2>
-                <Message />
-              </div>
-            )}
 
             {activeView === "notifications" && (
               <div className="share-card">

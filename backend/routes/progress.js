@@ -115,9 +115,6 @@ router.post('/update', optimizedAuth, async(req,res)=>{
         if (!token||!id||!topic||!hours_studied){
             return errorClass.insufficientInfo(res);
         }
-        // if (!verifyToken.fireBaseToken(token,id)){
-        //     return errorClass.errorRes('Invalid Token',res,401);
-        // }
         
 
         const progressEntry = await Progress.findOne({where:{user_id:id,topic}});
@@ -249,10 +246,6 @@ router.post('/create', async(req,res)=>{
         if (!token||!id||!topic||!hours_studied){
             return errorClass.insufficientInfo(res);
         }
-        // if (!verifyToken.fireBaseToken(token,id)){
-        //     return errorClass.errorRes('Invalid Token',res,401);
-        // }
-        
 
         progressEntry = await Progress.create({
                 user_id:id,
@@ -368,10 +361,7 @@ router.delete('/delete/:token/:id/:topic/:section', optimizedAuth, async (req, r
         if (!token||!id || !topic) {
             return errorClass.insufficientInfo(res);
         }
-        // if (!verifyToken.fireBaseToken(token,id)){
-        //     return errorClass.errorRes('Invalid Token',res,401);
-        // }
-
+        
         const progressEntry = await Progress.findOne({ where: { user_id: id, topic } });
 
         if (!progressEntry) {

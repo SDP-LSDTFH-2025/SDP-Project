@@ -174,16 +174,9 @@
 .profile-btn {
   margin-right:0.1rem;
   padding: 7px 8px;
-  background: #8b5cf6;
-  color: white;
-  border: 1px solid #7c3aed;
-  transition: all 0.2s ease;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
 }
 .profile-btn:hover {
-  background: #7c3aed;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(139, 92, 246, 0.3);
-}
-.profile-btn:active {
-  transform: translateY(0);
+    background: #94c4da;
 }

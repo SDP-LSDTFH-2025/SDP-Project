@@ -6,10 +6,9 @@
     sans-serif;
   overflow-y: auto;
   max-width: 900px;
-  max-height: calc(100vh - 120px);
+  min-height: calc(100vh - 120px);
   margin: 0 auto;
   background-color: #f8f9fa;
-  padding-right: 8px;
 }
 
 .progress-header {
@@ -127,6 +126,16 @@
 .course-progress {
   font-weight: 600;
   color: #4285f4;
+}
+
+.collapse-arrow {
+  cursor: pointer;
+  transition: transform 0.2s;
+  color: #666;
+}
+
+.collapse-arrow.expanded {
+  transform: rotate(90deg);
 }
 
 .progress-bar {
@@ -300,6 +309,8 @@
     width: 90%;
     padding: 20px;
   }
+}
+
 /* ---------- Topics in courses ---------- */
 .topics-section {
   margin-top: 12px;
@@ -497,5 +508,12 @@
   background-color: #2c8c47;
 }
 
-
+/* Loading state */
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
+  font-size: 16px;
+  color: #666;
 }

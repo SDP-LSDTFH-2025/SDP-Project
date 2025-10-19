@@ -9,11 +9,11 @@ const filePath = await path.join(__dirname, "/docs/Test.pdf");
 
 test.describe("uploadResource Page Shows Correctly", () => {
 	test("Check if all needed things show", async ({ page }) => {
-		await page.goto("http://localhost:5173/home");
+		await page.goto("http://localhost:5174/home");
 		await expect(
-			page.getByRole("button", { name: "Upload Resource" })
+			page.getByRole("button", { name: "Upload Resource" }).nth(1)
 		).toBeVisible();
-		await page.getByRole("button", { name: "Upload Resource" }).click();
+		await page.getByRole("button", { name: "Upload Resource" }).nth(1).click();
 		await page.getByRole("textbox", { name: "Resource title" }).click();
 		await page
 			.getByRole("textbox", { name: "Resource title" })

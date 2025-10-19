@@ -29,12 +29,12 @@ test.describe.skip("Login and Setup Process", () => {
 		context.setDefaultTimeout(60000);
 
 		// Navigate to the initial page
-		await page.goto("http://localhost:5173/");
-		await page.waitForURL("http://localhost:5173/");
+		await page.goto("http://localhost:5174/");
+		await page.waitForURL("http://localhost:5174/");
 
 		// Click the "Log In" button
 		await page.click('button:has-text("Log In")');
-		await page.waitForURL("http://localhost:5173/login");
+		await page.waitForURL("http://localhost:5174/login");
 
 		// Click the "Sign in with Google" button
 		await page
@@ -61,7 +61,7 @@ test.describe.skip("Login and Setup Process", () => {
 		}
 
 		// Wait for the page to navigate to the home screen
-		await page.waitForURL("http://localhost:5173/home");
+		await page.waitForURL("http://localhost:5174/home");
 
 		// Save the storage state for session persistence
 		await context.storageState({ path: stateFile });

@@ -2,7 +2,7 @@ import { test, expect } from "playwright-test-coverage";
 
 test.describe("Logging out Page Shows Correctly", () => {
 	test("Check if all needed things show", async ({ page }) => {
-		await page.goto('http://localhost:5173/home');
+		await page.goto('http://localhost:5174/home');
         await page.getByRole('button', { name: 'Logout' }).click();
         await page.getByRole('link', { name: 'Forgot password?' }).click();
         await page.getByRole('textbox', { name: 'Enter your email' }).click();
@@ -33,7 +33,7 @@ test.describe("Logging out Page Shows Correctly", () => {
         await page.getByRole('link', { name: 'Back to login' }).click();
         await page.getByRole('link', { name: 'Sign up' }).click();
         await page.getByRole('textbox', { name: 'Optional' }).click();
-        await page.goto('http://localhost:5173/');
+        await page.goto('http://localhost:5174/');
         await page.getByRole('button', { name: 'Get Started →' }).click();
         
 	});

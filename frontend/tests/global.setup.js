@@ -28,10 +28,10 @@ export default async () => {
 		return;
 	}
 
-	await page.goto("http://localhost:5173/");
-	await page.waitForURL("http://localhost:5173/");
+	await page.goto("http://localhost:5174/");
+	await page.waitForURL("http://localhost:5174/");
 	await page.click('button:has-text("Log In")');
-	await page.waitForURL("http://localhost:5173/login");
+	await page.waitForURL("http://localhost:5174/login");
 	await page
 		.getByRole("button", { name: "Sign in with Google" })
 		.first()
@@ -51,7 +51,7 @@ export default async () => {
 		await allowButton.click();
 	}
 
-	await page.waitForURL("http://localhost:5173/home");
+	await page.waitForURL("http://localhost:5174/home");
 
 	await context.storageState({ path: stateFile });
 

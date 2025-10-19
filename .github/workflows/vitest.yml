@@ -1,27 +1,60 @@
-name: Run Tests
+name: Backend Tests
+
+env:
+  DB_HOST: ${{ secrets.DB_HOST }}
+  DB_PORT: ${{ secrets.DB_PORT }}
+  DB_NAME: ${{ secrets.DB_NAME }}
+  DB_USER: ${{ secrets.DB_USER }}
+  DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+  JWT_SECRET: ${{ secrets.JWT_SECRET }}
+  DATABASE_URL: ${{ secrets.DATABASE_URL }}
+  API_PREFIX: ${{ secrets.API_PREFIX }}
+  BACKEND_URL: ${{ secrets.BACKEND_URL }}
+  CLOUDINARY_CLOUD_NAME: ${{ secrets.CLOUDINARY_CLOUD_NAME }}
+  CLOUDINARY_API_KEY: ${{ secrets.CLOUDINARY_API_KEY }}
+  CLOUDINARY_API_SECRET: ${{ secrets.CLOUDINARY_API_SECRET }}
+  RATE_LIMIT_WINDOW_MS: ${{ secrets.RATE_LIMIT_WINDOW_MS }}
+  RATE_LIMIT_MAX_REQUESTS: ${{ secrets.RATE_LIMIT_MAX_REQUESTS }}
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
-  test:
+  api-test:
     runs-on: ubuntu-latest
-    container:
-      image: node:22
+
     steps:
-      # Checkout the code
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      # Install dependencies using npm ci
-      - name: Install dependencies
-        run: npm install && npm ci
-        working-directory: ./backend
+      - name: Setup Node.js v22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: backend/package-lock.json
 
-      # Run tests
+      - name: Navigate to backend and install dependencies
+        run: |
+          cd backend
+          npm ci
+
+      - name: Start server in background
+        run: |
+          cd backend
+          npm run dev &
+          echo "Server started in background (Node.js v22)"
+          # Wait for server to be ready
+          sleep 15
+          # Optional: Check if server is responding
+          curl -f http://localhost:3000 || true
+
       - name: Run tests
-        run: npm run test
-        working-directory: ./backend
+        env:
+          API_PREFIX: ${{ secrets.API_PREFIX }}
+        run: |
+          cd backend
+          npm run test

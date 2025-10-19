@@ -37,6 +37,8 @@ frontend/.env
 frontend/.env.*
 backend/.env
 backend/.env.*
+frontend/secrets
+backend/secrets
 
 # Keep env.example files for reference
 !**/.env.example
@@ -65,6 +67,7 @@ playwright-report/
 blob-report/
 playwright/.cache/
 storageState.json
+JSON_CONFIG_BASE64.txt
 
 # Optional npm cache directory
 .npm

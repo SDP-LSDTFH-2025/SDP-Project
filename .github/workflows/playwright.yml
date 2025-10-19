@@ -1,39 +1,91 @@
 name: Playwright Tests
 on:
   push:
-    branches: [ main, master ]
+    branches: [ main ]
   pull_request:
-    branches: [ main, master ]
+    branches: [ main ]
 jobs:
-  test:
+  e2e-test:
     timeout-minutes: 60
     runs-on: ubuntu-latest
+
     steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-node@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node
+      uses: actions/setup-node@v4
       with:
-        node-version: lts/*
+        node-version: '22'
+      
+    - name: Create target directory (if it doesn't exist)
+      run: mkdir -p frontend/tests/state
+
+    - name: Decode and create JSON file in specific folder
+      env:
+          BASE64_SECRET: ${{ secrets.JSON_CONFIG_BASE64 }}
+      run: |
+          echo "$BASE64_SECRET" | base64 --decode > frontend/tests/state/storageState.json
+
+    - name: Verify file was created
+      run: |
+          ls -la frontend/tests/state/
+
     - name: Install dependencies for backend
       working-directory: ./backend
-      run: npm install && npm ci
+      run: npm ci
+
     - name: Install dependencies for frontend
       working-directory: ./frontend
-      run: npm install && npm ci
+      run: npm ci
+
     - name: Install Playwright Browsers
+      working-directory: ./frontend
       run: npx playwright install chromium --with-deps
+
     - name: Install xvfb
       run: sudo apt-get install -y xvfb
+
     - name: Start backend dev server
       working-directory: ./backend
-      run: npm run dev &
+      env:
+          API_PREFIX: ${{ secrets.API_PREFIX }}
+          BACKEND_URL: ${{ secrets.BACKEND_URL }}
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          DB_PORT: ${{ secrets.DB_PORT }}
+          DB_NAME: ${{ secrets.DB_NAME }}
+          CLOUDINARY_API_SECRET: ${{ secrets.CLOUDINARY_API_SECRET }}
+          CLOUDINARY_CLOUD_NAME: ${{ secrets.CLOUDINARY_CLOUD_NAME }}
+          CLOUDINARY_API_KEY: ${{ secrets.CLOUDINARY_API_KEY }}
+          RATE_LIMIT_WINDOW_MS: ${{ secrets.RATE_LIMIT_WINDOW_MS }}
+          RATE_LIMIT_MAX_REQUESTS: ${{ secrets.RATE_LIMIT_MAX_REQUESTS }}
+      run: npm run start &
+
     - name: Start frontend dev server
       working-directory: ./frontend
       run: npm run dev &
+
     - name: Wait for servers to be ready
-      run: sleep 10  # Adjust sleep time as needed to ensure servers are up
+      run: sleep 10 
+
     - name: Run Playwright tests in headed mode
       working-directory: ./frontend
-      env:  # Environment variables for this specific step
+      env:
         GOOGLE_TEST_EMAIL: ${{ secrets.GOOGLE_TEST_EMAIL}}
         GOOGLE_TEST_PASSWORD: ${{ secrets.GOOGLE_TEST_PASSWORD}}
-      run: xvfb-run npx playwright test --workers=1 # Use xvfb-run for a headed browser
+        VITE_CLIENT_ID: ${{ secrets.VITE_CLIENT_ID}}
+        VITE_GOOGLE_API_KEY: ${{ secrets.VITE_GOOGLE_API_KEY}}
+      run: xvfb-run npx playwright test --workers=1 
+    - uses: actions/upload-artifact@v4
+      if: ${{ !cancelled() }}
+      with:
+        name: playwright-report
+        path: playwright-report/
+        retention-days: 30
+      
+    - name: Cleanup sensitive file
+      run: rm frontend/tests/state/storageState.json

@@ -1,0 +1,84 @@
+==================================================
+Checking Frontend
+==================================================
+Total packages found: 584
+Compromised packages found: 21
+
+Compromised packages:
+  - ansi-regex@6.2.2
+  - ansi-styles@6.2.3
+  - strip-ansi@7.1.2
+  - wrap-ansi@8.1.0
+  - debug@4.1.12
+  - ansi-regex@5.0.1
+  - ansi-styles@4.3.0
+  - chalk@4.1.2
+  - color-convert@2.0.1
+  - color-name@1.1.4
+  - debug@4.4.1
+  - debug@4.3.7
+  - debug@4.3.7
+  - debug@1.0.0
+  - debug@4.3.7
+  - debug@4.3.7
+  - debug@4.3.7
+  - debug@4.3.7
+  - strip-ansi@6.0.1
+  - supports-color@7.2.0
+  - wrap-ansi@6.2.0
+
+Compromised: 3.60%
+Safe: 96.40%
+
+==================================================
+Checking Backend
+==================================================
+Total packages found: 1043
+Compromised packages found: 34
+
+Compromised packages:
+  - ansi-regex@6.2.2
+  - ansi-styles@6.2.3
+  - strip-ansi@7.1.2
+  - wrap-ansi@8.1.0
+  - debug@4.1.12
+  - ansi-regex@5.0.1
+  - ansi-styles@4.3.0
+  - debug@2.6.9
+  - chalk@4.1.2
+  - color-convert@2.0.1
+  - color-name@1.1.4
+  - debug@2.6.9
+  - debug@4.4.3
+  - debug@4.3.7
+  - debug@4.3.7
+  - error-ex@1.3.4
+  - debug@3.2.7
+  - debug@3.2.7
+  - debug@3.2.7
+  - debug@2.6.9
+  - debug@2.6.9
+  - is-arrayish@0.2.1
+  - supports-color@8.1.1
+  - debug@2.6.9
+  - supports-color@5.5.0
+  - ansi-styles@5.2.0
+  - debug@2.6.9
+  - debug@4.3.7
+  - debug@4.3.7
+  - debug@4.3.7
+  - debug@4.3.7
+  - strip-ansi@6.0.1
+  - supports-color@7.2.0
+  - wrap-ansi@7.0.0
+
+Compromised: 3.26%
+Safe: 96.74%
+
+==================================================
+OVERALL SUMMARY
+==================================================
+Total packages: 1627
+Total compromised: 55
+Overall compromised: 3.38%
+Overall safe: 96.62%

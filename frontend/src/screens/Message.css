@@ -33,6 +33,17 @@
   color: #2563eb;
 }
 
+.messages-logo-container {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.messages-logo {
+  height: 32px;
+  width: auto;
+}
+
 .messages-title {
   margin: 0;
   font-size: 1.5rem;

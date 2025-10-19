@@ -11,6 +11,9 @@
     --radius: 12px;
     --shadow: 0 1px 2px rgba(16,24,40,0.06);
   }
+  :root.dark-mode{
+    --bg:black;
+  }
   .navigation {
     display: flex;
     justify-content: space-between;
@@ -20,6 +23,9 @@
     background-color: #ffffff;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); 
     font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,system-ui,sans-serif;
+  }
+  .navigation.dark-mode{
+    background-color: #000000;
   }
 
   
@@ -78,6 +84,10 @@
   }
   .nav-btn:hover {
   background-color: #f0f0f0 !important; /* Slightly darker on hover */ 
+  }
+
+  .navigate.dark-mode{
+    background-color: black;
   }
   
   /* Logout button specific style */
@@ -527,3 +537,142 @@
     }
   }
   
+
+/* -----------------------------------
+   🌙 DARK MODE THEME
+----------------------------------- */
+
+:root.dark-mode {
+  --bg: #0f0f10;
+  --card: #1a1a1c;
+  --border: #2a2a2d;
+  --text: #e5e7eb;
+  --muted: #9ca3af;
+  --brand-500: #a78bfa;
+  --brand-600: #8b5cf6;
+  --brand-700: #7c3aed;
+  --shadow: 0 2px 4px rgba(0,0,0,0.4);
+}
+
+/* Main Dashboard Background */
+.dashboard.dark-mode {
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* Navigation Bar */
+.navigation.dark-mode {
+  background: var(--card);
+  color: var(--text);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+}
+
+.logo.dark-mode {
+  color: var(--brand-500);
+}
+
+/* Buttons */
+.nav-button.dark-mode,
+.nav-btn.dark-mode {
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+.nav-button.dark-mode:hover,
+.nav-btn.dark-mode:hover {
+  background: var(--brand-600);
+  color: white;
+}
+
+/* Sidebar and Cards */
+.sidebar.dark-mode .shadow-card,
+.rightbar.dark-mode > div,
+.share-card.dark-mode,
+.study-buddies.dark-mode {
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: var(--text);
+  box-shadow: var(--shadow);
+}
+.buddies.dark-mode{
+  color: lightgray;
+}
+.buddy-name.dark-mode{
+  color: lightgray;
+}
+.title.dark-mode{
+  color: lightgrey;
+}
+
+/* Buttons inside Sidebar */
+.sidebar.dark-mode .buttons {
+  color: var(--text);
+}
+.sidebar.dark-mode .buttons:hover {
+  background: var(--brand-600);
+  color: #fff;
+}
+
+/* Input Fields */
+.search.dark-mode,
+.share-input.dark-mode {
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+.search.dark-mode:focus {
+  border-color: var(--brand-500);
+  box-shadow: 0 0 0 2px rgba(167,139,250,0.3);
+}
+
+/* Resource Cards */
+.resource-card.dark-mode {
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+.resource-card.dark-mode h2 {
+  color: var(--brand-500);
+}
+.resource-card.dark-mode p {
+  color: var(--muted);
+}
+
+/* Study Buddies / Groups */
+.buddy-item.dark-mode:hover {
+  background: rgba(124,58,237,0.2);
+}
+
+/* Calendar Event Modal */
+.event-modal-content.dark-mode {
+  background: var(--card);
+  color: var(--text);
+}
+
+/* Mobile Menu */
+.mobile-menu.dark-mode {
+  background: var(--card);
+  border-color: var(--border);
+}
+.mobile-menu.dark-mode .buttons {
+  color: var(--text);
+}
+.mobile-menu.dark-mode .buttons:hover {
+  background: var(--brand-700);
+}
+
+/* Logout button */
+.logout.dark-mode {
+  background: var(--card);
+  color: black;
+  border: 1px solid var(--border);
+}
+.logout.dark-mode:hover {
+  background: var(--brand-700);
+  color: white;
+}
+
+/*unaffected text 8*/
+.darkText.dark-mode{
+  color: white;
+}

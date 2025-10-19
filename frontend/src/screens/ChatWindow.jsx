@@ -4,7 +4,6 @@ import { Send, ArrowLeft, Phone, Video, Smile, Paperclip, Mic, Image, File } fro
 import { Button } from "../components/ui/button";
 import { socket } from "../socket";
 import { getPrivateChatHistory } from "../api/chat";
-import DropdownMenu, { chatWindowMenuItems } from "../components/DropdownMenu";
 import EmojiPicker from "../components/EmojiPicker";
 import VoiceRecorder from "../components/VoiceRecorder";
 import VideoCall from "../components/VideoCall";
@@ -456,10 +455,6 @@ export default function ChatWindow({ chat, onBack }) {
           >
             <Phone size={20} />
           </Button>
-          <DropdownMenu 
-            items={chatWindowMenuItems}
-            className="whatsapp-action-btn"
-          />
         </div>
       </div>
 
@@ -475,7 +470,7 @@ export default function ChatWindow({ chat, onBack }) {
           ) : (
             messages.map((msg, i) => (
               <div key={msg.id || i} className={`whatsapp-message-wrapper ${msg.from}`}>
-                <div className={`whatsapp-message ${msg.from}`}>
+                <div className={`whatsapp-message ${msg.from} ${msg.type === 'voice_note' ? 'voice-message' : ''}`}>
                   <div className="whatsapp-message-content">
                     {msg.type === 'voice_note' ? (
                       <VoiceNotePlayer

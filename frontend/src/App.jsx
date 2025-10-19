@@ -8,6 +8,7 @@ import { Registration } from "./components/Registration.jsx";
 import { Interests } from "./components/Interests.jsx";
 import { Success } from "./components/Success.jsx";
 import { CallProvider } from "./components/CallProvider.jsx";
+import Messages from "./pages/Messages.jsx";
 
 // ProtectedRoute wrapper to guard private routes
 function ProtectedRoute({ user, children }) {
@@ -97,6 +98,16 @@ export default function App() {
           element={
             <ProtectedRoute user={user}>
               <Home user={user} />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Messages route - only for logged-in users */}
+        <Route
+          path="/messages"
+          element={
+            <ProtectedRoute user={user}>
+              <Messages />
             </ProtectedRoute>
           }
         />

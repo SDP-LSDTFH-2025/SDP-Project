@@ -577,14 +577,7 @@ router.post('/', optimizedAuth, async (req, res) => {
 
 router.post('/request/pending', optimizedAuth, async (req, res) => {
     try {
-        const { token, id} = req.body;
-
-        if (!token||!id){
-            return errorClass.insufficientInfo(res);
-        }
-        // if (!verifyToken.fireBaseToken(token, id)) {
-        //     return errorClass.errorRes('Invalid Token', res,401);
-        // }
+        const { id} = req.body;
         
         const followers =await Follows_requests.findAll({where:{followee_id:id}})
         
@@ -775,9 +768,6 @@ router.get('/recommend/:token/:id', optimizedAuth, async (req,res)=>{
         if (!token||!id) {
             return errorClass.insufficientInfo(res);
         }
-        // if (!verifyToken.fireBaseToken(token,id)){
-        //     return errorClass.errorRes('Invalid Token',res,401);
-        // }
 
         //default run
         let count = await User.count()
@@ -874,9 +864,6 @@ router.get('/recommend/:token/:id/:index/:threshold', optimizedAuth, async (req,
         if (!token||!id) {
             return errorClass.insufficientInfo(res);
         }
-        // if (!verifyToken.fireBaseToken(token,id)){
-        //     return errorClass.errorRes('Invalid Token',res,401);
-        // }
 
         //default run
         let count = await User.count()

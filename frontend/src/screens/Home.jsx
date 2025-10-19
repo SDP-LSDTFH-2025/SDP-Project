@@ -43,10 +43,8 @@ import ProfilePage from "../pages/ProfilePage.jsx";
 import Feed from "../pages/Feed.jsx";
 import PlanSessions from "../pages/Sessions.jsx";
 import Progress from "../pages/Progress.jsx";
-import Message from "./Message.jsx";
 import Notifications from "./Notifications.jsx";
 import CallIndicator from "../components/CallIndicator.jsx";
-import AudioSettings from "../components/AudioSettings.jsx";
 
 function Home({ user }) {
   const location = useLocation();
@@ -221,7 +219,11 @@ function Home({ user }) {
   }
 
   function handleNavigationClick(view) {
-    updateActiveView(view);
+    if (view === "messages") {
+      navigate("/messages");
+    } else {
+      updateActiveView(view);
+    }
   }
 
   const handleUploadSubmit = async (e) => {
@@ -281,6 +283,51 @@ function Home({ user }) {
     }
   };
 
+  //settings ui
+  const [Configurations, toogleConfigurations] = useState(false);
+  
+
+  useEffect(()=>{
+      //add all affected elements here
+    const modules = [
+      document.documentElement,
+      document.querySelector(".dashboard"),//
+      document.querySelector(".navigation"),
+      document.querySelector(".logo"),
+      ...document.querySelectorAll(".title"),
+      document.querySelector(".header-content"),
+      document.querySelector(".nav-btn"),
+      document.querySelector(".sidebar"),
+      document.querySelector(".rightbar"),
+      ...document.querySelectorAll(".buddies"),
+      ...document.querySelectorAll(".buddy-name"),
+      document.querySelector(".share-card"),
+      document.querySelector(".study-buddies"),
+      document.querySelector(".sidebar"),
+      document.querySelector(".search"),
+      document.querySelector(".share-input"),
+      document.querySelector(".resource-card"),
+      document.querySelector(".buddy-item"),
+      ...document.querySelectorAll(".darkText"),
+      document.querySelector(".event-modal-content"),
+      document.querySelector(".mobile-menu"),
+      //document.querySelector(".logout"),
+    ];
+
+    if (Configurations){
+      for (const element of modules){
+        if (!element) continue;
+        element.classList.add("dark-mode");
+      }
+    }
+    else{
+      for (const element of modules){
+        if (!element) continue;
+        element.classList.remove("dark-mode");
+      }
+    }
+  },[Configurations])
+
   return (
     <div className="home-container">
       {/* Call Indicator - shows incoming/active calls */}
@@ -291,7 +338,6 @@ function Home({ user }) {
         <h1 className="logo">StudyBuddy</h1>
 
         <div className="nav-actions">
-          <AudioSettings />
           <Button
             className={`nav-button ${activeView === "messages" ? "active" : ""}`}
             onClick={() => handleNavigationClick("messages")}
@@ -341,6 +387,7 @@ function Home({ user }) {
           <button className="nav-btn menu-btn mobile-only" onClick={toggleMenu}>
             {isMenuOpen ? <X className="pics" size={24} /> : <Menu size={24} />}
           </button>
+          <button className="nav-btn logout" onClick={()=>toogleConfigurations(!Configurations)}>{Configurations ? "🌞 Light Mode" : "🌙 Dark Mode"}</button>
         </div>
       </nav>
 
@@ -488,7 +535,7 @@ function Home({ user }) {
                   className={`buttons ${activeView === "feed" ? "active" : ""}`}
                   onClick={() => handleNavigationClick("feed")}
                 >
-                  <BookOpen className="pics" />
+                  <BookOpen className="pics" style={{ color: Configurations ? "rgb(120, 0, 190)" : "black" }}/>
                   Resource Feed
                 </Button>
 
@@ -498,7 +545,7 @@ function Home({ user }) {
                   }`}
                   onClick={() => handleNavigationClick("progress")}
                 >
-                  <ChartSpline className="pics" />
+                  <ChartSpline className="pics" style={{ color: Configurations ? "rgb(120, 0, 190)" : "black" }}/>
                   Progress
                 </Button>
 
@@ -508,7 +555,7 @@ function Home({ user }) {
                   }`}
                   onClick={() => handleNavigationClick("friends")}
                 >
-                  <User className="pics" />
+                  <User className="pics" style={{ color: Configurations ? "rgb(120, 0, 190)" : "black" }}/>
                   Study Buddies
                 </Button>
 
@@ -518,7 +565,7 @@ function Home({ user }) {
                   }`}
                   onClick={() => handleNavigationClick("requests")}
                 >
-                  <UserPlus className="pics" />
+                  <UserPlus className="pics" style={{ color: Configurations ? "rgb(120, 0, 190)" : "black" }}/>
                   Friend Requests
                 </Button>
 
@@ -528,7 +575,7 @@ function Home({ user }) {
                   }`}
                   onClick={() => handleNavigationClick("groups")}
                 >
-                  <Users className="pics" />
+                  <Users className="pics" style={{ color: Configurations ? "rgb(120, 0, 190)" : "black" }}/>
                   Study Groups
                 </Button>
 
@@ -539,7 +586,7 @@ function Home({ user }) {
                   }`}
                   onClick={() => handleNavigationClick("upload")}
                 >
-                  <Upload className="pics" />
+                  <Upload className="pics" style={{ color: Configurations ? "rgb(120, 0, 190)" : "black" }}/>
                   Upload Resource
                 </Button>
 
@@ -549,7 +596,7 @@ function Home({ user }) {
                   }`}
                   onClick={() => handleNavigationClick("messages")}
                 >
-                  <MessageCircle className="pics" />
+                  <MessageCircle className="pics" style={{ color: Configurations ? "rgb(120, 0, 190)" : "black" }}/>
                   Messages
                 </Button>
 
@@ -560,7 +607,7 @@ function Home({ user }) {
                   onClick={() => handleNavigationClick("notifications")}
                   style={{ position: 'relative' }}
                 >
-                  <Bell className="pics" />
+                  <Bell className="pics" style={{ color: Configurations ? "rgb(120, 0, 190)" : "black" }}/>
                   Notifications
                   {notificationCount > 0 && (
                     <Badge 
@@ -595,7 +642,7 @@ function Home({ user }) {
             <Card className="shadow-card">
               <CardHeader className="calendar-header">
                 <div className="header-content">
-                  <Calendar className="pics" />
+                  <Calendar className="pics" style={{ color: Configurations ? "rgba(255, 255, 255, 1)" : "black" }}/>
                   <CardTitle className="title">Upcoming Events</CardTitle>
                 </div>
               </CardHeader>
@@ -680,7 +727,7 @@ function Home({ user }) {
           <div className="col-span-6">
             {activeView === "feed" && (
               <div className="share-card">
-                <h2>Resources</h2>
+                <h2 className="darkText">Resources</h2>
                 <Button
                   className="upload-btn"
                   onClick={() => updateActiveView("upload")}
@@ -699,7 +746,7 @@ function Home({ user }) {
             )}
             {activeView === "upload" && (
               <div id="Uploads" className="share-card">
-                <h2>Upload Study Resource</h2>
+                <h2 className="darkText">Upload Study Resource</h2>
                 {error && <p style={{ color: "red" }}>{error}</p>}
                 <form onSubmit={handleUploadSubmit}>
                   <Input
@@ -753,7 +800,7 @@ function Home({ user }) {
                 <Progress />
               </div>
             )}
-            {activeView === "usersprof" && <Profiles user={selectedUser} />}
+            {activeView === "usersprof" && <Profiles user={selectedUser} currentUser={user} />}
 
             {activeView === "friends" && (
               <div className="share-card">
@@ -772,14 +819,14 @@ function Home({ user }) {
 
             {activeView === "messages" && (
               <div className="share-card">
-                <h2>Messages</h2>
+                <h2 className="darkText">Messages</h2>
                 <Message />
               </div>
             )}
 
             {activeView === "notifications" && (
               <div className="share-card">
-                <h2>Notifications</h2>
+                <h2 className="darkText">Notifications</h2>
                 <Notifications user={user} />
               </div>
             )}
@@ -831,7 +878,7 @@ function Home({ user }) {
 
           {/* Active study groups */}
           <div className="study-groups">
-            <h3> <Users className="pics" /> Group Studies</h3>
+            <h3 className="buddy-name"> <Users className="pics" style={{ color: Configurations ? "rgb(120, 0, 190)" : "black" }}/> Group Studies</h3>
             {groupsLoading && <p>Loading Groups...</p>}
             {groupsError && <p >{groupsError.message}</p>}
             {groups.length > 0 ? (

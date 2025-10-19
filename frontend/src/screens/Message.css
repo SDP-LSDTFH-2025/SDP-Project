@@ -220,7 +220,7 @@
     margin: 0;
     font-size: 1rem;
   font-weight: 600;
-  color: #000000;
+  color: #ffffff;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -2087,6 +2087,7 @@
   
   .whatsapp-chat-header h3 {
     font-size: 0.9375rem;
+    color: #ffffff;
   }
   
   .whatsapp-time {

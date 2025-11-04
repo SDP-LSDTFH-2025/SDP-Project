@@ -188,68 +188,86 @@ export default function ChatWindow({ chat, onBack }) {
 
 
   const startVideoCall = () => {
-    const callId = `call_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    
-    // Use the new call manager to initiate call
-    if (window.callManager) {
-      window.callManager.initiateCall({
-        callType: 'video',
-        targetUserId: chat.id,
-        targetUserName: chat.username,
-        targetUserAvatar: chat.avatar,
-        isGroupCall: false
-      });
-    } else {
-      // Fallback to old system
-      const callData = {
-        callId,
-        isCaller: true,
-        otherUserId: chat.id
-      };
+    try {
+      const callId = `call_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       
-      setVideoCallData(callData);
-      setIsVideoCallActive(true);
+      // Use the new call manager to initiate call
+      if (window.callManager) {
+        window.callManager.initiateCall({
+          callType: 'video',
+          targetUserId: chat.id,
+          targetUserName: chat.username,
+          targetUserAvatar: chat.avatar,
+          isGroupCall: false
+        });
+      } else {
+        // Fallback to old system
+        const callData = {
+          callId,
+          isCaller: true,
+          otherUserId: chat.id
+        };
+        
+        setVideoCallData(callData);
+        setIsVideoCallActive(true);
+      }
+    } catch (error) {
+      console.error("Error starting video call:", error);
+      alert("Failed to start video call. Please try again.");
     }
   };
 
   const endVideoCall = () => {
-    if (window.callManager && window.callManager.activeCall) {
-      window.callManager.endCall();
-    } else {
+    try {
+      if (window.callManager && window.callManager.activeCall) {
+        window.callManager.endCall();
+      }
+    } catch (error) {
+      console.error("Error ending video call:", error);
+    } finally {
       setIsVideoCallActive(false);
       setVideoCallData(null);
     }
   };
 
   const startVoiceCall = () => {
-    const callId = `voice_call_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    
-    // Use the new call manager to initiate call
-    if (window.callManager) {
-      window.callManager.initiateCall({
-        callType: 'voice',
-        targetUserId: chat.id,
-        targetUserName: chat.username,
-        targetUserAvatar: chat.avatar,
-        isGroupCall: false
-      });
-    } else {
-      // Fallback to old system
-      const callData = {
-        callId,
-        isCaller: true,
-        otherUserId: chat.id
-      };
+    try {
+      const callId = `voice_call_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       
-      setVoiceCallData(callData);
-      setIsVoiceCallActive(true);
+      // Use the new call manager to initiate call
+      if (window.callManager) {
+        window.callManager.initiateCall({
+          callType: 'voice',
+          targetUserId: chat.id,
+          targetUserName: chat.username,
+          targetUserAvatar: chat.avatar,
+          isGroupCall: false
+        });
+      } else {
+        // Fallback to old system
+        const callData = {
+          callId,
+          isCaller: true,
+          otherUserId: chat.id
+        };
+        
+        setVoiceCallData(callData);
+        setIsVoiceCallActive(true);
+      }
+    } catch (error) {
+      console.error("Error starting voice call:", error);
+      alert("Failed to start voice call. Please try again.");
     }
   };
 
   const endVoiceCall = () => {
-    if (window.callManager && window.callManager.activeCall) {
-      window.callManager.endCall();
-    } else {
+    try {
+      if (window.callManager && window.callManager.activeCall) {
+        window.callManager.endCall();
+      }
+    } catch (error) {
+      console.error("Error ending voice call:", error);
+    } finally {
       setIsVoiceCallActive(false);
       setVoiceCallData(null);
     }
